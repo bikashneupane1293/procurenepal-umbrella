@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 import { CompanyModule } from './company/company.module';
+import { CertificateModule } from './certificate/certificate.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CompanyModule } from './company/company.module';
     TenantsModule,
     FeatureFlagModule,
     CompanyModule,
+    CertificateModule,
   ],
   controllers: [AppController],
   providers: [AppService],
