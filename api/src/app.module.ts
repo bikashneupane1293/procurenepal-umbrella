@@ -12,6 +12,7 @@ import { CompanyModule } from './company/company.module';
 import { CertificateModule } from './certificate/certificate.module';
 import { WpiModule } from './wpi/wpi.module';
 import { TurnoverModule } from './turnover/turnover.module';
+import { QualificationModule } from './qualification/qualification.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { TurnoverModule } from './turnover/turnover.module';
     CertificateModule,
     WpiModule,
     TurnoverModule,
+    QualificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
