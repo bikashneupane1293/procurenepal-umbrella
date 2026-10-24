@@ -11,7 +11,6 @@ export class QualificationService {
   ) {}
 
   async evaluate(tenantId: string, dto: EvaluateQualificationDto) {
-    // 1. Verify company belongs to tenant
     const company = await this.prisma.company.findFirst({
       where: { id: dto.companyId, tenantId },
     });
@@ -19,7 +18,6 @@ export class QualificationService {
       throw new NotFoundException('Company not found or access denied');
     }
 
-    // 2. Fetch verified certificates for this company
     const certificates = await this.prisma.certificate.findMany({
       where: {
         companyId: dto.companyId,
@@ -31,13 +29,8 @@ export class QualificationService {
 
     const requirements = dto.requirements || {};
 
-    // 3. TURNOVER CHECK (applies JV share)
     const turnoverResult = await this.checkTurnover(certificates, requirements);
-
-    // 4. KEY ACTIVITY CHECK (MAX year logic, NO JV share applied)
     const keyActivityResult = this.checkKeyActivity(certificates, requirements);
-
-    // 5. Determine final result
     const result = this.determineResult(turnoverResult, keyActivityResult);
 
     return {
@@ -67,7 +60,7 @@ export class QualificationService {
       };
     }
 
-    // Apply JV share to each certificate (per PPMO rules, JV applies to turnover)
+    // JV share DOES apply to turnover
     const turnoverCerts = certificates.map((c) => ({
       amount: Number(c.contractAmount) * (Number(c.jvShare) / 100),
       fiscalYear: c.fiscalYear,
@@ -101,7 +94,6 @@ export class QualificationService {
       };
     }
 
-    // Filter certificates matching the activity + allowed project types
     const filtered = certificates.filter((c) => {
       const activitiesMatch = c.activities?.includes(requirements.requiredActivity!);
       const projectTypeMatch =
@@ -111,8 +103,8 @@ export class QualificationService {
       return activitiesMatch && projectTypeMatch;
     });
 
-    // CRITICAL: Key Activity uses MAX YEAR logic, NOT average
-    // CRITICAL: JV share is NOT applied to Key Activity (per PPMO rule)
+    // CRITICAL: MAX YEAR logic, NOT average
+    // CRITICAL: JV share is NOT applied to Key Activity (PPMO rule)
     const yearlyProduction: Record<string, number> = {};
     for (const cert of filtered) {
       yearlyProduction[cert.fiscalYear] =
@@ -142,7 +134,6 @@ export class QualificationService {
       return 'INDIVIDUAL_ELIGIBLE';
     }
     // JV can only help when turnover is the ONLY failing criterion
-    // (JV share does not apply to key activity, so JV can't help there)
     if (!turnover.passed && keyActivity.passed) {
       return 'JV_REQUIRED';
     }
