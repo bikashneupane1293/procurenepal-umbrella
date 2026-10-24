@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { FeatureFlagModule } from './feature-flag/feature-flag.module';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FeatureFlagModule } from './feature-flag/feature-flag.module';
     UsersModule,
     TenantsModule,
     FeatureFlagModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
