@@ -9,11 +9,9 @@ dist/
 .env.local
 .env.*.local
 
-# Python
-.venv/
-venv/
-__pycache__/
-*.pyc
+# Prisma
+prisma/*.db
+prisma/*.db-journal
 
 # OS
 .DS_Store
@@ -21,7 +19,3 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
-
-# Build artifacts
-build/
-coverage/

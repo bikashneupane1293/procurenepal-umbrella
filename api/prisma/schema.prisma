@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== TENANT (MULTI-TENANCY) ====================
+model Tenant {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  panVat          String?
+  address         String?
+  contactEmail    String?
+  contactPhone    String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           User[]
+  subscriptions   Subscription[]
+  featureFlags    TenantFeatureFlag[]
+  certificates    Certificate[]
+  tenders         Tender[]
+  auditLogs       AuditLog[]
+}
+
+// ==================== USER & RBAC ====================
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  fullName     String
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  googleId     String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+enum Role {
+  VIEWER
+  SUPER_ADMIN
+  OWNER
+  DIRECTOR
+  PROJECT_DIRECTOR
+  PROCUREMENT_OFFICER
+  ACCOUNTANT
+  STORE_MANAGER
+  SITE_ENGINEER
+  SUPERVISOR
+  VENDOR
+}
+
+// ==================== SUBSCRIPTION & FEATURE FLAGS ====================
+model Subscription {
+  id              String    @id @default(uuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan            Plan      @default(FREE)
+  status          SubStatus @default(ACTIVE)
+  startsAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  paymentMethod   String?
+  paymentRef      String?
+  amountNPR       Decimal?  @db.Decimal(12, 2)
+  createdAt       DateTime  @default(now())
+
+  @@index([tenantId])
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  TRIALING
+}
+
+model TenantFeatureFlag {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  flagKey    String
+  enabled    Boolean  @default(false)
+  enabledAt  DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([tenantId, flagKey])
+  @@index([tenantId])
+}
+
+// ==================== COMPANY & CERTIFICATES ====================
+model Company {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String
+  slug            String
+  panVat          String?
+  licenseClass    String?
+  licenseExpiry   DateTime?
+  address         String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  certificates    Certificate[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model Certificate {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  certificateId      String   @unique
+  projectName        String
+  employerName       String?
+  contractAmount     Decimal  @db.Decimal(15, 2)
+  finalAmount        Decimal? @db.Decimal(15, 2)
+  priceAdjustment    Decimal? @db.Decimal(15, 2) @default(0)
+  fiscalYear         String
+  projectType        String
+  activities         String[] @default([])
+  verificationStatus String   @default("unverified")
+  completionStatus   String   @default("in_progress")
+  jvShare            Decimal  @default(100) @db.Decimal(5, 2)
+  pdfUrl             String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([companyId])
+  @@index([fiscalYear])
+}
+
+// ==================== TENDER & QUALIFICATION ====================
+model Tender {
+  id                String   @id @default(uuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ifbNumber         String
+  projectTitle      String
+  procuringEntity   String?
+  publicationDate   DateTime?
+  deadlineDate      DateTime
+  projectType       String?
+  boqAmount         Decimal? @db.Decimal(15, 2)
+  reqTurnover       Decimal? @db.Decimal(15, 2)
+  reqActivity       String?
+  reqProjectTypes   String[] @default([])
+  reqMinProduction  Decimal? @db.Decimal(15, 2)
+  status            String   @default("active")
+  source            String   @default("manual")
+  createdAt         DateTime @default(now())
+
+  @@unique([tenantId, ifbNumber])
+  @@index([tenantId])
+}
+
+model QualificationResult {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  tenderId           String
+  companyId          String
+  result             String
+  turnoverAact       Decimal? @db.Decimal(15, 2)
+  turnoverRequired   Decimal? @db.Decimal(15, 2)
+  keyActivityDetails Json?
+  explanation        String?
+  calculatedAt       DateTime @default(now())
+
+  @@unique([tenderId, companyId])
+  @@index([tenantId])
+}
+
+// ==================== AUDIT LOGS ====================
+model AuditLog {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  userId      String?
+  actionType  String
+  entityType  String?
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  isAiAction  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
