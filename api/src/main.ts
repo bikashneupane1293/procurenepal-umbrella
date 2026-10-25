@@ -14,7 +14,11 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:4200', 'http://localhost:3000', 'https://procurenepal.com'],
+    origin: [
+      'http://localhost:4200',
+      'https://app.procurenepal.com',
+      'https://procurenepal.com',
+    ],
     credentials: true,
   });
 
