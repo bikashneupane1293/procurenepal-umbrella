@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Mukta:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8f9fa;
+}
+
+body {
+  color: #1f2937;
+}
+
+/* Utility classes */
+.btn-primary {
+  @apply bg-navy-800 text-white font-semibold py-3 px-6 rounded-lg transition hover:bg-navy-700;
+}
+
+.btn-accent {
+  @apply bg-gold-600 text-navy-900 font-semibold py-3 px-6 rounded-lg transition hover:bg-gold-500;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+}
+
+.input-field {
+  @apply w-full border-2 border-gray-200 focus:border-navy-700 rounded-lg px-4 py-3 outline-none transition;
+}
+
+.label {
+  @apply block text-sm font-medium text-navy-700 mb-2;
+}

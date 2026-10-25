@@ -1,0 +1,93 @@
+<div class="min-h-screen flex">
+  <!-- LEFT: Branding Panel (Navy) -->
+  <div class="hidden lg:flex lg:w-1/2 bg-navy-900 items-center justify-center p-12 relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-96 h-96 bg-gold-500 opacity-10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-64 h-64 bg-gold-600 opacity-10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-md">
+      <h1 class="text-5xl font-bold text-white mb-2 font-display">
+        <span class="text-gold-500">Procure</span>Nepal
+      </h1>
+      <p class="text-gray-400 text-lg mb-8">Construction Industry Operating System</p>
+      <div class="space-y-4 text-white/80">
+        <div class="flex items-start gap-3">
+          <span class="text-gold-500 text-xl">✓</span>
+          <span>PPMO-compliant tender qualification engine</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-gold-500 text-xl">✓</span>
+          <span>WPI-adjusted turnover calculation</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-gold-500 text-xl">✓</span>
+          <span>Real-time JV qualification analysis</span>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-gold-500 text-xl">✓</span>
+          <span>Built for Nepalese contractors</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Login Form (White) -->
+  <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+    <div class="w-full max-w-md">
+      <div class="lg:hidden mb-8 text-center">
+        <h1 class="text-3xl font-bold text-navy-900 font-display">
+          <span class="text-gold-600">Procure</span>Nepal
+        </h1>
+      </div>
+
+      <h2 class="text-3xl font-bold text-navy-900 mb-2 font-display">Welcome back</h2>
+      <p class="text-gray-600 mb-8">Sign in to your workspace</p>
+
+      <form (ngSubmit)="onSubmit()" class="space-y-5">
+        <div>
+          <label class="label">Email Address</label>
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            class="input-field"
+            placeholder="admin@griha.com"
+          />
+        </div>
+
+        <div>
+          <label class="label">Password</label>
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            class="input-field"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="btn-primary w-full disabled:opacity-50"
+        >
+          {{ loading ? 'Signing in...' : 'Sign In' }}
+        </button>
+
+        <div *ngIf="errorMsg" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {{ errorMsg }}
+        </div>
+
+        <div *ngIf="successMsg" class="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+          {{ successMsg }}
+        </div>
+      </form>
+
+      <p class="mt-8 text-center text-sm text-gray-600">
+        Don't have an account?
+        <a href="#" class="text-gold-600 font-semibold hover:text-gold-500">Register</a>
+      </p>
+    </div>
+  </div>
+</div>
