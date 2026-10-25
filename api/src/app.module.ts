@@ -13,6 +13,7 @@ import { CertificateModule } from './certificate/certificate.module';
 import { WpiModule } from './wpi/wpi.module';
 import { TurnoverModule } from './turnover/turnover.module';
 import { QualificationModule } from './qualification/qualification.module';
+import { TenderModule } from './tender/tender.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { QualificationModule } from './qualification/qualification.module';
     WpiModule,
     TurnoverModule,
     QualificationModule,
+    TenderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
