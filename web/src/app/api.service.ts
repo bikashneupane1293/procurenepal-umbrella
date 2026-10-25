@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private API_URL = 'http://localhost:3000';
+  // Live Render URL
+  private API_URL = 'https://procurenepal-api.onrender.com'; 
 
   constructor(private http: HttpClient) {}
 
