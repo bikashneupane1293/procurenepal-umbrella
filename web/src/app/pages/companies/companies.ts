@@ -1,10 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { AuthService } from '../../core/auth.service';
+
+// Excel/ZIP tools load only when needed
+const loadExcel = () => import('../../core/excel');
 
 @Component({
   selector: 'app-companies',
@@ -22,6 +26,27 @@ import { AuthService } from '../../core/auth.service';
     </div>
 
     @if (okMsg()) { <div class="msg ok">{{ okMsg() }}</div> }
+
+    @if (confirmTarget(); as t) {
+      <div class="panel danger-panel">
+        <h2>Delete "{{ t.name }}"?</h2>
+        <p>This will permanently delete the company <strong>and ALL of its experience certificates and saved qualification results</strong>. This cannot be undone.</p>
+        <p><strong>Step 1 (recommended):</strong> download a ZIP backup first. It contains an Excel file you can import again later.</p>
+        <div class="actions">
+          <button class="btn gold" (click)="downloadZip(t)" [disabled]="zippingId() === t.id">
+            {{ zippingId() === t.id ? 'Preparing ZIP…' : '⬇ Download ZIP backup' }}
+          </button>
+          @if (backupDoneId() === t.id) { <span class="tag green done">✓ Backup downloaded</span> }
+        </div>
+        <p style="margin-top:18px"><strong>Step 2:</strong> delete the company.</p>
+        <div class="actions">
+          <button class="btn del" (click)="removeCompany(t)" [disabled]="deletingId() === t.id">
+            {{ deletingId() === t.id ? 'Deleting…' : (backupDoneId() === t.id ? 'Delete permanently' : 'Delete without backup') }}
+          </button>
+          <button class="btn light" (click)="confirmTarget.set(null)" [disabled]="deletingId() === t.id">Cancel</button>
+        </div>
+      </div>
+    }
 
     @if (showForm()) {
       <form class="panel" (ngSubmit)="save()">
@@ -85,9 +110,10 @@ import { AuthService } from '../../core/auth.service';
                   <td class="row-actions">
                     <a class="link" routerLink="/certificates" [queryParams]="{ company: c.id }">Certificates →</a>
                     @if (isOwner) {
-                      <button class="btn danger" [disabled]="deletingId() === c.id" (click)="removeCompany(c)">
-                        {{ deletingId() === c.id ? 'Deleting…' : 'Delete' }}
+                      <button class="btn light small" title="Download all data of this company as a ZIP file" [disabled]="zippingId() === c.id" (click)="downloadZip(c)">
+                        {{ zippingId() === c.id ? '…' : '⬇ ZIP' }}
                       </button>
+                      <button class="btn danger" (click)="askDelete(c)">Delete</button>
                     }
                   </td>
                 </tr>
@@ -100,15 +126,28 @@ import { AuthService } from '../../core/auth.service';
       }
     </div>
   `,
-  styles: [UI_STYLES, `.row-actions { white-space: nowrap; } .row-actions .btn { margin-left: 12px; }`],
+  styles: [UI_STYLES, `
+    .row-actions { white-space: nowrap; }
+    .row-actions .btn { margin-left: 10px; }
+    .btn.small { padding: 6px 12px; }
+    .danger-panel { border: 2px solid #fecaca; background: #fffafa; }
+    .danger-panel h2 { color: #b91c1c; }
+    .danger-panel p { margin: 6px 0; color: #4b5563; }
+    .btn.del { background: #dc2626; }
+    .btn.del:hover { background: #b91c1c; }
+    .done { align-self: center; font-size: 12px; padding: 6px 10px; }
+  `],
 })
 export class CompaniesPage {
   private data = inject(DataService);
   private auth = inject(AuthService);
 
-  // Only the workspace Owner may delete companies (the backend checks this too)
+  // Only the workspace Owner may download ZIP backups and delete companies
   isOwner = ['OWNER', 'SUPER_ADMIN'].includes(this.auth.getUser()?.role);
   deletingId = signal('');
+  confirmTarget = signal<any | null>(null);
+  zippingId = signal('');
+  backupDoneId = signal('');
 
   companies = signal<any[]>([]);
   loading = signal(true);
@@ -144,21 +183,40 @@ export class CompaniesPage {
     this.showForm.set(true);
   }
 
+  askDelete(c: any) {
+    this.okMsg.set('');
+    this.backupDoneId.set('');
+    this.confirmTarget.set(c);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async downloadZip(c: any) {
+    if (!this.isOwner) return; // ZIP backup is for the workspace Owner only
+    this.zippingId.set(c.id);
+    try {
+      const certs = await firstValueFrom(this.data.getCertificates(c.id));
+      const { downloadCompanyZip } = await loadExcel();
+      await downloadCompanyZip(c, certs);
+      this.backupDoneId.set(c.id);
+      if (!this.confirmTarget()) this.okMsg.set(`⬇ Backup of "${c.name}" downloaded (${certs.length} certificate${certs.length === 1 ? '' : 's'}).`);
+    } catch (err) {
+      this.loadError.set('Could not create the ZIP backup: ' + errorText(err));
+    }
+    this.zippingId.set('');
+  }
+
   removeCompany(c: any) {
-    const ok = confirm(
-      `Delete the company "${c.name}"?\n\nThis will also delete ALL of its experience certificates and its saved qualification results.\nThis cannot be undone.`,
-    );
-    if (!ok) return;
     this.deletingId.set(c.id);
     this.okMsg.set('');
     this.data.deleteCompany(c.id).subscribe({
       next: (res: any) => {
         this.deletingId.set('');
+        this.confirmTarget.set(null);
         const n = res?.certificatesDeleted ?? 0;
         this.okMsg.set(`🗑️ "${c.name}" was deleted${n ? ` together with ${n} certificate${n === 1 ? '' : 's'}` : ''}.`);
         this.load();
       },
-      error: (err) => { this.deletingId.set(''); this.loadError.set(errorText(err)); },
+      error: (err) => { this.deletingId.set(''); this.confirmTarget.set(null); this.loadError.set(errorText(err)); },
     });
   }
 

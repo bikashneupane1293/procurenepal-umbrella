@@ -80,6 +80,11 @@ function autoWidth(ws: XLSX.WorkSheet, cols: string[]) {
 
 // ---------- EXPORT (also used for the blank template) ----------
 export function exportCertificates(certs: any[], companyName: (id: string) => string, fileName: string) {
+  const { certRows, actRows } = certificateRows(certs, companyName);
+  writeBook(certRows, actRows, fileName);
+}
+
+function certificateRows(certs: any[], companyName: (id: string) => string) {
   const certRows: any[][] = [CERT_COLS];
   const actRows: any[][] = [ACT_COLS];
 
@@ -102,8 +107,7 @@ export function exportCertificates(certs: any[], companyName: (id: string) => st
       actRows.push([ref, a.name, a.unit, a.fiscalYear, Number(a.quantity)]);
     });
   });
-
-  writeBook(certRows, actRows, fileName);
+  return { certRows, actRows };
 }
 
 export function downloadTemplate() {
@@ -121,6 +125,10 @@ export function downloadTemplate() {
 }
 
 function writeBook(certRows: any[][], actRows: any[][], fileName: string) {
+  XLSX.writeFile(buildBook(certRows, actRows), fileName);
+}
+
+function buildBook(certRows: any[][], actRows: any[][]): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
   const ws1 = XLSX.utils.aoa_to_sheet(certRows);
   autoWidth(ws1, CERT_COLS);
@@ -149,7 +157,65 @@ function writeBook(certRows: any[][], actRows: any[][], fileName: string) {
   XLSX.utils.book_append_sheet(wb, ws1, 'Certificates');
   XLSX.utils.book_append_sheet(wb, ws2, 'KeyActivities');
   XLSX.utils.book_append_sheet(wb, help, 'Instructions');
-  XLSX.writeFile(wb, fileName);
+  return wb;
+}
+
+// ---------- COMPANY BACKUP ZIP (before deleting a company) ----------
+export async function downloadCompanyZip(company: any, certs: any[]) {
+  const { zipSync, strToU8 } = await import('fflate');
+  const files: Record<string, Uint8Array> = {};
+  const date = new Date().toISOString().slice(0, 10);
+  const safe = String(company.name || 'Company').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+  // 1. Certificates in the same Excel format as "Import Excel" (+ a Company Details sheet)
+  const { certRows, actRows } = certificateRows(certs, () => company.name);
+  const wb = buildBook(certRows, actRows);
+  const details = XLSX.utils.aoa_to_sheet([
+    ['Field', 'Value'],
+    ['Company Name', company.name ?? ''],
+    ['PAN / VAT No.', company.panVat ?? ''],
+    ['License Class', company.licenseClass ?? ''],
+    ['License Expiry', company.licenseExpiry ? String(company.licenseExpiry).slice(0, 10) : ''],
+    ['Address', company.address ?? ''],
+    ['Slug', company.slug ?? ''],
+    ['Created On', company.createdAt ? String(company.createdAt).slice(0, 10) : ''],
+    ['Certificates', certs.length],
+    ['Backup Date', date],
+  ]);
+  details['!cols'] = [{ wch: 20 }, { wch: 50 }];
+  XLSX.utils.book_append_sheet(wb, details, 'Company Details');
+  files[`${safe}_Certificates.xlsx`] = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }));
+
+  // 2. Complete raw data (every field) for safe keeping
+  files['company.json'] = strToU8(JSON.stringify(company, null, 2));
+  files['certificates.json'] = strToU8(JSON.stringify(certs, null, 2));
+
+  // 3. Read-me
+  files['README.txt'] = strToU8([
+    `ProcureNepal — company backup`,
+    `Company: ${company.name}`,
+    `Backup date: ${date}`,
+    `Certificates: ${certs.length}`,
+    ``,
+    `Files:`,
+    `  ${safe}_Certificates.xlsx  — certificates + key activities + company details (Excel)`,
+    `  company.json / certificates.json — complete data in JSON format`,
+    ``,
+    `To restore: add the company again on the Companies page (same name),`,
+    `then on the Certificates page click "Import Excel" and choose ${safe}_Certificates.xlsx.`,
+    ``,
+    `© Cuidado Technology Pvt. Ltd. · ProcureNepal`,
+  ].join('\r\n'));
+
+  const blob = new Blob([zipSync(files) as BlobPart], { type: 'application/zip' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ProcureNepal_Backup_${safe}_${date}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 // ---------- IMPORT: read the file and check every row ----------
