@@ -56,6 +56,9 @@ export type CertificateMinAggregateOutputType = {
   completionStatus: string | null
   jvShare: runtime.Decimal | null
   pdfUrl: string | null
+  jvName: string | null
+  startDate: Date | null
+  completionDate: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -76,6 +79,9 @@ export type CertificateMaxAggregateOutputType = {
   completionStatus: string | null
   jvShare: runtime.Decimal | null
   pdfUrl: string | null
+  jvName: string | null
+  startDate: Date | null
+  completionDate: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -97,6 +103,10 @@ export type CertificateCountAggregateOutputType = {
   completionStatus: number
   jvShare: number
   pdfUrl: number
+  jvName: number
+  startDate: number
+  completionDate: number
+  keyActivities: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -133,6 +143,9 @@ export type CertificateMinAggregateInputType = {
   completionStatus?: true
   jvShare?: true
   pdfUrl?: true
+  jvName?: true
+  startDate?: true
+  completionDate?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -153,6 +166,9 @@ export type CertificateMaxAggregateInputType = {
   completionStatus?: true
   jvShare?: true
   pdfUrl?: true
+  jvName?: true
+  startDate?: true
+  completionDate?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -174,6 +190,10 @@ export type CertificateCountAggregateInputType = {
   completionStatus?: true
   jvShare?: true
   pdfUrl?: true
+  jvName?: true
+  startDate?: true
+  completionDate?: true
+  keyActivities?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -282,6 +302,10 @@ export type CertificateGroupByOutputType = {
   completionStatus: string
   jvShare: runtime.Decimal
   pdfUrl: string | null
+  jvName: string | null
+  startDate: Date | null
+  completionDate: Date | null
+  keyActivities: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: CertificateCountAggregateOutputType | null
@@ -326,6 +350,10 @@ export type CertificateWhereInput = {
   completionStatus?: Prisma.StringFilter<"Certificate"> | string
   jvShare?: Prisma.DecimalFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  jvName?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  keyActivities?: Prisma.JsonNullableFilter<"Certificate">
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -349,6 +377,10 @@ export type CertificateOrderByWithRelationInput = {
   completionStatus?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
   pdfUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  jvName?: Prisma.SortOrderInput | Prisma.SortOrder
+  startDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  completionDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  keyActivities?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
@@ -375,6 +407,10 @@ export type CertificateWhereUniqueInput = Prisma.AtLeast<{
   completionStatus?: Prisma.StringFilter<"Certificate"> | string
   jvShare?: Prisma.DecimalFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  jvName?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  keyActivities?: Prisma.JsonNullableFilter<"Certificate">
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -398,6 +434,10 @@ export type CertificateOrderByWithAggregationInput = {
   completionStatus?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
   pdfUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  jvName?: Prisma.SortOrderInput | Prisma.SortOrder
+  startDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  completionDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  keyActivities?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CertificateCountOrderByAggregateInput
@@ -427,6 +467,10 @@ export type CertificateScalarWhereWithAggregatesInput = {
   completionStatus?: Prisma.StringWithAggregatesFilter<"Certificate"> | string
   jvShare?: Prisma.DecimalWithAggregatesFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.StringNullableWithAggregatesFilter<"Certificate"> | string | null
+  jvName?: Prisma.StringNullableWithAggregatesFilter<"Certificate"> | string | null
+  startDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Certificate"> | Date | string | null
+  completionDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Certificate"> | Date | string | null
+  keyActivities?: Prisma.JsonNullableWithAggregatesFilter<"Certificate">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Certificate"> | Date | string
 }
@@ -446,6 +490,10 @@ export type CertificateCreateInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutCertificatesInput
@@ -469,6 +517,10 @@ export type CertificateUncheckedCreateInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -488,6 +540,10 @@ export type CertificateUpdateInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutCertificatesNestedInput
@@ -511,6 +567,10 @@ export type CertificateUncheckedUpdateInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -532,6 +592,10 @@ export type CertificateCreateManyInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -551,6 +615,10 @@ export type CertificateUpdateManyMutationInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -572,6 +640,10 @@ export type CertificateUncheckedUpdateManyInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -611,6 +683,10 @@ export type CertificateCountOrderByAggregateInput = {
   completionStatus?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
   pdfUrl?: Prisma.SortOrder
+  jvName?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  completionDate?: Prisma.SortOrder
+  keyActivities?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -638,6 +714,9 @@ export type CertificateMaxOrderByAggregateInput = {
   completionStatus?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
   pdfUrl?: Prisma.SortOrder
+  jvName?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  completionDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -658,6 +737,9 @@ export type CertificateMinOrderByAggregateInput = {
   completionStatus?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
   pdfUrl?: Prisma.SortOrder
+  jvName?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  completionDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -785,6 +867,10 @@ export type CertificateCreateWithoutTenantInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutCertificatesInput
@@ -806,6 +892,10 @@ export type CertificateUncheckedCreateWithoutTenantInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -856,6 +946,10 @@ export type CertificateScalarWhereInput = {
   completionStatus?: Prisma.StringFilter<"Certificate"> | string
   jvShare?: Prisma.DecimalFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  jvName?: Prisma.StringNullableFilter<"Certificate"> | string | null
+  startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
+  keyActivities?: Prisma.JsonNullableFilter<"Certificate">
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
 }
@@ -875,6 +969,10 @@ export type CertificateCreateWithoutCompanyInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutCertificatesInput
@@ -896,6 +994,10 @@ export type CertificateUncheckedCreateWithoutCompanyInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -942,6 +1044,10 @@ export type CertificateCreateManyTenantInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -961,6 +1067,10 @@ export type CertificateUpdateWithoutTenantInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutCertificatesNestedInput
@@ -982,6 +1092,10 @@ export type CertificateUncheckedUpdateWithoutTenantInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1002,6 +1116,10 @@ export type CertificateUncheckedUpdateManyWithoutTenantInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1022,6 +1140,10 @@ export type CertificateCreateManyCompanyInput = {
   completionStatus?: string
   jvShare?: runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: string | null
+  jvName?: string | null
+  startDate?: Date | string | null
+  completionDate?: Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1041,6 +1163,10 @@ export type CertificateUpdateWithoutCompanyInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutCertificatesNestedInput
@@ -1062,6 +1188,10 @@ export type CertificateUncheckedUpdateWithoutCompanyInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1082,6 +1212,10 @@ export type CertificateUncheckedUpdateManyWithoutCompanyInput = {
   completionStatus?: Prisma.StringFieldUpdateOperationsInput | string
   jvShare?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pdfUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  jvName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1105,6 +1239,10 @@ export type CertificateSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   completionStatus?: boolean
   jvShare?: boolean
   pdfUrl?: boolean
+  jvName?: boolean
+  startDate?: boolean
+  completionDate?: boolean
+  keyActivities?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1128,6 +1266,10 @@ export type CertificateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   completionStatus?: boolean
   jvShare?: boolean
   pdfUrl?: boolean
+  jvName?: boolean
+  startDate?: boolean
+  completionDate?: boolean
+  keyActivities?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1151,6 +1293,10 @@ export type CertificateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   completionStatus?: boolean
   jvShare?: boolean
   pdfUrl?: boolean
+  jvName?: boolean
+  startDate?: boolean
+  completionDate?: boolean
+  keyActivities?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1174,11 +1320,15 @@ export type CertificateSelectScalar = {
   completionStatus?: boolean
   jvShare?: boolean
   pdfUrl?: boolean
+  jvName?: boolean
+  startDate?: boolean
+  completionDate?: boolean
+  keyActivities?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "certificateId" | "projectName" | "employerName" | "contractAmount" | "finalAmount" | "priceAdjustment" | "fiscalYear" | "projectType" | "activities" | "verificationStatus" | "completionStatus" | "jvShare" | "pdfUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
+export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "certificateId" | "projectName" | "employerName" | "contractAmount" | "finalAmount" | "priceAdjustment" | "fiscalYear" | "projectType" | "activities" | "verificationStatus" | "completionStatus" | "jvShare" | "pdfUrl" | "jvName" | "startDate" | "completionDate" | "keyActivities" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
 export type CertificateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1215,6 +1365,10 @@ export type $CertificatePayload<ExtArgs extends runtime.Types.Extensions.Interna
     completionStatus: string
     jvShare: runtime.Decimal
     pdfUrl: string | null
+    jvName: string | null
+    startDate: Date | null
+    completionDate: Date | null
+    keyActivities: runtime.JsonValue | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["certificate"]>
@@ -1658,6 +1812,10 @@ export interface CertificateFieldRefs {
   readonly completionStatus: Prisma.FieldRef<"Certificate", 'String'>
   readonly jvShare: Prisma.FieldRef<"Certificate", 'Decimal'>
   readonly pdfUrl: Prisma.FieldRef<"Certificate", 'String'>
+  readonly jvName: Prisma.FieldRef<"Certificate", 'String'>
+  readonly startDate: Prisma.FieldRef<"Certificate", 'DateTime'>
+  readonly completionDate: Prisma.FieldRef<"Certificate", 'DateTime'>
+  readonly keyActivities: Prisma.FieldRef<"Certificate", 'Json'>
   readonly createdAt: Prisma.FieldRef<"Certificate", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Certificate", 'DateTime'>
 }

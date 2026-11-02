@@ -149,10 +149,6 @@ model Certificate {
   startDate          DateTime?
   completionDate     DateTime?
   keyActivities      Json?
-  jvName             String?
-  startDate          DateTime?
-  completionDate     DateTime?
-  keyActivities      Json?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

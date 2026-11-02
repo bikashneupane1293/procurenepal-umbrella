@@ -1226,6 +1226,10 @@ export const CertificateScalarFieldEnum = {
   completionStatus: 'completionStatus',
   jvShare: 'jvShare',
   pdfUrl: 'pdfUrl',
+  jvName: 'jvName',
+  startDate: 'startDate',
+  completionDate: 'completionDate',
+  keyActivities: 'keyActivities',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
