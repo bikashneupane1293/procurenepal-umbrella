@@ -31,6 +31,19 @@ export class CertificateService {
     const certificateId =
       dto.certificateId || `CERT-${Date.now().toString().slice(-8)}`;
 
+    // Key activity table rows (stored as JSON)
+    const keyActivities = (dto.keyActivities ?? []).map((a) => ({
+      name: a.name,
+      unit: a.unit,
+      fiscalYear: a.fiscalYear,
+      quantity: a.quantity,
+    }));
+
+    // Keep the simple list of activity names too — the qualification engine uses it
+    const activityNames = Array.from(
+      new Set([...(dto.activities ?? []), ...keyActivities.map((a) => a.name)]),
+    );
+
     return this.prisma.certificate.create({
       data: {
         tenantId,
@@ -43,10 +56,14 @@ export class CertificateService {
         priceAdjustment: dto.priceAdjustment ?? 0,
         fiscalYear: dto.fiscalYear,
         projectType: dto.projectType,
-        activities: dto.activities ?? [],
+        activities: activityNames,
+        keyActivities: keyActivities.length ? keyActivities : undefined,
         verificationStatus: dto.verificationStatus ?? 'unverified',
         completionStatus: dto.completionStatus ?? 'in_progress',
         jvShare: dto.jvShare ?? 100,
+        jvName: dto.jvName,
+        startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+        completionDate: dto.completionDate ? new Date(dto.completionDate) : undefined,
         pdfUrl: dto.pdfUrl,
       },
     });

@@ -29,7 +29,7 @@ import { UI_STYLES } from '../../core/ui-styles';
         <div class="grid">
           <div>
             <label>Company Name <span class="req">*</span></label>
-            <input name="name" [(ngModel)]="form.name" placeholder="e.g. Griha Construction Pvt. Ltd." required />
+            <input name="name" [(ngModel)]="form.name" placeholder="e.g. Cuidado Construction Pvt. Ltd." required />
           </div>
           <div>
             <label>PAN / VAT No.</label>
@@ -131,7 +131,7 @@ export class CompaniesPage {
     this.showForm.set(true);
   }
 
-  // "Griha Construction Pvt. Ltd." -> "griha-construction-pvt-ltd"
+  // "Cuidado Construction Pvt. Ltd." -> "cuidado-construction-pvt-ltd"
   private makeSlug(name: string): string {
     return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'company';
   }

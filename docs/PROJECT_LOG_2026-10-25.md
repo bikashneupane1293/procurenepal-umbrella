@@ -48,12 +48,12 @@ Complete Phase 1 through Phase 5.4 in one continuous sprint.
 ## 🧪 PROOF OF CORRECTNESS
 
 ### Multi-Tenancy Test (Proven)
-- Griha token → GET /companies → [1 company] ✅
+- Cuidado token → GET /companies → [1 company] ✅
 - Competitor token → GET /companies → [] ✅
-- Competitor token → GET /companies/{griha_id} → 404 ✅
+- Competitor token → GET /companies/{cuidado_id} → 404 ✅
 
 ### Qualification Engine (Verified)
-- Input: Griha, 1 certificate (83.9M, 30% JV, BUILDING, 2078/79)
+- Input: Cuidado, 1 certificate (83.9M, 30% JV, BUILDING, 2078/79)
 - Result: `JV_REQUIRED` ✅
 - Turnover: 29,518,157 (< 50M) ❌
 - Key Activity: 83,898,334 (≥ 60M) ✅ (no JV share applied)

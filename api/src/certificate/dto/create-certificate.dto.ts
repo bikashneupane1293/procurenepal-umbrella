@@ -5,9 +5,31 @@ import {
   IsNumber,
   IsArray,
   IsIn,
+  IsDateString,
+  ValidateNested,
   Min,
   Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+// One row of the Key Activities table
+export class KeyActivityDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  unit: string;
+
+  @IsString()
+  @IsNotEmpty()
+  fiscalYear: string;
+
+  @IsNumber()
+  @Min(0)
+  quantity: number;
+}
 
 export class CreateCertificateDto {
   @IsString()
@@ -62,6 +84,24 @@ export class CreateCertificateDto {
   @Max(100)
   @IsOptional()
   jvShare?: number;
+
+  @IsString()
+  @IsOptional()
+  jvName?: string;
+
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  completionDate?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => KeyActivityDto)
+  @IsOptional()
+  keyActivities?: KeyActivityDto[];
 
   @IsString()
   @IsOptional()
