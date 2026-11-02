@@ -20,6 +20,9 @@ export class DataService {
   createCompany(body: any): Observable<any> {
     return this.http.post(`${API_URL}/companies`, body);
   }
+  deleteCompany(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/companies/${id}`);
+  }
 
   // ---------- Certificates ----------
   getCertificates(companyId?: string): Observable<any[]> {

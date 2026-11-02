@@ -1,6 +1,14 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+
+// Roles allowed to delete companies
+const CAN_DELETE_COMPANY = ['OWNER', 'SUPER_ADMIN'];
 
 @Injectable()
 export class CompanyService {
@@ -42,5 +50,34 @@ export class CompanyService {
     }
 
     return company;
+  }
+
+  async remove(tenantId: string, role: string, id: string) {
+    if (!CAN_DELETE_COMPANY.includes(role)) {
+      throw new ForbiddenException('Only the workspace Owner can delete companies');
+    }
+
+    const company = await this.prisma.company.findFirst({
+      where: { id, tenantId },
+      select: { id: true, name: true },
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found or access denied');
+    }
+
+    // Delete in one transaction: qualification results, certificates, then the company
+    const [results, certificates] = await this.prisma.$transaction([
+      this.prisma.qualificationResult.deleteMany({ where: { tenantId, companyId: id } }),
+      this.prisma.certificate.deleteMany({ where: { tenantId, companyId: id } }),
+      this.prisma.company.delete({ where: { id } }),
+    ]);
+
+    return {
+      deleted: true,
+      id,
+      name: company.name,
+      certificatesDeleted: certificates.count,
+      qualificationResultsDeleted: results.count,
+    };
   }
 }

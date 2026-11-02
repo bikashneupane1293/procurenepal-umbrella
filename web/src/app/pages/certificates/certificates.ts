@@ -1,9 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
+import type { ImportRow } from '../../core/excel';
+
+// The Excel tools are loaded only when needed, so the app stays fast
+const loadExcel = () => import('../../core/excel');
 
 interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity: number | null; }
 
@@ -17,10 +22,67 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
         <h1>Experience Certificates</h1>
         <p class="sub">Completed and ongoing works used for tender qualification</p>
       </div>
-      @if (!showForm() && companies().length > 0) {
-        <button class="btn gold" (click)="openForm()">+ Add Certificate</button>
-      }
+      <div class="tools">
+        @if (certificates().length > 0) {
+          <button class="btn light" (click)="exportExcel()">⬇ Export Excel</button>
+        }
+        <button class="btn light" (click)="downloadTemplate()">📄 Excel Template</button>
+        @if (companies().length > 0) {
+          <button class="btn light" (click)="fileInput.click()">⬆ Import Excel</button>
+          @if (!showForm()) {
+            <button class="btn gold" (click)="openForm()">+ Add Certificate</button>
+          }
+        }
+        <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFile($event)" />
+      </div>
     </div>
+
+    @if (importRows().length > 0 || importError()) {
+      <div class="panel">
+        <h2>Import from Excel @if (importFileName()) { <small class="help">— {{ importFileName() }}</small> }</h2>
+        @if (importError()) { <div class="msg error">{{ importError() }}</div> }
+        @if (importRows().length > 0) {
+          <div class="msg info">
+            {{ readyCount() }} ready · {{ errorCount() }} with problems
+            @if (savedCount() > 0) { · <strong>{{ savedCount() }} saved</strong> }
+            @if (failedCount() > 0) { · {{ failedCount() }} failed }
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Row</th><th>Company</th><th>Project</th><th>FY</th><th class="num">Contract (NPR)</th><th class="num">Key activities</th><th>Status</th></tr></thead>
+              <tbody>
+                @for (r of importRows(); track r.rowNo) {
+                  <tr>
+                    <td>{{ r.rowNo }}</td>
+                    <td>{{ r.companyName }}</td>
+                    <td>{{ r.body.projectName }}</td>
+                    <td>{{ r.body.fiscalYear }}</td>
+                    <td class="num">{{ r.body.contractAmount | number: '1.0-2' }}</td>
+                    <td class="num">{{ r.body.keyActivities?.length || 0 }}</td>
+                    <td>
+                      @switch (r.status) {
+                        @case ('ready') { <span class="tag">Ready</span> }
+                        @case ('saving') { <span class="tag gold">Saving…</span> }
+                        @case ('saved') { <span class="tag green">Saved</span> }
+                        @default { <span class="tag warn">{{ r.status === 'error' ? 'Fix in Excel' : 'Failed' }}</span> }
+                      }
+                      @if (r.message) { <div class="help err">{{ r.message }}</div> }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        <div class="actions">
+          @if (readyCount() > 0 && !importing()) {
+            <button class="btn" (click)="runImport()">Import {{ readyCount() }} certificate{{ readyCount() === 1 ? '' : 's' }}</button>
+          }
+          @if (importing()) { <button class="btn" disabled>Importing… {{ savedCount() + failedCount() }} / {{ importTotal() }}</button> }
+          <button class="btn light" (click)="closeImport()" [disabled]="importing()">Close</button>
+        </div>
+      </div>
+    }
 
     <div class="panel filter">
       <label>Show certificates of</label>
@@ -253,6 +315,8 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
     table.mini { margin-top: 6px; font-size: 12px; width: auto; }
     table.mini td { padding: 2px 10px 2px 0; border: 0; color: #4b5563; }
     .tag.warn { background: #fef2f2; color: #b91c1c; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .help.err { color: #b91c1c; max-width: 420px; }
   `],
 })
 export class CertificatesPage {
@@ -270,6 +334,17 @@ export class CertificatesPage {
   saving = signal(false);
   formError = signal('');
   okMsg = signal('');
+
+  // Excel import state
+  importRows = signal<ImportRow[]>([]);
+  importError = signal('');
+  importFileName = signal('');
+  importing = signal(false);
+  importTotal = signal(0);
+  readyCount = computed(() => this.importRows().filter((r) => r.status === 'ready').length);
+  errorCount = computed(() => this.importRows().filter((r) => r.status === 'error').length);
+  savedCount = computed(() => this.importRows().filter((r) => r.status === 'saved').length);
+  failedCount = computed(() => this.importRows().filter((r) => r.status === 'failed').length);
 
   // Nepali fiscal years, newest first: 2083/84 … 2070/71
   fiscalYears = Array.from({ length: 14 }, (_, i) => {
@@ -411,6 +486,69 @@ export class CertificatesPage {
       },
       error: (err) => { this.saving.set(false); this.formError.set(errorText(err)); },
     });
+  }
+
+  // ---------- Excel ----------
+  async exportExcel() {
+    const { exportCertificates } = await loadExcel();
+    const name = this.companyId() ? this.companyName(this.companyId()).replace(/[^A-Za-z0-9]+/g, '_') : 'All';
+    const date = new Date().toISOString().slice(0, 10);
+    exportCertificates(this.certificates(), (id) => this.companyName(id), `ProcureNepal_Certificates_${name}_${date}.xlsx`);
+  }
+
+  async downloadTemplate() {
+    const { downloadTemplate } = await loadExcel();
+    downloadTemplate();
+  }
+
+  async onFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow choosing the same file again
+    if (!file) return;
+    this.showForm.set(false);
+    this.okMsg.set('');
+    this.importError.set('');
+    this.importRows.set([]);
+    this.importFileName.set(file.name);
+    try {
+      const { readImportFile } = await loadExcel();
+      // Load ALL saved certificates so duplicates can be skipped
+      const existing = await firstValueFrom(this.data.getCertificates()).catch(() => [] as any[]);
+      const rows = await readImportFile(file, this.companies(), existing);
+      this.importRows.set(rows);
+      if (rows.length === 0) this.importError.set('No certificate rows found in the file.');
+    } catch (e: any) {
+      this.importError.set(e?.message || 'Could not read this file. Please use the Excel Template.');
+    }
+  }
+
+  async runImport() {
+    const todo = this.importRows().filter((r) => r.status === 'ready');
+    this.importing.set(true);
+    this.importTotal.set(todo.length);
+    for (const row of todo) {
+      this.updateRow(row, { status: 'saving', message: '' });
+      try {
+        await firstValueFrom(this.data.createCertificate(row.companyId, row.body));
+        this.updateRow(row, { status: 'saved', message: '' });
+      } catch (err) {
+        this.updateRow(row, { status: 'failed', message: errorText(err) });
+      }
+    }
+    this.importing.set(false);
+    this.okMsg.set(`✅ Import finished: ${this.savedCount()} saved${this.failedCount() ? `, ${this.failedCount()} failed` : ''}.`);
+    this.load();
+  }
+
+  private updateRow(row: ImportRow, patch: Partial<ImportRow>) {
+    this.importRows.update((list) => list.map((r) => (r.rowNo === row.rowNo ? { ...r, ...patch } : r)));
+  }
+
+  closeImport() {
+    this.importRows.set([]);
+    this.importError.set('');
+    this.importFileName.set('');
   }
 
   remove(c: any) {

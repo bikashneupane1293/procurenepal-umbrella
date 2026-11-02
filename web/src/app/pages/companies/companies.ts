@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-companies',
@@ -81,7 +82,14 @@ import { UI_STYLES } from '../../core/ui-styles';
                   <td>@if (c.licenseClass) { <span class="tag gold">Class {{ c.licenseClass }}</span> } @else { — }</td>
                   <td>{{ c.licenseExpiry ? (c.licenseExpiry | date: 'dd MMM yyyy') : '—' }}</td>
                   <td>{{ c.address || '—' }}</td>
-                  <td><a class="link" routerLink="/certificates" [queryParams]="{ company: c.id }">Certificates →</a></td>
+                  <td class="row-actions">
+                    <a class="link" routerLink="/certificates" [queryParams]="{ company: c.id }">Certificates →</a>
+                    @if (isOwner) {
+                      <button class="btn danger" [disabled]="deletingId() === c.id" (click)="removeCompany(c)">
+                        {{ deletingId() === c.id ? 'Deleting…' : 'Delete' }}
+                      </button>
+                    }
+                  </td>
                 </tr>
               } @empty {
                 <tr><td colspan="6" class="empty">No companies yet. Click <strong>+ Add Company</strong> to add your first one.</td></tr>
@@ -92,10 +100,15 @@ import { UI_STYLES } from '../../core/ui-styles';
       }
     </div>
   `,
-  styles: [UI_STYLES],
+  styles: [UI_STYLES, `.row-actions { white-space: nowrap; } .row-actions .btn { margin-left: 12px; }`],
 })
 export class CompaniesPage {
   private data = inject(DataService);
+  private auth = inject(AuthService);
+
+  // Only the workspace Owner may delete companies (the backend checks this too)
+  isOwner = ['OWNER', 'SUPER_ADMIN'].includes(this.auth.getUser()?.role);
+  deletingId = signal('');
 
   companies = signal<any[]>([]);
   loading = signal(true);
@@ -129,6 +142,24 @@ export class CompaniesPage {
     this.formError.set('');
     this.okMsg.set('');
     this.showForm.set(true);
+  }
+
+  removeCompany(c: any) {
+    const ok = confirm(
+      `Delete the company "${c.name}"?\n\nThis will also delete ALL of its experience certificates and its saved qualification results.\nThis cannot be undone.`,
+    );
+    if (!ok) return;
+    this.deletingId.set(c.id);
+    this.okMsg.set('');
+    this.data.deleteCompany(c.id).subscribe({
+      next: (res: any) => {
+        this.deletingId.set('');
+        const n = res?.certificatesDeleted ?? 0;
+        this.okMsg.set(`🗑️ "${c.name}" was deleted${n ? ` together with ${n} certificate${n === 1 ? '' : 's'}` : ''}.`);
+        this.load();
+      },
+      error: (err) => { this.deletingId.set(''); this.loadError.set(errorText(err)); },
+    });
   }
 
   // "Cuidado Construction Pvt. Ltd." -> "cuidado-construction-pvt-ltd"
