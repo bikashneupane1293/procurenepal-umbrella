@@ -27,6 +27,7 @@ import { AuthService } from '../core/auth.service';
           <button class="logout" (click)="logout()">Logout</button>
         </header>
         <router-outlet />
+        <footer class="copy">© {{ year }} Cuidado Technology Pvt. Ltd. · ProcureNepal · All rights reserved.</footer>
       </div>
     </div>
   `,
@@ -49,6 +50,7 @@ import { AuthService } from '../core/auth.service';
     .role { background: #fef5e0; color: #b8860b; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 12px; }
     .logout { background: #0a1f3d; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .logout:hover { background: #1e3a5f; }
+    .copy { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e1e3e6; font-size: 12px; color: #9ca3af; text-align: center; }
     @media (max-width: 768px) {
       .shell { flex-direction: column; }
       .sidebar { width: auto; padding: 16px; }
@@ -63,6 +65,7 @@ import { AuthService } from '../core/auth.service';
 export class ShellLayout {
   private auth = inject(AuthService);
   user = this.auth.getUser();
+  year = new Date().getFullYear();
 
   logout() {
     this.auth.logout();
