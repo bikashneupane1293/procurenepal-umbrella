@@ -14,8 +14,8 @@ export class App {
   private api = inject(ApiService);
   private cdr = inject(ChangeDetectorRef);
 
-  email = 'admin@griha.com';
-  password = 'Password123!';
+  email = '';
+  password = '';
   loading = false;
   errorMsg = '';
   successMsg = '';
