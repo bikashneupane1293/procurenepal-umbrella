@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,7 +30,17 @@ export class LoginPage {
     }
   }
 
+  // Pressing Enter inside the Email or Password box signs you in
+  @HostListener('keydown.enter', ['$event'])
+  onEnterKey(event: Event) {
+    if (event.target instanceof HTMLInputElement && !this.loading) {
+      event.preventDefault();
+      this.onSubmit();
+    }
+  }
+
   onSubmit() {
+    if (this.loading) return;
     this.loading = true;
     this.errorMsg = '';
     this.successMsg = '';
