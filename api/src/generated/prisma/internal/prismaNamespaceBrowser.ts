@@ -59,6 +59,7 @@ export const ModelName = {
   Certificate: 'Certificate',
   Tender: 'Tender',
   QualificationResult: 'QualificationResult',
+  AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog'
 } as const
 
@@ -178,6 +179,8 @@ export const CertificateScalarFieldEnum = {
   startDate: 'startDate',
   completionDate: 'completionDate',
   keyActivities: 'keyActivities',
+  outstandingAmount: 'outstandingAmount',
+  isOpenBid: 'isOpenBid',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -201,7 +204,19 @@ export const TenderScalarFieldEnum = {
   reqMinProduction: 'reqMinProduction',
   status: 'status',
   source: 'source',
-  createdAt: 'createdAt'
+  contractPeriodMonths: 'contractPeriodMonths',
+  reqBidCapacity: 'reqBidCapacity',
+  reqSimilarValue: 'reqSimilarValue',
+  reqSimilarCount: 'reqSimilarCount',
+  similarDescription: 'similarDescription',
+  keyActivityReqs: 'keyActivityReqs',
+  criteria: 'criteria',
+  isComplexWork: 'isComplexWork',
+  awardMethod: 'awardMethod',
+  ruleSetId: 'ruleSetId',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type TenderScalarFieldEnum = (typeof TenderScalarFieldEnum)[keyof typeof TenderScalarFieldEnum]
@@ -217,10 +232,27 @@ export const QualificationResultScalarFieldEnum = {
   turnoverRequired: 'turnoverRequired',
   keyActivityDetails: 'keyActivityDetails',
   explanation: 'explanation',
+  checks: 'checks',
+  warnings: 'warnings',
+  ruleSetId: 'ruleSetId',
   calculatedAt: 'calculatedAt'
 } as const
 
 export type QualificationResultScalarFieldEnum = (typeof QualificationResultScalarFieldEnum)[keyof typeof QualificationResultScalarFieldEnum]
+
+
+export const AnnualTurnoverScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  fiscalYear: 'fiscalYear',
+  amount: 'amount',
+  source: 'source',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnnualTurnoverScalarFieldEnum = (typeof AnnualTurnoverScalarFieldEnum)[keyof typeof AnnualTurnoverScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

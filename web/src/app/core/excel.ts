@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { bsToAd } from './nepali-date';
 
 // ---------- Column names used in the Excel file (export, template and import) ----------
 export const CERT_COLS = [
@@ -6,6 +7,8 @@ export const CERT_COLS = [
   'Project Type', 'Fiscal Year', 'Start Date', 'Completion Date', 'Completion Status',
   'Contract Amount (excl. VAT)', 'Final Amount (excl. VAT)', 'Price Adjustment (excl. VAT)',
   'JV Share %', 'JV Name', 'Document Checked',
+  // added in Phase 6.4A (older files without these columns still import)
+  'Remaining Work (excl. VAT)', 'Open Bid',
 ];
 export const ACT_COLS = ['Ref', 'Item Name', 'Unit', 'Fiscal Year', 'Quantity'];
 
@@ -46,7 +49,8 @@ function validYmd(y: number, m: number, d: number): string | null {
   if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
   return `${y}-${pad(m)}-${pad(d)}`;
 }
-// Accepts Excel dates, "2025-06-30" or "30/06/2025". Returns "YYYY-MM-DD", "" (empty) or null (invalid)
+// Accepts Excel dates, "2025-06-30", "30/06/2025" or a BS date "2082/03/15" (years 2040+ are BS).
+// Returns AD "YYYY-MM-DD", "" (empty) or null (invalid)
 function dateStr(v: any): string | null {
   if (v === null || v === undefined || v === '') return '';
   if (v instanceof Date && !isNaN(v.getTime())) {
@@ -57,7 +61,8 @@ function dateStr(v: any): string | null {
     return d ? `${d.y}-${pad(d.m)}-${pad(d.d)}` : null;
   }
   const s = String(v).trim();
-  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+  if (m && +m[1] >= 2040) return bsToAd(s) || null; // Bikram Sambat
   if (m) return validYmd(+m[1], +m[2], +m[3]);
   m = s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
   if (m) return validYmd(+m[3], +m[2], +m[1]);
@@ -102,6 +107,8 @@ function certificateRows(certs: any[], companyName: (id: string) => string) {
       c.jvShare != null ? Number(c.jvShare) : 100,
       c.jvName ?? '',
       c.verificationStatus === 'verified' ? 'Yes' : 'No',
+      c.outstandingAmount != null ? Number(c.outstandingAmount) : '',
+      c.completionStatus === 'in_progress' ? (c.isOpenBid === false ? 'No' : 'Yes') : '',
     ]);
     (c.keyActivities ?? []).forEach((a: any) => {
       actRows.push([ref, a.name, a.unit, a.fiscalYear, Number(a.quantity)]);
@@ -114,7 +121,9 @@ export function downloadTemplate() {
   const certRows: any[][] = [
     CERT_COLS,
     [1, 'Cuidado Construction Pvt. Ltd.', 'Upgrading of Dhulikhel–Sindhuli Road', 'Department of Roads', 'DOR-2081-045',
-      'ROAD', '2081/82', '2023-01-10', '2025-06-30', 'Completed', 45000000, 47250000, 0, 60, 'Cuidado–Sharma JV', 'No'],
+      'ROAD', '2081/82', '2023-01-10', '2025-06-30', 'Completed', 45000000, 47250000, 0, 60, 'Cuidado–Sharma JV', 'No', '', ''],
+    [2, 'Cuidado Construction Pvt. Ltd.', 'Construction of Cuidado Bridge (ongoing)', 'DoLIDAR', 'BR-2082-011',
+      'BRIDGE', '2082/83', '2082/04/01', '2084/03/30', 'In progress', 80000000, '', 0, 100, '', 'No', 52000000, 'Yes'],
   ];
   const actRows: any[][] = [
     ACT_COLS,
@@ -142,11 +151,13 @@ function buildBook(certRows: any[][], actRows: any[][]): XLSX.WorkBook {
     ['Company Name must match a company already added in ProcureNepal (Companies page).'],
     ['Project Type: ROAD, BUILDING, IRRIGATION or BRIDGE.'],
     ['Fiscal Year: Nepali fiscal year, e.g. 2081/82.'],
-    ['Dates: AD format YYYY-MM-DD, e.g. 2025-06-30.'],
+    ['Dates: AD as YYYY-MM-DD (e.g. 2025-06-30) or BS as YYYY/MM/DD (e.g. 2082/03/15 — years 2040 and later are read as BS).'],
     ['Completion Status: Completed, Substantially completed or In progress.'],
     ['All amounts: taxable amount only (excluding VAT), in NPR, numbers only.'],
     ['JV Share %: 100 if your company did the work alone. If below 100, JV Name is required.'],
     ['Document Checked: Yes if checked against the employer\'s original, otherwise No.'],
+    ['Running contracts (In progress) only: Remaining Work = value of work still to be done (excl. VAT), used for bid capacity;'],
+    ['  Open Bid = Yes if it counts towards the five-running-contract limit, No if the bid document excludes it.'],
     [''],
     ['Sheet "KeyActivities": one row per item per fiscal year.'],
     ['  Ref must match the Ref of the certificate in the "Certificates" sheet.'],
@@ -161,7 +172,7 @@ function buildBook(certRows: any[][], actRows: any[][]): XLSX.WorkBook {
 }
 
 // ---------- COMPANY BACKUP ZIP (before deleting a company) ----------
-export async function downloadCompanyZip(company: any, certs: any[]) {
+export async function downloadCompanyZip(company: any, certs: any[], turnovers: any[] = []) {
   const { zipSync, strToU8 } = await import('fflate');
   const files: Record<string, Uint8Array> = {};
   const date = new Date().toISOString().slice(0, 10);
@@ -184,11 +195,18 @@ export async function downloadCompanyZip(company: any, certs: any[]) {
   ]);
   details['!cols'] = [{ wch: 20 }, { wch: 50 }];
   XLSX.utils.book_append_sheet(wb, details, 'Company Details');
+  const to = XLSX.utils.aoa_to_sheet([
+    ['Fiscal Year', 'Turnover (excl. VAT)', 'Source'],
+    ...turnovers.map((t) => [t.fiscalYear, Number(t.amount), t.source ?? 'audited']),
+  ]);
+  to['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, to, 'Annual Turnover');
   files[`${safe}_Certificates.xlsx`] = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }));
 
   // 2. Complete raw data (every field) for safe keeping
   files['company.json'] = strToU8(JSON.stringify(company, null, 2));
   files['certificates.json'] = strToU8(JSON.stringify(certs, null, 2));
+  files['turnovers.json'] = strToU8(JSON.stringify(turnovers, null, 2));
 
   // 3. Read-me
   files['README.txt'] = strToU8([
@@ -199,10 +217,11 @@ export async function downloadCompanyZip(company: any, certs: any[]) {
     ``,
     `Files:`,
     `  ${safe}_Certificates.xlsx  — certificates + key activities + company details (Excel)`,
-    `  company.json / certificates.json — complete data in JSON format`,
+    `  company.json / certificates.json / turnovers.json — complete data in JSON format`,
     ``,
     `To restore: add the company again on the Companies page (same name),`,
     `then on the Certificates page click "Import Excel" and choose ${safe}_Certificates.xlsx.`,
+    `Re-enter the audited turnover (sheet "Annual Turnover") with the Turnover button on the Companies page.`,
     ``,
     `© Cuidado Technology Pvt. Ltd. · ProcureNepal`,
   ].join('\r\n'));
@@ -306,6 +325,11 @@ export async function readImportFile(file: File, companies: any[], existing: any
     const jvName = txt(r['JV Name']);
     if (jvShare < 100 && !jvName) errors.push('JV Name is required when JV Share is below 100');
 
+    const remaining = num(r['Remaining Work (excl. VAT)']);
+    if (remaining !== null && (isNaN(remaining) || remaining < 0)) errors.push('Remaining Work must be a number ≥ 0');
+    const openBidTxt = txt(r['Open Bid']).toLowerCase();
+    if (openBidTxt && !['yes', 'y', 'no', 'n', 'true', 'false', '1', '0'].includes(openBidTxt)) errors.push('Open Bid must be Yes or No');
+
     errors.push(...(actErrors.get(ref) ?? []));
 
     const certNoTxt = txt(r['Certificate No']);
@@ -333,6 +357,10 @@ export async function readImportFile(file: File, companies: any[], existing: any
     if (jvShare < 100 && jvName) body.jvName = jvName;
     if (start) body.startDate = start;
     if (end) body.completionDate = end;
+    if (status === 'in_progress') {
+      if (remaining !== null && !isNaN(remaining)) body.outstandingAmount = remaining;
+      if (openBidTxt) body.isOpenBid = ['yes', 'y', 'true', '1'].includes(openBidTxt);
+    }
     const ka = actByRef.get(ref) ?? [];
     if (ka.length) {
       body.keyActivities = ka;

@@ -45,6 +45,7 @@ export type QualificationResultMinAggregateOutputType = {
   turnoverAact: runtime.Decimal | null
   turnoverRequired: runtime.Decimal | null
   explanation: string | null
+  ruleSetId: string | null
   calculatedAt: Date | null
 }
 
@@ -57,6 +58,7 @@ export type QualificationResultMaxAggregateOutputType = {
   turnoverAact: runtime.Decimal | null
   turnoverRequired: runtime.Decimal | null
   explanation: string | null
+  ruleSetId: string | null
   calculatedAt: Date | null
 }
 
@@ -70,6 +72,9 @@ export type QualificationResultCountAggregateOutputType = {
   turnoverRequired: number
   keyActivityDetails: number
   explanation: number
+  checks: number
+  warnings: number
+  ruleSetId: number
   calculatedAt: number
   _all: number
 }
@@ -94,6 +99,7 @@ export type QualificationResultMinAggregateInputType = {
   turnoverAact?: true
   turnoverRequired?: true
   explanation?: true
+  ruleSetId?: true
   calculatedAt?: true
 }
 
@@ -106,6 +112,7 @@ export type QualificationResultMaxAggregateInputType = {
   turnoverAact?: true
   turnoverRequired?: true
   explanation?: true
+  ruleSetId?: true
   calculatedAt?: true
 }
 
@@ -119,6 +126,9 @@ export type QualificationResultCountAggregateInputType = {
   turnoverRequired?: true
   keyActivityDetails?: true
   explanation?: true
+  checks?: true
+  warnings?: true
+  ruleSetId?: true
   calculatedAt?: true
   _all?: true
 }
@@ -219,6 +229,9 @@ export type QualificationResultGroupByOutputType = {
   turnoverRequired: runtime.Decimal | null
   keyActivityDetails: runtime.JsonValue | null
   explanation: string | null
+  checks: runtime.JsonValue | null
+  warnings: runtime.JsonValue | null
+  ruleSetId: string | null
   calculatedAt: Date
   _count: QualificationResultCountAggregateOutputType | null
   _avg: QualificationResultAvgAggregateOutputType | null
@@ -255,6 +268,9 @@ export type QualificationResultWhereInput = {
   turnoverRequired?: Prisma.DecimalNullableFilter<"QualificationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.JsonNullableFilter<"QualificationResult">
   explanation?: Prisma.StringNullableFilter<"QualificationResult"> | string | null
+  checks?: Prisma.JsonNullableFilter<"QualificationResult">
+  warnings?: Prisma.JsonNullableFilter<"QualificationResult">
+  ruleSetId?: Prisma.StringNullableFilter<"QualificationResult"> | string | null
   calculatedAt?: Prisma.DateTimeFilter<"QualificationResult"> | Date | string
 }
 
@@ -268,6 +284,9 @@ export type QualificationResultOrderByWithRelationInput = {
   turnoverRequired?: Prisma.SortOrderInput | Prisma.SortOrder
   keyActivityDetails?: Prisma.SortOrderInput | Prisma.SortOrder
   explanation?: Prisma.SortOrderInput | Prisma.SortOrder
+  checks?: Prisma.SortOrderInput | Prisma.SortOrder
+  warnings?: Prisma.SortOrderInput | Prisma.SortOrder
+  ruleSetId?: Prisma.SortOrderInput | Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
@@ -285,6 +304,9 @@ export type QualificationResultWhereUniqueInput = Prisma.AtLeast<{
   turnoverRequired?: Prisma.DecimalNullableFilter<"QualificationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.JsonNullableFilter<"QualificationResult">
   explanation?: Prisma.StringNullableFilter<"QualificationResult"> | string | null
+  checks?: Prisma.JsonNullableFilter<"QualificationResult">
+  warnings?: Prisma.JsonNullableFilter<"QualificationResult">
+  ruleSetId?: Prisma.StringNullableFilter<"QualificationResult"> | string | null
   calculatedAt?: Prisma.DateTimeFilter<"QualificationResult"> | Date | string
 }, "id" | "tenderId_companyId">
 
@@ -298,6 +320,9 @@ export type QualificationResultOrderByWithAggregationInput = {
   turnoverRequired?: Prisma.SortOrderInput | Prisma.SortOrder
   keyActivityDetails?: Prisma.SortOrderInput | Prisma.SortOrder
   explanation?: Prisma.SortOrderInput | Prisma.SortOrder
+  checks?: Prisma.SortOrderInput | Prisma.SortOrder
+  warnings?: Prisma.SortOrderInput | Prisma.SortOrder
+  ruleSetId?: Prisma.SortOrderInput | Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
   _count?: Prisma.QualificationResultCountOrderByAggregateInput
   _avg?: Prisma.QualificationResultAvgOrderByAggregateInput
@@ -319,6 +344,9 @@ export type QualificationResultScalarWhereWithAggregatesInput = {
   turnoverRequired?: Prisma.DecimalNullableWithAggregatesFilter<"QualificationResult"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.JsonNullableWithAggregatesFilter<"QualificationResult">
   explanation?: Prisma.StringNullableWithAggregatesFilter<"QualificationResult"> | string | null
+  checks?: Prisma.JsonNullableWithAggregatesFilter<"QualificationResult">
+  warnings?: Prisma.JsonNullableWithAggregatesFilter<"QualificationResult">
+  ruleSetId?: Prisma.StringNullableWithAggregatesFilter<"QualificationResult"> | string | null
   calculatedAt?: Prisma.DateTimeWithAggregatesFilter<"QualificationResult"> | Date | string
 }
 
@@ -332,6 +360,9 @@ export type QualificationResultCreateInput = {
   turnoverRequired?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: string | null
   calculatedAt?: Date | string
 }
 
@@ -345,6 +376,9 @@ export type QualificationResultUncheckedCreateInput = {
   turnoverRequired?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: string | null
   calculatedAt?: Date | string
 }
 
@@ -358,6 +392,9 @@ export type QualificationResultUpdateInput = {
   turnoverRequired?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -371,6 +408,9 @@ export type QualificationResultUncheckedUpdateInput = {
   turnoverRequired?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -384,6 +424,9 @@ export type QualificationResultCreateManyInput = {
   turnoverRequired?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: string | null
   calculatedAt?: Date | string
 }
 
@@ -397,6 +440,9 @@ export type QualificationResultUpdateManyMutationInput = {
   turnoverRequired?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -410,6 +456,9 @@ export type QualificationResultUncheckedUpdateManyInput = {
   turnoverRequired?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   keyActivityDetails?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   explanation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  checks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  warnings?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calculatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -428,6 +477,9 @@ export type QualificationResultCountOrderByAggregateInput = {
   turnoverRequired?: Prisma.SortOrder
   keyActivityDetails?: Prisma.SortOrder
   explanation?: Prisma.SortOrder
+  checks?: Prisma.SortOrder
+  warnings?: Prisma.SortOrder
+  ruleSetId?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
@@ -445,6 +497,7 @@ export type QualificationResultMaxOrderByAggregateInput = {
   turnoverAact?: Prisma.SortOrder
   turnoverRequired?: Prisma.SortOrder
   explanation?: Prisma.SortOrder
+  ruleSetId?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
@@ -457,6 +510,7 @@ export type QualificationResultMinOrderByAggregateInput = {
   turnoverAact?: Prisma.SortOrder
   turnoverRequired?: Prisma.SortOrder
   explanation?: Prisma.SortOrder
+  ruleSetId?: Prisma.SortOrder
   calculatedAt?: Prisma.SortOrder
 }
 
@@ -477,6 +531,9 @@ export type QualificationResultSelect<ExtArgs extends runtime.Types.Extensions.I
   turnoverRequired?: boolean
   keyActivityDetails?: boolean
   explanation?: boolean
+  checks?: boolean
+  warnings?: boolean
+  ruleSetId?: boolean
   calculatedAt?: boolean
 }, ExtArgs["result"]["qualificationResult"]>
 
@@ -490,6 +547,9 @@ export type QualificationResultSelectCreateManyAndReturn<ExtArgs extends runtime
   turnoverRequired?: boolean
   keyActivityDetails?: boolean
   explanation?: boolean
+  checks?: boolean
+  warnings?: boolean
+  ruleSetId?: boolean
   calculatedAt?: boolean
 }, ExtArgs["result"]["qualificationResult"]>
 
@@ -503,6 +563,9 @@ export type QualificationResultSelectUpdateManyAndReturn<ExtArgs extends runtime
   turnoverRequired?: boolean
   keyActivityDetails?: boolean
   explanation?: boolean
+  checks?: boolean
+  warnings?: boolean
+  ruleSetId?: boolean
   calculatedAt?: boolean
 }, ExtArgs["result"]["qualificationResult"]>
 
@@ -516,10 +579,13 @@ export type QualificationResultSelectScalar = {
   turnoverRequired?: boolean
   keyActivityDetails?: boolean
   explanation?: boolean
+  checks?: boolean
+  warnings?: boolean
+  ruleSetId?: boolean
   calculatedAt?: boolean
 }
 
-export type QualificationResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tenderId" | "companyId" | "result" | "turnoverAact" | "turnoverRequired" | "keyActivityDetails" | "explanation" | "calculatedAt", ExtArgs["result"]["qualificationResult"]>
+export type QualificationResultOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tenderId" | "companyId" | "result" | "turnoverAact" | "turnoverRequired" | "keyActivityDetails" | "explanation" | "checks" | "warnings" | "ruleSetId" | "calculatedAt", ExtArgs["result"]["qualificationResult"]>
 
 export type $QualificationResultPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "QualificationResult"
@@ -534,6 +600,9 @@ export type $QualificationResultPayload<ExtArgs extends runtime.Types.Extensions
     turnoverRequired: runtime.Decimal | null
     keyActivityDetails: runtime.JsonValue | null
     explanation: string | null
+    checks: runtime.JsonValue | null
+    warnings: runtime.JsonValue | null
+    ruleSetId: string | null
     calculatedAt: Date
   }, ExtArgs["result"]["qualificationResult"]>
   composites: {}
@@ -967,6 +1036,9 @@ export interface QualificationResultFieldRefs {
   readonly turnoverRequired: Prisma.FieldRef<"QualificationResult", 'Decimal'>
   readonly keyActivityDetails: Prisma.FieldRef<"QualificationResult", 'Json'>
   readonly explanation: Prisma.FieldRef<"QualificationResult", 'String'>
+  readonly checks: Prisma.FieldRef<"QualificationResult", 'Json'>
+  readonly warnings: Prisma.FieldRef<"QualificationResult", 'Json'>
+  readonly ruleSetId: Prisma.FieldRef<"QualificationResult", 'String'>
   readonly calculatedAt: Prisma.FieldRef<"QualificationResult", 'DateTime'>
 }
     

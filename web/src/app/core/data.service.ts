@@ -20,8 +20,19 @@ export class DataService {
   createCompany(body: any): Observable<any> {
     return this.http.post(`${API_URL}/companies`, body);
   }
+  updateCompany(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/companies/${id}`, body);
+  }
   deleteCompany(id: string): Observable<any> {
     return this.http.delete(`${API_URL}/companies/${id}`);
+  }
+
+  // ---------- Audited annual turnover ----------
+  getTurnovers(companyId: string): Observable<any[]> {
+    return this.http.get(`${API_URL}/companies/${companyId}/turnovers`).pipe(map(toList));
+  }
+  saveTurnovers(companyId: string, items: { fiscalYear: string; amount: number }[]): Observable<any[]> {
+    return this.http.put(`${API_URL}/companies/${companyId}/turnovers`, { items }).pipe(map(toList));
   }
 
   // ---------- Certificates ----------
@@ -34,6 +45,9 @@ export class DataService {
   createCertificate(companyId: string, body: any): Observable<any> {
     return this.http.post(`${API_URL}/companies/${companyId}/certificates`, body);
   }
+  updateCertificate(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/certificates/${id}`, body);
+  }
   deleteCertificate(id: string): Observable<any> {
     return this.http.delete(`${API_URL}/certificates/${id}`);
   }
@@ -41,6 +55,41 @@ export class DataService {
   // ---------- Tenders ----------
   getTenders(): Observable<any[]> {
     return this.http.get(`${API_URL}/tenders`).pipe(map(toList));
+  }
+  getTender(id: string): Observable<any> {
+    return this.http.get(`${API_URL}/tenders/${id}`);
+  }
+  createTender(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/tenders`, body);
+  }
+  updateTender(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/tenders/${id}`, body);
+  }
+  deleteTender(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/tenders/${id}`);
+  }
+
+  // ---------- Qualification ----------
+  evaluateCompany(tenderId: string, companyId: string): Observable<any> {
+    return this.http.post(`${API_URL}/tenders/${tenderId}/evaluate/${companyId}`, {});
+  }
+  evaluateAll(tenderId: string): Observable<any> {
+    return this.http.post(`${API_URL}/tenders/${tenderId}/evaluate-all`, {});
+  }
+  evaluateJv(tenderId: string, partners: { companyId: string; share: number; isLead?: boolean }[]): Observable<any> {
+    return this.http.post(`${API_URL}/tenders/${tenderId}/evaluate-jv`, { partners });
+  }
+  jvPartners(tenderId: string, companyId: string): Observable<any> {
+    return this.http.get(`${API_URL}/tenders/${tenderId}/jv-partners/${companyId}`);
+  }
+  getQualifications(tenderId: string): Observable<any[]> {
+    return this.http.get(`${API_URL}/tenders/${tenderId}/qualifications`).pipe(map(toList));
+  }
+  quickCheck(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/qualification/evaluate`, body);
+  }
+  getRules(): Observable<any> {
+    return this.http.get(`${API_URL}/qualification/rules`);
   }
 }
 

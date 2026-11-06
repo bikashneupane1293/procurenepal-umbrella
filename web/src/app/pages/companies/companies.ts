@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { AuthService } from '../../core/auth.service';
+import { DateField } from '../../shared/date-field';
+import { showBoth } from '../../core/nepali-date';
 
 // Excel/ZIP tools load only when needed
 const loadExcel = () => import('../../core/excel');
@@ -13,7 +14,7 @@ const loadExcel = () => import('../../core/excel');
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DateField],
   template: `
     <div class="bar">
       <div>
@@ -50,7 +51,7 @@ const loadExcel = () => import('../../core/excel');
 
     @if (showForm()) {
       <form class="panel" (ngSubmit)="save()">
-        <h2>New Company</h2>
+        <h2>{{ editId() ? 'Edit Company' : 'New Company' }}</h2>
         @if (formError()) { <div class="msg error">{{ formError() }}</div> }
         <div class="grid">
           <div>
@@ -71,21 +72,52 @@ const loadExcel = () => import('../../core/excel');
               <option value="D">Class D</option>
             </select>
           </div>
-          <div>
-            <label>License Expiry Date</label>
-            <input type="date" name="licenseExpiry" [(ngModel)]="form.licenseExpiry" />
-            <div class="help">Date in AD (English calendar)</div>
-          </div>
+          <app-date-field label="License Expiry Date" [(value)]="form.licenseExpiry" />
           <div>
             <label>Address</label>
             <input name="address" [(ngModel)]="form.address" placeholder="e.g. Baneshwor, Kathmandu" />
           </div>
         </div>
         <div class="actions">
-          <button class="btn" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save Company' }}</button>
-          <button class="btn light" type="button" (click)="showForm.set(false)">Cancel</button>
+          <button class="btn" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (editId() ? 'Save Changes' : 'Save Company') }}</button>
+          <button class="btn light" type="button" (click)="showForm.set(false); editId.set('')">Cancel</button>
         </div>
       </form>
+    }
+
+    @if (toCompany(); as tc) {
+      <div class="panel">
+        <h2>Audited Annual Turnover — {{ tc.name }}</h2>
+        <p class="help">Average annual construction turnover uses the best 3 of the last 10 fiscal years (WPI-adjusted). If this table is empty, turnover is estimated from certificates, which is less accurate.</p>
+        @if (toError()) { <div class="msg error">{{ toError() }}</div> }
+        @if (toLoading()) { <div class="msg info">Loading…</div> } @else {
+          <div class="table-wrap">
+            <table class="acts">
+              <thead><tr><th style="width:30%">Fiscal Year</th><th class="num" style="width:40%">Turnover (NPR)</th><th style="width:20%">Source</th><th></th></tr></thead>
+              <tbody>
+                @for (row of toRows; track $index; let i = $index) {
+                  <tr>
+                    <td><select [name]="'tfy' + i" [(ngModel)]="row.fiscalYear">
+                      @for (fy of fiscalYears; track fy) { <option [value]="fy">{{ fy }}</option> }
+                    </select></td>
+                    <td><input type="number" min="0" [name]="'tam' + i" [(ngModel)]="row.amount" class="right" placeholder="0" />
+                      <div class="help tax">Enter taxable amount only (excluding VAT)</div></td>
+                    <td><select [name]="'tsrc' + i" [(ngModel)]="row.source">
+                      <option value="audited">Audited</option><option value="provisional">Provisional</option>
+                    </select></td>
+                    <td><button type="button" class="btn danger" (click)="toRows.splice(i, 1)">🗑️</button></td>
+                  </tr>
+                } @empty { <tr><td colspan="4" class="empty">No turnover entered yet.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button class="btn light" type="button" (click)="addTurnoverRow()">+ Add Year</button>
+            <button class="btn" type="button" (click)="saveTurnovers(tc)" [disabled]="toSaving()">{{ toSaving() ? 'Saving…' : 'Save Turnover' }}</button>
+            <button class="btn light" type="button" (click)="toCompany.set(null)">Close</button>
+          </div>
+        }
+      </div>
     }
 
     <div class="panel">
@@ -105,10 +137,12 @@ const loadExcel = () => import('../../core/excel');
                   <td><strong>{{ c.name }}</strong></td>
                   <td>{{ c.panVat || '—' }}</td>
                   <td>@if (c.licenseClass) { <span class="tag gold">Class {{ c.licenseClass }}</span> } @else { — }</td>
-                  <td>{{ c.licenseExpiry ? (c.licenseExpiry | date: 'dd MMM yyyy') : '—' }}</td>
+                  <td>{{ both(c.licenseExpiry) }}</td>
                   <td>{{ c.address || '—' }}</td>
                   <td class="row-actions">
                     <a class="link" routerLink="/certificates" [queryParams]="{ company: c.id }">Certificates →</a>
+                    <button class="btn light small" (click)="openTurnover(c)">Turnover</button>
+                    <button class="btn light small" (click)="openEdit(c)">Edit</button>
                     @if (isOwner) {
                       <button class="btn light small" title="Download all data of this company as a ZIP file" [disabled]="zippingId() === c.id" (click)="downloadZip(c)">
                         {{ zippingId() === c.id ? '…' : '⬇ ZIP' }}
@@ -136,6 +170,9 @@ const loadExcel = () => import('../../core/excel');
     .btn.del { background: #dc2626; }
     .btn.del:hover { background: #b91c1c; }
     .done { align-self: center; font-size: 12px; padding: 6px 10px; }
+    table.acts td { padding: 6px; border-bottom: 0; }
+    input.right { text-align: right; }
+    .help.tax { color: #b8860b; }
   `],
 })
 export class CompaniesPage {
@@ -158,6 +195,18 @@ export class CompaniesPage {
   okMsg = signal('');
 
   form = this.emptyForm();
+  editId = signal('');
+
+  // Audited turnover editor
+  toCompany = signal<any | null>(null);
+  toRows: { fiscalYear: string; amount: number | null; source: string }[] = [];
+  toLoading = signal(false);
+  toSaving = signal(false);
+  toError = signal('');
+  fiscalYears = Array.from({ length: 14 }, (_, i) => {
+    const y = 2083 - i;
+    return `${y}/${String((y + 1) % 100).padStart(2, '0')}`;
+  });
 
   constructor() {
     this.load();
@@ -176,7 +225,60 @@ export class CompaniesPage {
     });
   }
 
+  both(d: any) { return showBoth(d); }
+
+  openEdit(c: any) {
+    this.editId.set(c.id);
+    this.form = {
+      name: c.name ?? '', panVat: c.panVat ?? '', licenseClass: c.licenseClass ?? '',
+      licenseExpiry: c.licenseExpiry ? String(c.licenseExpiry).slice(0, 10) : '', address: c.address ?? '',
+    };
+    this.formError.set('');
+    this.okMsg.set('');
+    this.showForm.set(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  openTurnover(c: any) {
+    this.toCompany.set(c);
+    this.toError.set('');
+    this.toLoading.set(true);
+    this.data.getTurnovers(c.id).subscribe({
+      next: (rows) => {
+        this.toRows = rows.map((r: any) => ({ fiscalYear: r.fiscalYear, amount: Number(r.amount), source: r.source ?? 'audited' }));
+        if (!this.toRows.length) this.addTurnoverRow();
+        this.toLoading.set(false);
+      },
+      error: (err) => { this.toError.set(errorText(err)); this.toLoading.set(false); },
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  addTurnoverRow() {
+    const used = new Set(this.toRows.map((r) => r.fiscalYear));
+    const fy = this.fiscalYears.slice(1).find((y) => !used.has(y)) ?? this.fiscalYears[1];
+    this.toRows.push({ fiscalYear: fy, amount: null, source: 'audited' });
+  }
+
+  saveTurnovers(c: any) {
+    const rows = this.toRows.filter((r) => r.amount !== null && (r.amount as any) !== '');
+    const fys = rows.map((r) => r.fiscalYear);
+    if (new Set(fys).size !== fys.length) { this.toError.set('Each fiscal year can appear only once.'); return; }
+    if (rows.some((r) => !(Number(r.amount) >= 0))) { this.toError.set('Turnover amounts must be 0 or more.'); return; }
+    this.toSaving.set(true);
+    this.toError.set('');
+    this.data.saveTurnovers(c.id, rows.map((r) => ({ fiscalYear: r.fiscalYear, amount: Number(r.amount), source: r.source }))).subscribe({
+      next: () => {
+        this.toSaving.set(false);
+        this.toCompany.set(null);
+        this.okMsg.set(`✅ Turnover of "${c.name}" saved (${rows.length} year${rows.length === 1 ? '' : 's'}).`);
+      },
+      error: (err) => { this.toSaving.set(false); this.toError.set(errorText(err)); },
+    });
+  }
+
   openForm() {
+    this.editId.set('');
     this.form = this.emptyForm();
     this.formError.set('');
     this.okMsg.set('');
@@ -195,8 +297,9 @@ export class CompaniesPage {
     this.zippingId.set(c.id);
     try {
       const certs = await firstValueFrom(this.data.getCertificates(c.id));
+      const turnovers = await firstValueFrom(this.data.getTurnovers(c.id)).catch(() => [] as any[]);
       const { downloadCompanyZip } = await loadExcel();
-      await downloadCompanyZip(c, certs);
+      await downloadCompanyZip(c, certs, turnovers);
       this.backupDoneId.set(c.id);
       if (!this.confirmTarget()) this.okMsg.set(`⬇ Backup of "${c.name}" downloaded (${certs.length} certificate${certs.length === 1 ? '' : 's'}).`);
     } catch (err) {
@@ -230,19 +333,24 @@ export class CompaniesPage {
     if (!f.name.trim()) { this.formError.set('Please enter the company name.'); return; }
 
     // Only send fields that have a value (the backend rejects empty extras)
-    const body: any = { name: f.name.trim(), slug: this.makeSlug(f.name) };
-    if (f.panVat.trim()) body.panVat = f.panVat.trim();
-    if (f.licenseClass) body.licenseClass = f.licenseClass;
-    if (f.licenseExpiry) body.licenseExpiry = f.licenseExpiry;
-    if (f.address.trim()) body.address = f.address.trim();
+    const editing = this.editId();
+    const body: any = { name: f.name.trim() };
+    if (!editing) body.slug = this.makeSlug(f.name);
+    // On edit, blank fields are sent as null so they are cleared
+    if (f.panVat.trim()) body.panVat = f.panVat.trim(); else if (editing) body.panVat = null;
+    if (f.licenseClass) body.licenseClass = f.licenseClass; else if (editing) body.licenseClass = null;
+    if (f.licenseExpiry) body.licenseExpiry = f.licenseExpiry; else if (editing) body.licenseExpiry = null;
+    if (f.address.trim()) body.address = f.address.trim(); else if (editing) body.address = null;
 
     this.saving.set(true);
     this.formError.set('');
-    this.data.createCompany(body).subscribe({
+    const req = editing ? this.data.updateCompany(editing, body) : this.data.createCompany(body);
+    req.subscribe({
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
-        this.okMsg.set(`✅ "${body.name}" was added.`);
+        this.editId.set('');
+        this.okMsg.set(editing ? `✅ "${body.name}" was updated.` : `✅ "${body.name}" was added.`);
         this.load();
       },
       error: (err) => { this.saving.set(false); this.formError.set(errorText(err)); },

@@ -223,6 +223,7 @@ export type CompanyWhereInput = {
   isActive?: Prisma.BoolFilter<"Company"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   certificates?: Prisma.CertificateListRelationFilter
+  turnovers?: Prisma.AnnualTurnoverListRelationFilter
 }
 
 export type CompanyOrderByWithRelationInput = {
@@ -237,6 +238,7 @@ export type CompanyOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   certificates?: Prisma.CertificateOrderByRelationAggregateInput
+  turnovers?: Prisma.AnnualTurnoverOrderByRelationAggregateInput
 }
 
 export type CompanyWhereUniqueInput = Prisma.AtLeast<{
@@ -255,6 +257,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"Company"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   certificates?: Prisma.CertificateListRelationFilter
+  turnovers?: Prisma.AnnualTurnoverListRelationFilter
 }, "id" | "tenantId_slug">
 
 export type CompanyOrderByWithAggregationInput = {
@@ -301,6 +304,7 @@ export type CompanyCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   certificates?: Prisma.CertificateCreateNestedManyWithoutCompanyInput
+  turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateInput = {
@@ -315,6 +319,7 @@ export type CompanyUncheckedCreateInput = {
   isActive?: boolean
   createdAt?: Date | string
   certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCompanyInput
+  turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUpdateInput = {
@@ -329,6 +334,7 @@ export type CompanyUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   certificates?: Prisma.CertificateUpdateManyWithoutCompanyNestedInput
+  turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateInput = {
@@ -343,6 +349,7 @@ export type CompanyUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCompanyNestedInput
+  turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateManyInput = {
@@ -447,6 +454,20 @@ export type CompanyUpdateOneRequiredWithoutCertificatesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutCertificatesInput, Prisma.CompanyUpdateWithoutCertificatesInput>, Prisma.CompanyUncheckedUpdateWithoutCertificatesInput>
 }
 
+export type CompanyCreateNestedOneWithoutTurnoversInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutTurnoversInput, Prisma.CompanyUncheckedCreateWithoutTurnoversInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutTurnoversInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutTurnoversNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutTurnoversInput, Prisma.CompanyUncheckedCreateWithoutTurnoversInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutTurnoversInput
+  upsert?: Prisma.CompanyUpsertWithoutTurnoversInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutTurnoversInput, Prisma.CompanyUpdateWithoutTurnoversInput>, Prisma.CompanyUncheckedUpdateWithoutTurnoversInput>
+}
+
 export type CompanyCreateWithoutCertificatesInput = {
   id?: string
   tenantId: string
@@ -458,6 +479,7 @@ export type CompanyCreateWithoutCertificatesInput = {
   address?: string | null
   isActive?: boolean
   createdAt?: Date | string
+  turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutCertificatesInput = {
@@ -471,6 +493,7 @@ export type CompanyUncheckedCreateWithoutCertificatesInput = {
   address?: string | null
   isActive?: boolean
   createdAt?: Date | string
+  turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutCertificatesInput = {
@@ -500,6 +523,7 @@ export type CompanyUpdateWithoutCertificatesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutCertificatesInput = {
@@ -513,6 +537,79 @@ export type CompanyUncheckedUpdateWithoutCertificatesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutTurnoversInput = {
+  id?: string
+  tenantId: string
+  name: string
+  slug: string
+  panVat?: string | null
+  licenseClass?: string | null
+  licenseExpiry?: Date | string | null
+  address?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  certificates?: Prisma.CertificateCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutTurnoversInput = {
+  id?: string
+  tenantId: string
+  name: string
+  slug: string
+  panVat?: string | null
+  licenseClass?: string | null
+  licenseExpiry?: Date | string | null
+  address?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutTurnoversInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutTurnoversInput, Prisma.CompanyUncheckedCreateWithoutTurnoversInput>
+}
+
+export type CompanyUpsertWithoutTurnoversInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutTurnoversInput, Prisma.CompanyUncheckedUpdateWithoutTurnoversInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutTurnoversInput, Prisma.CompanyUncheckedCreateWithoutTurnoversInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutTurnoversInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutTurnoversInput, Prisma.CompanyUncheckedUpdateWithoutTurnoversInput>
+}
+
+export type CompanyUpdateWithoutTurnoversInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  panVat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  certificates?: Prisma.CertificateUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutTurnoversInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  panVat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 
@@ -522,10 +619,12 @@ export type CompanyUncheckedUpdateWithoutCertificatesInput = {
 
 export type CompanyCountOutputType = {
   certificates: number
+  turnovers: number
 }
 
 export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   certificates?: boolean | CompanyCountOutputTypeCountCertificatesArgs
+  turnovers?: boolean | CompanyCountOutputTypeCountTurnoversArgs
 }
 
 /**
@@ -545,6 +644,13 @@ export type CompanyCountOutputTypeCountCertificatesArgs<ExtArgs extends runtime.
   where?: Prisma.CertificateWhereInput
 }
 
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountTurnoversArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AnnualTurnoverWhereInput
+}
+
 
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -558,6 +664,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   isActive?: boolean
   createdAt?: boolean
   certificates?: boolean | Prisma.Company$certificatesArgs<ExtArgs>
+  turnovers?: boolean | Prisma.Company$turnoversArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["company"]>
 
@@ -603,6 +710,7 @@ export type CompanySelectScalar = {
 export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "name" | "slug" | "panVat" | "licenseClass" | "licenseExpiry" | "address" | "isActive" | "createdAt", ExtArgs["result"]["company"]>
 export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   certificates?: boolean | Prisma.Company$certificatesArgs<ExtArgs>
+  turnovers?: boolean | Prisma.Company$turnoversArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CompanyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -612,6 +720,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Company"
   objects: {
     certificates: Prisma.$CertificatePayload<ExtArgs>[]
+    turnovers: Prisma.$AnnualTurnoverPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1019,6 +1128,7 @@ readonly fields: CompanyFieldRefs;
 export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   certificates<T extends Prisma.Company$certificatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$certificatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  turnovers<T extends Prisma.Company$turnoversArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$turnoversArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnnualTurnoverPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1472,6 +1582,30 @@ export type Company$certificatesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.CertificateScalarFieldEnum | Prisma.CertificateScalarFieldEnum[]
+}
+
+/**
+ * Company.turnovers
+ */
+export type Company$turnoversArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AnnualTurnover
+   */
+  select?: Prisma.AnnualTurnoverSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AnnualTurnover
+   */
+  omit?: Prisma.AnnualTurnoverOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AnnualTurnoverInclude<ExtArgs> | null
+  where?: Prisma.AnnualTurnoverWhereInput
+  orderBy?: Prisma.AnnualTurnoverOrderByWithRelationInput | Prisma.AnnualTurnoverOrderByWithRelationInput[]
+  cursor?: Prisma.AnnualTurnoverWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AnnualTurnoverScalarFieldEnum | Prisma.AnnualTurnoverScalarFieldEnum[]
 }
 
 /**

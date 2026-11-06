@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
 
 // Roles allowed to delete companies
 const CAN_DELETE_COMPANY = ['OWNER', 'SUPER_ADMIN'];
@@ -50,6 +51,27 @@ export class CompanyService {
     }
 
     return company;
+  }
+
+  async update(tenantId: string, id: string, dto: UpdateCompanyDto) {
+    const company = await this.prisma.company.findFirst({ where: { id, tenantId } });
+    if (!company) {
+      throw new NotFoundException('Company not found or access denied');
+    }
+    if (dto.slug && dto.slug !== company.slug) {
+      const clash = await this.prisma.company.findUnique({
+        where: { tenantId_slug: { tenantId, slug: dto.slug } },
+      });
+      if (clash) throw new ConflictException('Company with this slug already exists in your workspace');
+    }
+    const data: any = {};
+    for (const k of ['name', 'slug', 'panVat', 'licenseClass', 'address'] as const) {
+      if (dto[k] !== undefined) data[k] = dto[k];
+    }
+    if (dto.licenseExpiry !== undefined) {
+      data.licenseExpiry = dto.licenseExpiry ? new Date(dto.licenseExpiry) : null;
+    }
+    return this.prisma.company.update({ where: { id }, data });
   }
 
   async remove(tenantId: string, role: string, id: string) {

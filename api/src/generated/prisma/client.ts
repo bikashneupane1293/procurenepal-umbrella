@@ -80,6 +80,11 @@ export type Tender = Prisma.TenderModel
  */
 export type QualificationResult = Prisma.QualificationResultModel
 /**
+ * Model AnnualTurnover
+ * 
+ */
+export type AnnualTurnover = Prisma.AnnualTurnoverModel
+/**
  * Model AuditLog
  * 
  */

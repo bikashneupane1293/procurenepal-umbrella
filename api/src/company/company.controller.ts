@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -22,6 +23,15 @@ export class CompanyController {
   @Get(':id')
   findOne(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
     return this.companyService.findOne(tenantId, id);
+  }
+
+  @Patch(':id')
+  update(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateCompanyDto,
+  ) {
+    return this.companyService.update(tenantId, id, dto);
   }
 
   // Only the workspace OWNER can delete a company (checked in the service)

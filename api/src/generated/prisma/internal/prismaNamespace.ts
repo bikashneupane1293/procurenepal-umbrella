@@ -405,6 +405,7 @@ export const ModelName = {
   Certificate: 'Certificate',
   Tender: 'Tender',
   QualificationResult: 'QualificationResult',
+  AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog'
 } as const
 
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "auditLog"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1017,6 +1018,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AnnualTurnover: {
+      payload: Prisma.$AnnualTurnoverPayload<ExtArgs>
+      fields: Prisma.AnnualTurnoverFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AnnualTurnoverFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AnnualTurnoverFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        findFirst: {
+          args: Prisma.AnnualTurnoverFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AnnualTurnoverFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        findMany: {
+          args: Prisma.AnnualTurnoverFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>[]
+        }
+        create: {
+          args: Prisma.AnnualTurnoverCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        createMany: {
+          args: Prisma.AnnualTurnoverCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AnnualTurnoverCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>[]
+        }
+        delete: {
+          args: Prisma.AnnualTurnoverDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        update: {
+          args: Prisma.AnnualTurnoverUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        deleteMany: {
+          args: Prisma.AnnualTurnoverDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AnnualTurnoverUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AnnualTurnoverUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>[]
+        }
+        upsert: {
+          args: Prisma.AnnualTurnoverUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnualTurnoverPayload>
+        }
+        aggregate: {
+          args: Prisma.AnnualTurnoverAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAnnualTurnover>
+        }
+        groupBy: {
+          args: Prisma.AnnualTurnoverGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AnnualTurnoverGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AnnualTurnoverCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AnnualTurnoverCountAggregateOutputType> | number
+        }
+      }
+    }
     AuditLog: {
       payload: Prisma.$AuditLogPayload<ExtArgs>
       fields: Prisma.AuditLogFieldRefs
@@ -1230,6 +1305,8 @@ export const CertificateScalarFieldEnum = {
   startDate: 'startDate',
   completionDate: 'completionDate',
   keyActivities: 'keyActivities',
+  outstandingAmount: 'outstandingAmount',
+  isOpenBid: 'isOpenBid',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1253,7 +1330,19 @@ export const TenderScalarFieldEnum = {
   reqMinProduction: 'reqMinProduction',
   status: 'status',
   source: 'source',
-  createdAt: 'createdAt'
+  contractPeriodMonths: 'contractPeriodMonths',
+  reqBidCapacity: 'reqBidCapacity',
+  reqSimilarValue: 'reqSimilarValue',
+  reqSimilarCount: 'reqSimilarCount',
+  similarDescription: 'similarDescription',
+  keyActivityReqs: 'keyActivityReqs',
+  criteria: 'criteria',
+  isComplexWork: 'isComplexWork',
+  awardMethod: 'awardMethod',
+  ruleSetId: 'ruleSetId',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type TenderScalarFieldEnum = (typeof TenderScalarFieldEnum)[keyof typeof TenderScalarFieldEnum]
@@ -1269,10 +1358,27 @@ export const QualificationResultScalarFieldEnum = {
   turnoverRequired: 'turnoverRequired',
   keyActivityDetails: 'keyActivityDetails',
   explanation: 'explanation',
+  checks: 'checks',
+  warnings: 'warnings',
+  ruleSetId: 'ruleSetId',
   calculatedAt: 'calculatedAt'
 } as const
 
 export type QualificationResultScalarFieldEnum = (typeof QualificationResultScalarFieldEnum)[keyof typeof QualificationResultScalarFieldEnum]
+
+
+export const AnnualTurnoverScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  fiscalYear: 'fiscalYear',
+  amount: 'amount',
+  source: 'source',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnnualTurnoverScalarFieldEnum = (typeof AnnualTurnoverScalarFieldEnum)[keyof typeof AnnualTurnoverScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -1457,6 +1563,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1616,6 +1736,7 @@ export type GlobalOmitConfig = {
   certificate?: Prisma.CertificateOmit
   tender?: Prisma.TenderOmit
   qualificationResult?: Prisma.QualificationResultOmit
+  annualTurnover?: Prisma.AnnualTurnoverOmit
   auditLog?: Prisma.AuditLogOmit
 }
 

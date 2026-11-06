@@ -3,12 +3,14 @@ import {
   Get,
   Post,
   Delete,
+  Patch,
   Body,
   Param,
   UseGuards,
 } from '@nestjs/common';
 import { CertificateService } from './certificate.service';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
+import { UpdateCertificateDto } from './dto/update-certificate.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -42,6 +44,15 @@ export class CertificateController {
   @Get('certificates/:id')
   findOne(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
     return this.certificateService.findOne(tenantId, id);
+  }
+
+  @Patch('certificates/:id')
+  update(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateCertificateDto,
+  ) {
+    return this.certificateService.update(tenantId, id, dto);
   }
 
   @Delete('certificates/:id')

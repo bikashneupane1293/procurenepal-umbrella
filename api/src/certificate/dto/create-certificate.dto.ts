@@ -6,6 +6,7 @@ import {
   IsArray,
   IsIn,
   IsDateString,
+  IsBoolean,
   ValidateNested,
   Min,
   Max,
@@ -106,4 +107,15 @@ export class CreateCertificateDto {
   @IsString()
   @IsOptional()
   pdfUrl?: string;
+
+  /** Running contracts only: value of work still to be done (excl. VAT) — used for FIN-5 / bid capacity */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  outstandingAmount?: number;
+
+  /** Running contracts only: false = excluded from the five-contract limit (e.g. not an open-bid contract) */
+  @IsBoolean()
+  @IsOptional()
+  isOpenBid?: boolean;
 }

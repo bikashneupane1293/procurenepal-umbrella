@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import type { ImportRow } from '../../core/excel';
+import { DateField } from '../../shared/date-field';
+import { adToBs } from '../../core/nepali-date';
 
 // The Excel tools are loaded only when needed, so the app stays fast
 const loadExcel = () => import('../../core/excel');
@@ -15,7 +17,7 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
 @Component({
   selector: 'app-certificates',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe, RouterLink],
+  imports: [FormsModule, DecimalPipe, RouterLink, DateField],
   template: `
     <div class="bar">
       <div>
@@ -101,14 +103,14 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
 
     @if (showForm()) {
       <form class="panel" (ngSubmit)="save()">
-        <h2>New Certificate</h2>
+        <h2>{{ editId() ? 'Edit Certificate' : 'New Certificate' }}</h2>
         @if (formError()) { <div class="msg error">{{ formError() }}</div> }
 
         <h3>1. Project details</h3>
         <div class="grid">
           <div>
             <label>Company <span class="req">*</span></label>
-            <select name="formCompany" [(ngModel)]="form.companyId">
+            <select name="formCompany" [(ngModel)]="form.companyId" [disabled]="!!editId()">
               <option value="">— Select company —</option>
               @for (c of companies(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
             </select>
@@ -123,7 +125,7 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
           </div>
           <div>
             <label>Certificate / Contract No.</label>
-            <input name="certificateId" [(ngModel)]="form.certificateId" placeholder="Leave blank to auto-generate" />
+            <input name="certificateId" [(ngModel)]="form.certificateId" [placeholder]="editId() ? 'Leave blank to keep' : 'Leave blank to auto-generate'" />
           </div>
           <div>
             <label>Project Type <span class="req">*</span></label>
@@ -140,16 +142,8 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
               @for (fy of fiscalYears; track fy) { <option [value]="fy">{{ fy }}</option> }
             </select>
           </div>
-          <div>
-            <label>Project Start Date</label>
-            <input type="date" name="startDate" [(ngModel)]="form.startDate" />
-            <div class="help">Date in AD (English calendar)</div>
-          </div>
-          <div>
-            <label>Project Completion Date</label>
-            <input type="date" name="completionDate" [(ngModel)]="form.completionDate" />
-            <div class="help">Date in AD (English calendar)</div>
-          </div>
+          <app-date-field label="Project Start Date" [(value)]="form.startDate" />
+          <app-date-field [label]="form.completionStatus === 'in_progress' ? 'Scheduled Completion Date' : 'Project Completion Date'" [(value)]="form.completionDate" />
           <div>
             <label>Completion Status</label>
             <select name="completionStatus" [(ngModel)]="form.completionStatus">
@@ -159,6 +153,19 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
             </select>
           </div>
         </div>
+        @if (form.completionStatus === 'in_progress') {
+          <div class="grid running">
+            <div>
+              <label>Remaining Work (NPR)</label>
+              <input type="number" min="0" step="0.01" name="outstandingAmount" [(ngModel)]="form.outstandingAmount" placeholder="Value of work still to be done" />
+              <div class="help tax">Enter taxable amount only (excluding VAT). Used for bid capacity (FIN-5 current commitments).</div>
+            </div>
+            <div>
+              <label class="inline"><input type="checkbox" name="isOpenBid" [(ngModel)]="form.isOpenBid" /> Open-bid contract</label>
+              <div class="help">Counts towards the running-contract limit (a bidder may not already hold 5). Untick only if the bid document excludes this contract.</div>
+            </div>
+          </div>
+        }
 
         <h3>2. Amounts</h3>
         <div class="grid">
@@ -239,8 +246,8 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
         </div>
 
         <div class="actions">
-          <button class="btn" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save Certificate' }}</button>
-          <button class="btn light" type="button" (click)="showForm.set(false)">Cancel</button>
+          <button class="btn" type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : (editId() ? 'Save Changes' : 'Save Certificate') }}</button>
+          <button class="btn light" type="button" (click)="showForm.set(false); editId.set('')">Cancel</button>
         </div>
       </form>
     }
@@ -267,9 +274,12 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
                     <strong>{{ c.projectName }}</strong>
                     <div class="help">{{ c.employerName || '' }}{{ c.employerName && c.certificateId ? ' · ' : '' }}{{ c.certificateId || '' }}</div>
                     @if (c.startDate || c.completionDate) {
-                      <div class="help">📅 {{ c.startDate ? (c.startDate | date: 'dd MMM yyyy') : '?' }} → {{ c.completionDate ? (c.completionDate | date: 'dd MMM yyyy') : '?' }}</div>
+                      <div class="help">📅 {{ bs(c.startDate) }} → {{ bs(c.completionDate) }} BS</div>
                     }
                     @if (c.jvName) { <div class="help">🤝 {{ c.jvName }}</div> }
+                    @if (c.completionStatus === 'in_progress') {
+                      <div class="help">⏳ Remaining: {{ c.outstandingAmount != null ? 'Rs ' + (toNum(c.outstandingAmount) | number: '1.0-0') : 'not entered' }}{{ c.isOpenBid === false ? ' · not counted in the 5-contract limit' : '' }}</div>
+                    }
                     @if (c.keyActivities?.length) {
                       <table class="mini">
                         @for (a of c.keyActivities; track $index) {
@@ -291,7 +301,7 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
                     @if (c.verificationStatus === 'verified') { <span class="tag gold">Checked</span> }
                     @else { <span class="tag warn">Not checked</span> }
                   </td>
-                  <td><button class="btn danger" (click)="remove(c)">Delete</button></td>
+                  <td class="row-actions"><button class="btn light small" (click)="openEdit(c)">Edit</button> <button class="btn danger" (click)="remove(c)">Delete</button></td>
                 </tr>
               } @empty {
                 <tr><td colspan="9" class="empty">No certificates yet.</td></tr>
@@ -317,6 +327,11 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
     .tag.warn { background: #fef2f2; color: #b91c1c; }
     .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .help.err { color: #b91c1c; max-width: 420px; }
+    .grid.running { margin-top: 14px; }
+    label.inline { display: inline-flex; gap: 6px; align-items: center; }
+    label.inline input { width: auto; }
+    .row-actions { white-space: nowrap; }
+    .btn.small { padding: 6px 12px; }
   `],
 })
 export class CertificatesPage {
@@ -355,6 +370,7 @@ export class CertificatesPage {
 
   form = this.emptyForm();
   rows: ActivityRow[] = [];
+  editId = signal('');
 
   constructor() {
     this.companyId.set(this.route.snapshot.queryParamMap.get('company') || '');
@@ -373,6 +389,7 @@ export class CertificatesPage {
       contractAmount: null as number | null, finalAmount: null as number | null,
       priceAdjustment: null as number | null, jvShare: 100 as number | null, jvName: '',
       completionStatus: 'completed', verificationStatus: 'unverified',
+      outstandingAmount: null as number | null, isOpenBid: true,
     };
   }
 
@@ -405,7 +422,31 @@ export class CertificatesPage {
     this.load();
   }
 
+  bs(d: any): string { return d ? adToBs(String(d).slice(0, 10)) || '?' : '?'; }
+
+  openEdit(c: any) {
+    const n = (v: any) => (v == null || v === '' ? null : Number(v));
+    const d = (v: any) => (v ? String(v).slice(0, 10) : '');
+    this.editId.set(c.id);
+    this.form = {
+      companyId: c.companyId, projectName: c.projectName ?? '', employerName: c.employerName ?? '',
+      certificateId: c.certificateId ?? '', projectType: c.projectType ?? 'ROAD', fiscalYear: c.fiscalYear,
+      startDate: d(c.startDate), completionDate: d(c.completionDate),
+      contractAmount: n(c.contractAmount), finalAmount: n(c.finalAmount), priceAdjustment: n(c.priceAdjustment),
+      jvShare: n(c.jvShare) ?? 100, jvName: c.jvName ?? '',
+      completionStatus: c.completionStatus ?? 'completed', verificationStatus: c.verificationStatus ?? 'unverified',
+      outstandingAmount: n(c.outstandingAmount), isOpenBid: c.isOpenBid !== false,
+    };
+    this.rows = (Array.isArray(c.keyActivities) && c.keyActivities.length ? c.keyActivities : [null]).map((a: any) =>
+      a ? { name: a.name ?? '', unit: a.unit ?? '', fiscalYear: a.fiscalYear ?? c.fiscalYear, quantity: n(a.quantity) } : this.newRow());
+    this.formError.set('');
+    this.okMsg.set('');
+    this.showForm.set(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   openForm() {
+    this.editId.set('');
     this.form = this.emptyForm();
     this.form.companyId = this.companyId();
     this.rows = [this.newRow()];
@@ -462,26 +503,40 @@ export class CertificatesPage {
       completionStatus: f.completionStatus,
       verificationStatus: f.verificationStatus,
     };
-    if (f.employerName.trim()) body.employerName = f.employerName.trim();
+    const editing = this.editId();
+    // On edit, blank optional fields are sent as null so they are cleared
+    const clear = (k: string) => { if (editing) body[k] = null; };
+    if (f.employerName.trim()) body.employerName = f.employerName.trim(); else clear('employerName');
     if (f.certificateId.trim()) body.certificateId = f.certificateId.trim();
-    if (this.hasValue(f.finalAmount)) body.finalAmount = Number(f.finalAmount);
-    if (this.hasValue(f.priceAdjustment)) body.priceAdjustment = Number(f.priceAdjustment);
+    if (this.hasValue(f.finalAmount)) body.finalAmount = Number(f.finalAmount); else clear('finalAmount');
+    if (this.hasValue(f.priceAdjustment)) body.priceAdjustment = Number(f.priceAdjustment); else if (editing) body.priceAdjustment = 0;
     if (this.hasValue(f.jvShare)) body.jvShare = Number(f.jvShare);
-    if (this.isJv()) body.jvName = f.jvName.trim();
-    if (f.startDate) body.startDate = f.startDate;
-    if (f.completionDate) body.completionDate = f.completionDate;
-    if (keyActivities.length) {
+    if (this.isJv()) body.jvName = f.jvName.trim(); else clear('jvName');
+    if (f.startDate) body.startDate = f.startDate; else clear('startDate');
+    if (f.completionDate) body.completionDate = f.completionDate; else clear('completionDate');
+    if (f.completionStatus === 'in_progress') {
+      if (this.hasValue(f.outstandingAmount)) {
+        if (Number(f.outstandingAmount) < 0) { this.formError.set('Remaining work cannot be negative.'); return; }
+        body.outstandingAmount = Number(f.outstandingAmount);
+      } else clear('outstandingAmount');
+      body.isOpenBid = !!f.isOpenBid;
+    } else if (editing) {
+      body.outstandingAmount = null;
+    }
+    if (keyActivities.length || editing) {
       body.keyActivities = keyActivities;
       body.activities = [...new Set(keyActivities.map((a) => a.name))];
     }
 
     this.saving.set(true);
     this.formError.set('');
-    this.data.createCertificate(f.companyId, body).subscribe({
+    const req = editing ? this.data.updateCertificate(editing, body) : this.data.createCertificate(f.companyId, body);
+    req.subscribe({
       next: () => {
         this.saving.set(false);
         this.showForm.set(false);
-        this.okMsg.set(`✅ Certificate "${body.projectName}" was added.`);
+        this.editId.set('');
+        this.okMsg.set(editing ? `✅ Certificate "${body.projectName}" was updated.` : `✅ Certificate "${body.projectName}" was added.`);
         this.load();
       },
       error: (err) => { this.saving.set(false); this.formError.set(errorText(err)); },

@@ -16,6 +16,10 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardPage },
       { path: 'companies', component: CompaniesPage },
       { path: 'certificates', component: CertificatesPage },
+      // Tender + qualification screens load on demand (smaller first download)
+      { path: 'tenders', loadComponent: () => import('./pages/tenders/tenders').then((m) => m.TendersPage) },
+      { path: 'tenders/:id', loadComponent: () => import('./pages/tenders/tender-detail').then((m) => m.TenderDetailPage) },
+      { path: 'qualification', loadComponent: () => import('./pages/qualification/qualification').then((m) => m.QualificationPage) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],
   },

@@ -35,3 +35,9 @@ body {
 .label {
   @apply block text-sm font-medium text-navy-700 mb-2;
 }
+
+/* Print: hide the app chrome, keep the page content (qualification reports) */
+@media print {
+  .sidebar, .topbar, .no-print { display: none !important; }
+  body { background: #fff !important; }
+}

@@ -121,6 +121,7 @@ model Company {
   createdAt       DateTime @default(now())
 
   certificates    Certificate[]
+  turnovers       AnnualTurnover[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -149,6 +150,8 @@ model Certificate {
   startDate          DateTime?
   completionDate     DateTime?
   keyActivities      Json?
+  outstandingAmount  Decimal?  @db.Decimal(15, 2)
+  isOpenBid          Boolean   @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -175,7 +178,20 @@ model Tender {
   reqMinProduction  Decimal? @db.Decimal(15, 2)
   status            String   @default("active")
   source            String   @default("manual")
+  // Phase 6.4A — qualification engine v2
+  contractPeriodMonths Int?
+  reqBidCapacity    Decimal? @db.Decimal(15, 2)
+  reqSimilarValue   Decimal? @db.Decimal(15, 2)
+  reqSimilarCount   Int?
+  similarDescription String?
+  keyActivityReqs   Json?
+  criteria          Json?
+  isComplexWork     Boolean  @default(false)
+  awardMethod       String?
+  ruleSetId         String?
+  notes             String?
   createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
 
   @@unique([tenantId, ifbNumber])
   @@index([tenantId])
@@ -191,9 +207,28 @@ model QualificationResult {
   turnoverRequired   Decimal? @db.Decimal(15, 2)
   keyActivityDetails Json?
   explanation        String?
+  checks             Json?
+  warnings           Json?
+  ruleSetId          String?
   calculatedAt       DateTime @default(now())
 
   @@unique([tenderId, companyId])
+  @@index([tenantId])
+}
+
+// Audited annual construction turnover per fiscal year (Phase 6.4A)
+model AnnualTurnover {
+  id         String   @id @default(uuid())
+  tenantId   String
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fiscalYear String
+  amount     Decimal  @db.Decimal(15, 2)
+  source     String   @default("audited")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@unique([companyId, fiscalYear])
   @@index([tenantId])
 }
 

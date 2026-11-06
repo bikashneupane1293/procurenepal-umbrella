@@ -14,8 +14,8 @@ import { AuthService } from '../core/auth.service';
           <a class="item" routerLink="/dashboard" routerLinkActive="active">🏠 Dashboard</a>
           <a class="item" routerLink="/companies" routerLinkActive="active">🏢 Companies</a>
           <a class="item" routerLink="/certificates" routerLinkActive="active">📜 Certificates</a>
-          <a class="item soon">📋 Tenders <small>Soon</small></a>
-          <a class="item soon">✅ Qualification <small>Soon</small></a>
+          <a class="item" routerLink="/tenders" routerLinkActive="active">📋 Tenders</a>
+          <a class="item" routerLink="/qualification" routerLinkActive="active">✅ Qualification</a>
           <a class="item soon">📊 Reports <small>Soon</small></a>
         </nav>
       </aside>

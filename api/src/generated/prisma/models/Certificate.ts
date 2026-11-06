@@ -31,6 +31,7 @@ export type CertificateAvgAggregateOutputType = {
   finalAmount: runtime.Decimal | null
   priceAdjustment: runtime.Decimal | null
   jvShare: runtime.Decimal | null
+  outstandingAmount: runtime.Decimal | null
 }
 
 export type CertificateSumAggregateOutputType = {
@@ -38,6 +39,7 @@ export type CertificateSumAggregateOutputType = {
   finalAmount: runtime.Decimal | null
   priceAdjustment: runtime.Decimal | null
   jvShare: runtime.Decimal | null
+  outstandingAmount: runtime.Decimal | null
 }
 
 export type CertificateMinAggregateOutputType = {
@@ -59,6 +61,8 @@ export type CertificateMinAggregateOutputType = {
   jvName: string | null
   startDate: Date | null
   completionDate: Date | null
+  outstandingAmount: runtime.Decimal | null
+  isOpenBid: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -82,6 +86,8 @@ export type CertificateMaxAggregateOutputType = {
   jvName: string | null
   startDate: Date | null
   completionDate: Date | null
+  outstandingAmount: runtime.Decimal | null
+  isOpenBid: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -107,6 +113,8 @@ export type CertificateCountAggregateOutputType = {
   startDate: number
   completionDate: number
   keyActivities: number
+  outstandingAmount: number
+  isOpenBid: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -118,6 +126,7 @@ export type CertificateAvgAggregateInputType = {
   finalAmount?: true
   priceAdjustment?: true
   jvShare?: true
+  outstandingAmount?: true
 }
 
 export type CertificateSumAggregateInputType = {
@@ -125,6 +134,7 @@ export type CertificateSumAggregateInputType = {
   finalAmount?: true
   priceAdjustment?: true
   jvShare?: true
+  outstandingAmount?: true
 }
 
 export type CertificateMinAggregateInputType = {
@@ -146,6 +156,8 @@ export type CertificateMinAggregateInputType = {
   jvName?: true
   startDate?: true
   completionDate?: true
+  outstandingAmount?: true
+  isOpenBid?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -169,6 +181,8 @@ export type CertificateMaxAggregateInputType = {
   jvName?: true
   startDate?: true
   completionDate?: true
+  outstandingAmount?: true
+  isOpenBid?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -194,6 +208,8 @@ export type CertificateCountAggregateInputType = {
   startDate?: true
   completionDate?: true
   keyActivities?: true
+  outstandingAmount?: true
+  isOpenBid?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -306,6 +322,8 @@ export type CertificateGroupByOutputType = {
   startDate: Date | null
   completionDate: Date | null
   keyActivities: runtime.JsonValue | null
+  outstandingAmount: runtime.Decimal | null
+  isOpenBid: boolean
   createdAt: Date
   updatedAt: Date
   _count: CertificateCountAggregateOutputType | null
@@ -354,6 +372,8 @@ export type CertificateWhereInput = {
   startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   keyActivities?: Prisma.JsonNullableFilter<"Certificate">
+  outstandingAmount?: Prisma.DecimalNullableFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFilter<"Certificate"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -381,6 +401,8 @@ export type CertificateOrderByWithRelationInput = {
   startDate?: Prisma.SortOrderInput | Prisma.SortOrder
   completionDate?: Prisma.SortOrderInput | Prisma.SortOrder
   keyActivities?: Prisma.SortOrderInput | Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  isOpenBid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
@@ -411,6 +433,8 @@ export type CertificateWhereUniqueInput = Prisma.AtLeast<{
   startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   keyActivities?: Prisma.JsonNullableFilter<"Certificate">
+  outstandingAmount?: Prisma.DecimalNullableFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFilter<"Certificate"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
@@ -438,6 +462,8 @@ export type CertificateOrderByWithAggregationInput = {
   startDate?: Prisma.SortOrderInput | Prisma.SortOrder
   completionDate?: Prisma.SortOrderInput | Prisma.SortOrder
   keyActivities?: Prisma.SortOrderInput | Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrderInput | Prisma.SortOrder
+  isOpenBid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CertificateCountOrderByAggregateInput
@@ -471,6 +497,8 @@ export type CertificateScalarWhereWithAggregatesInput = {
   startDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Certificate"> | Date | string | null
   completionDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Certificate"> | Date | string | null
   keyActivities?: Prisma.JsonNullableWithAggregatesFilter<"Certificate">
+  outstandingAmount?: Prisma.DecimalNullableWithAggregatesFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolWithAggregatesFilter<"Certificate"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Certificate"> | Date | string
 }
@@ -494,6 +522,8 @@ export type CertificateCreateInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutCertificatesInput
@@ -521,6 +551,8 @@ export type CertificateUncheckedCreateInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -544,6 +576,8 @@ export type CertificateUpdateInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutCertificatesNestedInput
@@ -571,6 +605,8 @@ export type CertificateUncheckedUpdateInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -596,6 +632,8 @@ export type CertificateCreateManyInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -619,6 +657,8 @@ export type CertificateUpdateManyMutationInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -644,6 +684,8 @@ export type CertificateUncheckedUpdateManyInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -687,6 +729,8 @@ export type CertificateCountOrderByAggregateInput = {
   startDate?: Prisma.SortOrder
   completionDate?: Prisma.SortOrder
   keyActivities?: Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrder
+  isOpenBid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -696,6 +740,7 @@ export type CertificateAvgOrderByAggregateInput = {
   finalAmount?: Prisma.SortOrder
   priceAdjustment?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrder
 }
 
 export type CertificateMaxOrderByAggregateInput = {
@@ -717,6 +762,8 @@ export type CertificateMaxOrderByAggregateInput = {
   jvName?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   completionDate?: Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrder
+  isOpenBid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -740,6 +787,8 @@ export type CertificateMinOrderByAggregateInput = {
   jvName?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   completionDate?: Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrder
+  isOpenBid?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -749,6 +798,7 @@ export type CertificateSumOrderByAggregateInput = {
   finalAmount?: Prisma.SortOrder
   priceAdjustment?: Prisma.SortOrder
   jvShare?: Prisma.SortOrder
+  outstandingAmount?: Prisma.SortOrder
 }
 
 export type CertificateCreateNestedManyWithoutTenantInput = {
@@ -871,6 +921,8 @@ export type CertificateCreateWithoutTenantInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutCertificatesInput
@@ -896,6 +948,8 @@ export type CertificateUncheckedCreateWithoutTenantInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -950,6 +1004,8 @@ export type CertificateScalarWhereInput = {
   startDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   completionDate?: Prisma.DateTimeNullableFilter<"Certificate"> | Date | string | null
   keyActivities?: Prisma.JsonNullableFilter<"Certificate">
+  outstandingAmount?: Prisma.DecimalNullableFilter<"Certificate"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFilter<"Certificate"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Certificate"> | Date | string
 }
@@ -973,6 +1029,8 @@ export type CertificateCreateWithoutCompanyInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutCertificatesInput
@@ -998,6 +1056,8 @@ export type CertificateUncheckedCreateWithoutCompanyInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1048,6 +1108,8 @@ export type CertificateCreateManyTenantInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1071,6 +1133,8 @@ export type CertificateUpdateWithoutTenantInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutCertificatesNestedInput
@@ -1096,6 +1160,8 @@ export type CertificateUncheckedUpdateWithoutTenantInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1120,6 +1186,8 @@ export type CertificateUncheckedUpdateManyWithoutTenantInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1144,6 +1212,8 @@ export type CertificateCreateManyCompanyInput = {
   startDate?: Date | string | null
   completionDate?: Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1167,6 +1237,8 @@ export type CertificateUpdateWithoutCompanyInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutCertificatesNestedInput
@@ -1192,6 +1264,8 @@ export type CertificateUncheckedUpdateWithoutCompanyInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1216,6 +1290,8 @@ export type CertificateUncheckedUpdateManyWithoutCompanyInput = {
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   keyActivities?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  outstandingAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  isOpenBid?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1243,6 +1319,8 @@ export type CertificateSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   startDate?: boolean
   completionDate?: boolean
   keyActivities?: boolean
+  outstandingAmount?: boolean
+  isOpenBid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1270,6 +1348,8 @@ export type CertificateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   startDate?: boolean
   completionDate?: boolean
   keyActivities?: boolean
+  outstandingAmount?: boolean
+  isOpenBid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1297,6 +1377,8 @@ export type CertificateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   startDate?: boolean
   completionDate?: boolean
   keyActivities?: boolean
+  outstandingAmount?: boolean
+  isOpenBid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
@@ -1324,11 +1406,13 @@ export type CertificateSelectScalar = {
   startDate?: boolean
   completionDate?: boolean
   keyActivities?: boolean
+  outstandingAmount?: boolean
+  isOpenBid?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "certificateId" | "projectName" | "employerName" | "contractAmount" | "finalAmount" | "priceAdjustment" | "fiscalYear" | "projectType" | "activities" | "verificationStatus" | "completionStatus" | "jvShare" | "pdfUrl" | "jvName" | "startDate" | "completionDate" | "keyActivities" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
+export type CertificateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "certificateId" | "projectName" | "employerName" | "contractAmount" | "finalAmount" | "priceAdjustment" | "fiscalYear" | "projectType" | "activities" | "verificationStatus" | "completionStatus" | "jvShare" | "pdfUrl" | "jvName" | "startDate" | "completionDate" | "keyActivities" | "outstandingAmount" | "isOpenBid" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
 export type CertificateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
@@ -1369,6 +1453,8 @@ export type $CertificatePayload<ExtArgs extends runtime.Types.Extensions.Interna
     startDate: Date | null
     completionDate: Date | null
     keyActivities: runtime.JsonValue | null
+    outstandingAmount: runtime.Decimal | null
+    isOpenBid: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["certificate"]>
@@ -1816,6 +1902,8 @@ export interface CertificateFieldRefs {
   readonly startDate: Prisma.FieldRef<"Certificate", 'DateTime'>
   readonly completionDate: Prisma.FieldRef<"Certificate", 'DateTime'>
   readonly keyActivities: Prisma.FieldRef<"Certificate", 'Json'>
+  readonly outstandingAmount: Prisma.FieldRef<"Certificate", 'Decimal'>
+  readonly isOpenBid: Prisma.FieldRef<"Certificate", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Certificate", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Certificate", 'DateTime'>
 }
