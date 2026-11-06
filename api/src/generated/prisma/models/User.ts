@@ -67,6 +67,7 @@ export type UserCountAggregateOutputType = {
   googleId: number
   lastLoginAt: number
   createdAt: number
+  modules: number
   _all: number
 }
 
@@ -114,6 +115,7 @@ export type UserCountAggregateInputType = {
   googleId?: true
   lastLoginAt?: true
   createdAt?: true
+  modules?: true
   _all?: true
 }
 
@@ -202,6 +204,7 @@ export type UserGroupByOutputType = {
   googleId: string | null
   lastLoginAt: Date | null
   createdAt: Date
+  modules: string[]
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
@@ -238,6 +241,7 @@ export type UserWhereInput = {
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  modules?: Prisma.StringNullableListFilter<"User">
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
 }
 
@@ -254,6 +258,7 @@ export type UserOrderByWithRelationInput = {
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modules?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
 }
 
@@ -273,6 +278,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  modules?: Prisma.StringNullableListFilter<"User">
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
 }, "id" | "email">
 
@@ -289,6 +295,7 @@ export type UserOrderByWithAggregationInput = {
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modules?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
@@ -310,6 +317,7 @@ export type UserScalarWhereWithAggregatesInput = {
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  modules?: Prisma.StringNullableListFilter<"User">
 }
 
 export type UserCreateInput = {
@@ -324,6 +332,7 @@ export type UserCreateInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
   tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
 }
 
@@ -340,6 +349,7 @@ export type UserUncheckedCreateInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
 }
 
 export type UserUpdateInput = {
@@ -354,6 +364,7 @@ export type UserUpdateInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
   tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
 }
 
@@ -370,6 +381,7 @@ export type UserUncheckedUpdateInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 export type UserCreateManyInput = {
@@ -385,6 +397,7 @@ export type UserCreateManyInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
 }
 
 export type UserUpdateManyMutationInput = {
@@ -399,6 +412,7 @@ export type UserUpdateManyMutationInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -414,6 +428,7 @@ export type UserUncheckedUpdateManyInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 export type UserListRelationFilter = {
@@ -424,6 +439,14 @@ export type UserListRelationFilter = {
 
 export type UserOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -439,6 +462,7 @@ export type UserCountOrderByAggregateInput = {
   googleId?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  modules?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -513,12 +537,21 @@ export type UserUncheckedUpdateManyWithoutTenantNestedInput = {
   deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
+export type UserCreatemodulesInput = {
+  set: string[]
+}
+
 export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
+}
+
+export type UserUpdatemodulesInput = {
+  set?: string[]
+  push?: string | string[]
 }
 
 export type UserCreateWithoutTenantInput = {
@@ -533,6 +566,7 @@ export type UserCreateWithoutTenantInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
 }
 
 export type UserUncheckedCreateWithoutTenantInput = {
@@ -547,6 +581,7 @@ export type UserUncheckedCreateWithoutTenantInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
 }
 
 export type UserCreateOrConnectWithoutTenantInput = {
@@ -591,6 +626,7 @@ export type UserScalarWhereInput = {
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  modules?: Prisma.StringNullableListFilter<"User">
 }
 
 export type UserCreateManyTenantInput = {
@@ -605,6 +641,7 @@ export type UserCreateManyTenantInput = {
   googleId?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  modules?: Prisma.UserCreatemodulesInput | string[]
 }
 
 export type UserUpdateWithoutTenantInput = {
@@ -619,6 +656,7 @@ export type UserUpdateWithoutTenantInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 export type UserUncheckedUpdateWithoutTenantInput = {
@@ -633,6 +671,7 @@ export type UserUncheckedUpdateWithoutTenantInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 export type UserUncheckedUpdateManyWithoutTenantInput = {
@@ -647,6 +686,7 @@ export type UserUncheckedUpdateManyWithoutTenantInput = {
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  modules?: Prisma.UserUpdatemodulesInput | string[]
 }
 
 
@@ -664,6 +704,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   googleId?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
+  modules?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -680,6 +721,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   googleId?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
+  modules?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -696,6 +738,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   googleId?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
+  modules?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -712,9 +755,10 @@ export type UserSelectScalar = {
   googleId?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
+  modules?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "email" | "phone" | "passwordHash" | "fullName" | "role" | "isActive" | "isVerified" | "googleId" | "lastLoginAt" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "email" | "phone" | "passwordHash" | "fullName" | "role" | "isActive" | "isVerified" | "googleId" | "lastLoginAt" | "createdAt" | "modules", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }
@@ -743,6 +787,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     googleId: string | null
     lastLoginAt: Date | null
     createdAt: Date
+    modules: string[]
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1179,6 +1224,7 @@ export interface UserFieldRefs {
   readonly googleId: Prisma.FieldRef<"User", 'String'>
   readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly modules: Prisma.FieldRef<"User", 'String[]'>
 }
     
 

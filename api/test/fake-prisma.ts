@@ -26,6 +26,7 @@ const COMPOSITE: Record<string, string[]> = {
   tenantId_slug: ['tenantId', 'slug'],
   tenderId_companyId: ['tenderId', 'companyId'],
   companyId_fiscalYear: ['companyId', 'fiscalYear'],
+  tenantId_flagKey: ['tenantId', 'flagKey'],
 };
 
 function matches(row: Row, where: Row = {}): boolean {
@@ -48,14 +49,15 @@ const DEFAULTS: Record<string, () => Row> = {
   tender: () => ({ reqProjectTypes: [], status: 'active', source: 'manual', isComplexWork: false, createdAt: new Date(), updatedAt: new Date() }),
   qualificationResult: () => ({ calculatedAt: new Date() }),
   annualTurnover: () => ({ source: 'audited', createdAt: new Date(), updatedAt: new Date() }),
-  user: () => ({ isActive: true }),
+  user: () => ({ isActive: true, modules: [], role: 'VIEWER', createdAt: new Date() }),
+  tenantFeatureFlag: () => ({ enabled: false, createdAt: new Date() }),
   tenant: () => ({ isActive: true }),
 };
 
 export class FakePrisma {
   db: Record<string, Row[]> = {
     company: [], certificate: [], tender: [], qualificationResult: [],
-    annualTurnover: [], user: [], tenant: [],
+    annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -92,7 +94,7 @@ export class FakePrisma {
       create: async (a: Row) => {
         const r = decimals({ id: randomUUID(), ...DEFAULTS[name](), ...a.data });
         rows().push(r);
-        return { ...r };
+        return self.select({ ...r }, a.select);
       },
       createMany: async (a: Row) => {
         for (const d of a.data) rows().push(decimals({ id: randomUUID(), ...DEFAULTS[name](), ...d }));
@@ -103,7 +105,7 @@ export class FakePrisma {
         if (!r) throw new Error('Record to update not found');
         Object.assign(r, a.data, 'updatedAt' in r ? { updatedAt: new Date() } : {});
         decimals(r);
-        return { ...r };
+        return self.select({ ...r }, a.select);
       },
       upsert: async (a: Row) => {
         const r = rows().find((x) => matches(x, a.where));
@@ -127,6 +129,7 @@ export class FakePrisma {
         }
         return r;
       },
+      count: async (a: Row = {}) => rows().filter((x) => matches(x, a.where)).length,
       deleteMany: async (a: Row = {}) => {
         const before = rows().length;
         self.db[name] = rows().filter((x) => !matches(x, a.where));
@@ -142,6 +145,7 @@ export class FakePrisma {
   annualTurnover = this.model('annualTurnover');
   user = this.model('user');
   tenant = this.model('tenant');
+  tenantFeatureFlag = this.model('tenantFeatureFlag');
 
   async $transaction(ops: Promise<any>[]) {
     const out: any[] = [];

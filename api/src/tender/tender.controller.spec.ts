@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ModuleGuard } from '../access/module.guard';
 import { TenderController } from './tender.controller';
 import { TenderService } from './tender.service';
 
@@ -9,7 +10,10 @@ describe('TenderController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TenderController],
       providers: [{ provide: TenderService, useValue: {} }],
-    }).compile();
+    })
+      .overrideGuard(ModuleGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<TenderController>(TenderController);
   });

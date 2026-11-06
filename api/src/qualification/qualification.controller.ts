@@ -3,9 +3,11 @@ import { QualificationService } from './qualification.service';
 import { EvaluateQualificationDto, ReplaceTurnoversDto } from './dto/evaluate-qualification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ModuleGuard, RequireModule } from '../access/module.guard';
 
 @Controller()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequireModule('bolpatra')
 export class QualificationController {
   constructor(private readonly qualificationService: QualificationService) {}
 

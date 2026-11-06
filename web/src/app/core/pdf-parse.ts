@@ -1,0 +1,188 @@
+// Reads tender notices (IFB) and experience certificates from PDF TEXT and suggests form values.
+// Pure functions (no browser) — tested in Node. Every value is a suggestion the user reviews.
+// © Cuidado Technology Pvt. Ltd.
+import { bsToAd, fiscalYearOf } from './nepali-date';
+
+export interface Found<T = any> { value: T; line: string; }
+export type Suggestions = Record<string, Found>;
+export interface FoundActivity { name: string; unit: string; quantity: number; line: string; }
+
+// ---------------------------------------------------------------- numbers & dates
+/** "NRs. 55,25,00,000.00" → 552500000 · "63 crore" → 630000000 · "5.5 lakh" → 550000 */
+export function parseAmount(s: string): number | null {
+  const m = String(s).match(/([\d][\d,]*(?:\.\d+)?)\s*(crore|cr\.?|lakhs?|lacs?|million|mn)?\b/i);
+  if (!m) return null;
+  let n = Number(m[1].replace(/,/g, ''));
+  if (!isFinite(n)) return null;
+  const unit = (m[2] ?? '').toLowerCase();
+  if (unit.startsWith('cr')) n *= 1e7;
+  else if (unit.startsWith('la')) n *= 1e5;
+  else if (unit.startsWith('mi') || unit === 'mn') n *= 1e6;
+  return Math.round(n * 100) / 100;
+}
+
+/** Money after a label: needs Rs/NRs before it or crore/lakh after it (so "One (1)" is not read as money). */
+function moneyIn(text: string): number | null {
+  const m =
+    text.match(/(?:N?Rs\.?|NPR)\s*:?\s*([\d][\d,]*(?:\.\d+)?\s*(?:crore|cr\.?|lakhs?|lacs?|million)?)/i) ??
+    text.match(/([\d][\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?))\b/i);
+  return m ? parseAmount(m[1]) : null;
+}
+
+/** First date in text → AD 'YYYY-MM-DD'. BS if the year is 2040 or later. */
+export function dateIn(text: string): string | null {
+  let m = text.match(/\b(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})\b/);
+  if (m) {
+    const y = +m[1];
+    if (y >= 2040) return bsToAd(`${m[1]}/${m[2]}/${m[3]}`) || null;
+    return valid(y, +m[2], +m[3]);
+  }
+  m = text.match(/\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b/);
+  if (m) {
+    const y = +m[3];
+    if (y >= 2040) return bsToAd(`${m[3]}/${m[2]}/${m[1]}`) || null;
+    return valid(y, +m[2], +m[1]);
+  }
+  return null;
+}
+function valid(y: number, mo: number, d: number): string | null {
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+// ---------------------------------------------------------------- line helpers
+export function toLines(text: string): string[] {
+  return text.split(/\r?\n/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+}
+/** First line matching label; returns the line and the text after the label (plus the next line for wrapped values). */
+function find(lines: string[], label: RegExp): { line: string; rest: string } | null {
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(label);
+    if (m) {
+      const rest = lines[i].slice((m.index ?? 0) + m[0].length);
+      return { line: lines[i], rest: rest + ' ' + (lines[i + 1] ?? '') };
+    }
+  }
+  return null;
+}
+const afterColon = (s: string) => s.replace(/^\s*[:\-–.]*\s*/, '').trim();
+
+// ---------------------------------------------------------------- key activities
+const UNIT = String.raw`(m3|m³|cum|cu\.?\s?m|m2|m²|sq\.?\s?m|sqm|kg|kgs|mt|ton|tons|tonnes?|nos?\.?|numbers?|km|rm|rmt|ltrs?|l)`;
+const ACT_RE = new RegExp(String.raw`^[\s\-•*·\d.)(a-z]{0,6}?\s*([A-Za-z][A-Za-z0-9 &/,()'.\-]*?[A-Za-z0-9)])\s*[:\-–=]?\s*([\d][\d,]*(?:\.\d+)?)\s*${UNIT}\.?\s*$`, 'i');
+
+const NORM_UNIT: Record<string, string> = { 'm³': 'm3', cum: 'm3', 'cu.m': 'm3', 'cu m': 'm3', 'cu.m.': 'm3', 'm²': 'm2', sqm: 'm2', 'sq.m': 'm2', 'sq m': 'm2', mt: 'MT', ton: 'MT', tons: 'MT', tonne: 'MT', tonnes: 'MT', no: 'Nos', 'no.': 'Nos', nos: 'Nos', 'nos.': 'Nos', number: 'Nos', numbers: 'Nos', kgs: 'kg', rmt: 'RM', rm: 'RM' };
+
+export function findActivities(lines: string[], header = /key activit|major (items|activit)|construction experience|quantit(y|ies) of work|items of work/i): FoundActivity[] {
+  let start = lines.findIndex((l) => header.test(l));
+  if (start < 0) start = 0;
+  const out: FoundActivity[] = [];
+  for (const line of lines.slice(start)) {
+    const m = line.match(ACT_RE);
+    if (!m) continue;
+    const name = m[1].replace(/^(and|of)\s+/i, '').trim();
+    if (/^(rs|nrs|npr|contract|amount|period|date|turnover|capacity)\b/i.test(name)) continue;
+    const u = m[3].toLowerCase().replace(/\s+/g, ' ');
+    out.push({ name, unit: NORM_UNIT[u] ?? m[3], quantity: Number(m[2].replace(/,/g, '')), line });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- tender notice (IFB)
+export function parseTenderText(text: string): { fields: Suggestions; activities: FoundActivity[] } {
+  const lines = toLines(text);
+  const f: Suggestions = {};
+  const put = (key: string, value: any, line: string) => { if (value !== null && value !== undefined && value !== '' && !(key in f)) f[key] = { value, line }; };
+
+  const ifb = find(lines, /\b(IFB|Bid|Contract Identification|Invitation)\s*(No|Number)\.?/i);
+  if (ifb) put('ifbNumber', afterColon(ifb.rest).split(/\s{2,}|\s(?=Date)|,/)[0].split(' ')[0], ifb.line);
+  const title = find(lines, /\b(Name of (the )?(Work|Project|Contract)|Project Name|Name of Assignment)\b/i);
+  if (title) put('projectTitle', afterColon(title.line.slice(title.line.search(/:|–|-/) + 1)) || afterColon(title.rest), title.line);
+  const pe = lines.find((l) => /(Municipality|Rural Municipality|Department of|Office of|Division|Authority|Board|Ministry|Project Directorate|Project Office)/i.test(l));
+  if (pe) put('procuringEntity', pe.replace(/^(Government of Nepal[,\s]*)/i, '').trim(), pe);
+
+  const est = find(lines, /\b(Cost Estimate|Estimated (Cost|Amount)|Engineer'?s Estimate|Estimate[d]? Value)\b/i);
+  if (est) put('boqAmount', moneyIn(est.rest), est.line);
+  const per = find(lines, /\b(Contract|Completion|Construction) Period\b|\bTime for Completion\b/i);
+  if (per) {
+    const m = per.rest.match(/(\d+)\s*(months?|days?|years?)/i);
+    if (m) {
+      const n = +m[1];
+      const u = m[2].toLowerCase();
+      put('contractPeriodMonths', u.startsWith('d') ? Math.max(1, Math.round(n / 30)) : u.startsWith('y') ? n * 12 : n, per.line);
+    }
+  }
+  const dl = find(lines, /\b(last date|deadline|bid submission|submission of bids?)\b/i);
+  if (dl) put('deadlineDate', dateIn(dl.rest) ?? dateIn(dl.line), dl.line);
+  const pub = find(lines, /\b(date of (first )?publication|published on|publication date)\b/i);
+  if (pub) put('publicationDate', dateIn(pub.rest) ?? dateIn(pub.line), pub.line);
+
+  const to = find(lines, /\bAverage Annual (Construction )?Turnover\b/i);
+  if (to) put('reqTurnover', moneyIn(to.rest), to.line);
+  const bc = find(lines, /\bbid(ding)? capacity\b/i);
+  if (bc) put('reqBidCapacity', moneyIn(bc.rest), bc.line);
+  // Similar contract: look in the similar-contract line and the next 2 lines
+  const si = lines.findIndex((l) => /\bsimilar (contract|nature|work)/i.test(l));
+  if (si >= 0) {
+    const block = lines.slice(si, si + 3).join(' ');
+    put('reqSimilarValue', moneyIn(block.replace(/one\s*\(\s*1\s*\)/i, '')), lines[si]);
+    const c = block.match(/at least\s+(one|two|three|four|five|\d+)/i);
+    const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+    if (c) put('reqSimilarCount', words[c[1].toLowerCase()] ?? Number(c[1]), lines[si]);
+  }
+  const type = guessType(text);
+  if (type) put('projectType', type.value, type.line);
+
+  return { fields: f, activities: findActivities(lines) };
+}
+
+// ---------------------------------------------------------------- experience certificate
+export function parseCertificateText(text: string): { fields: Suggestions; activities: FoundActivity[] } {
+  const lines = toLines(text);
+  const f: Suggestions = {};
+  const put = (key: string, value: any, line: string) => { if (value !== null && value !== undefined && value !== '' && !(key in f)) f[key] = { value, line }; };
+
+  const no = find(lines, /\b(Contract|Agreement|Certificate)\s*(No|Number)\.?/i);
+  if (no) put('certificateId', afterColon(no.rest).split(' ')[0], no.line);
+  const title = find(lines, /\b(Name of (the )?(Work|Project|Contract)|Project Name)\b/i);
+  if (title) put('projectName', afterColon(title.line.slice(title.line.search(/:|–|-/) + 1)), title.line);
+  const emp = lines.find((l) => /(Department of|Municipality|Division|Office|Authority|Board|Ministry|Project Directorate)/i.test(l) && !/^this is to certify/i.test(l));
+  if (emp) put('employerName', emp.replace(/^(Government of Nepal[,\s]*)/i, '').trim(), emp);
+
+  const ca = find(lines, /\b(Contract (Amount|Price|Value)|Agreement Amount|Original Contract)\b/i);
+  if (ca) put('contractAmount', moneyIn(ca.rest), ca.line);
+  const fa = find(lines, /\b(Final (Bill )?(Amount|Value|Contract)|Completed (Amount|Value)|Work done amount|Total (Bill|Payment) (Amount)?)\b/i);
+  if (fa) put('finalAmount', moneyIn(fa.rest), fa.line);
+  const pa = find(lines, /\bPrice Adjustment\b/i);
+  if (pa) put('priceAdjustment', moneyIn(pa.rest), pa.line);
+  const sd = find(lines, /\b(Date of (Commencement|Start)|Commencement Date|Start(ing)? Date|Work Started)\b/i);
+  if (sd) put('startDate', dateIn(sd.rest) ?? dateIn(sd.line), sd.line);
+  const cd = find(lines, /\b(Date of (Completion|Substantial Completion)|(Actual )?Completion Date|Completed on)\b/i);
+  if (cd) put('completionDate', dateIn(cd.rest) ?? dateIn(cd.line), cd.line);
+  if (f['completionDate']) put('fiscalYear', fiscalYearOf(f['completionDate'].value), f['completionDate'].line);
+  const jv = find(lines, /\b(JV|Joint Venture)\s*(Share|Participation|%)/i);
+  if (jv) {
+    const m = jv.rest.match(/(\d+(?:\.\d+)?)\s*%?/);
+    if (m && +m[1] > 0 && +m[1] <= 100) put('jvShare', +m[1], jv.line);
+  }
+  if (/substantial(ly)? complet/i.test(text)) put('completionStatus', 'substantially_completed', 'substantially completed');
+  else if (/\bcomplet(ed|ion)\b/i.test(text)) put('completionStatus', 'completed', 'completed');
+  const type = guessType(text);
+  if (type) put('projectType', type.value, type.line);
+
+  return { fields: f, activities: findActivities(lines) };
+}
+
+function guessType(text: string): Found | null {
+  const t = text.toLowerCase();
+  const score = (words: string[]) => words.reduce((s, w) => s + (t.split(w).length - 1), 0);
+  const s: [string, number][] = [
+    ['BRIDGE', score(['bridge', 'pul '])],
+    ['ROAD', score(['road', 'highway', 'pavement', 'asphalt', 'blacktop', 'dbst'])],
+    ['IRRIGATION', score(['irrigation', 'canal', 'headworks', 'river training', 'embankment'])],
+    ['BUILDING', score(['building', 'park', 'hospital', 'school', 'block', 'office building', 'housing'])],
+  ];
+  s.sort((a, b) => b[1] - a[1]);
+  return s[0][1] > 0 ? { value: s[0][0], line: `keyword count: ${s[0][0].toLowerCase()} (${s[0][1]})` } : null;
+}

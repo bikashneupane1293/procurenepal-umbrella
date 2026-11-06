@@ -8,6 +8,7 @@ import { UI_STYLES } from '../../core/ui-styles';
 import type { ImportRow } from '../../core/excel';
 import { DateField } from '../../shared/date-field';
 import { adToBs } from '../../core/nepali-date';
+import { PdfFill, PdfApply } from '../../shared/pdf-fill';
 
 // The Excel tools are loaded only when needed, so the app stays fast
 const loadExcel = () => import('../../core/excel');
@@ -17,7 +18,7 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
 @Component({
   selector: 'app-certificates',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink, DateField],
+  imports: [FormsModule, DecimalPipe, RouterLink, DateField, PdfFill],
   template: `
     <div class="bar">
       <div>
@@ -105,6 +106,8 @@ interface ActivityRow { name: string; unit: string; fiscalYear: string; quantity
       <form class="panel" (ngSubmit)="save()">
         <h2>{{ editId() ? 'Edit Certificate' : 'New Certificate' }}</h2>
         @if (formError()) { <div class="msg error">{{ formError() }}</div> }
+        <app-pdf-fill kind="certificate" (filled)="fromPdf($event)" />
+        @if (pdfMsg()) { <div class="msg ok">{{ pdfMsg() }}</div> }
 
         <h3>1. Project details</h3>
         <div class="grid">
@@ -422,6 +425,19 @@ export class CertificatesPage {
     this.load();
   }
 
+  pdfMsg = signal('');
+  fromPdf(p: PdfApply) {
+    const f: any = this.form;
+    for (const [k, v] of Object.entries(p.fields)) if (k in f) f[k] = v;
+    if (p.fields['fiscalYear'] && !this.fiscalYears.includes(p.fields['fiscalYear'])) f.fiscalYear = this.form.fiscalYear;
+    if (p.activities.length) {
+      const fy = this.form.fiscalYear;
+      const keep = this.rows.filter((r) => r.name.trim());
+      this.rows = [...keep, ...p.activities.map((a) => ({ name: a.name, unit: a.unit, fiscalYear: fy, quantity: a.quantity }))];
+    }
+    this.pdfMsg.set(`📄 ${Object.keys(p.fields).length} field(s) and ${p.activities.length} key activit${p.activities.length === 1 ? 'y' : 'ies'} filled from ${p.fileName}. Key activity fiscal years are set to ${this.form.fiscalYear} — change them if the work was spread over years. Check every value against the PDF before saving.`);
+  }
+
   bs(d: any): string { return d ? adToBs(String(d).slice(0, 10)) || '?' : '?'; }
 
   openEdit(c: any) {
@@ -446,6 +462,7 @@ export class CertificatesPage {
   }
 
   openForm() {
+    this.pdfMsg.set('');
     this.editId.set('');
     this.form = this.emptyForm();
     this.form.companyId = this.companyId();

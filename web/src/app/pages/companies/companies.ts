@@ -7,6 +7,10 @@ import { UI_STYLES } from '../../core/ui-styles';
 import { AuthService } from '../../core/auth.service';
 import { DateField } from '../../shared/date-field';
 import { showBoth } from '../../core/nepali-date';
+import { ImportPanel } from '../../shared/import-panel';
+import type { SheetRow } from '../../core/sheets';
+
+const loadSheets = () => import('../../core/sheets');
 
 // Excel/ZIP tools load only when needed
 const loadExcel = () => import('../../core/excel');
@@ -14,17 +18,28 @@ const loadExcel = () => import('../../core/excel');
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [FormsModule, RouterLink, DateField],
+  imports: [FormsModule, RouterLink, DateField, ImportPanel],
   template: `
     <div class="bar">
       <div>
         <h1>Companies</h1>
         <p class="sub">Your construction companies (the firms that bid on tenders)</p>
       </div>
-      @if (!showForm()) {
-        <button class="btn gold" (click)="openForm()">+ Add Company</button>
-      }
+      <div class="tools">
+        @if (companies().length) { <button class="btn light" (click)="exportExcel()">⬇ Export Excel</button> }
+        <button class="btn light" (click)="template()">📄 Excel Template</button>
+        <button class="btn light" (click)="fileInput.click()">⬆ Import Excel</button>
+        <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFile($event)" />
+        @if (!showForm()) {
+          <button class="btn gold" (click)="openForm()">+ Add Company</button>
+        }
+      </div>
     </div>
+
+    @if (impRows().length || impError()) {
+      <app-import-panel [rows]="impRows()" [headers]="['Company', 'Class', 'Licence expiry']" [fileName]="impFile()"
+        [error]="impError()" [busy]="importing()" (run)="runImport()" (closed)="impRows.set([]); impError.set('')" />
+    }
 
     @if (okMsg()) { <div class="msg ok">{{ okMsg() }}</div> }
 
@@ -87,7 +102,15 @@ const loadExcel = () => import('../../core/excel');
 
     @if (toCompany(); as tc) {
       <div class="panel">
-        <h2>Audited Annual Turnover — {{ tc.name }}</h2>
+        <div class="bar tight">
+          <h2>Audited Annual Turnover — {{ tc.name }}</h2>
+          <div class="tools">
+            <button class="btn light small" type="button" (click)="exportTurnover(tc)">⬇ Export</button>
+            <button class="btn light small" type="button" (click)="turnoverTemplate()">📄 Template</button>
+            <button class="btn light small" type="button" (click)="toFile.click()">⬆ Import Excel</button>
+            <input #toFile type="file" accept=".xlsx,.xls" hidden (change)="onTurnoverFile($event)" />
+          </div>
+        </div>
         <p class="help">Average annual construction turnover uses the best 3 of the last 10 fiscal years (WPI-adjusted). If this table is empty, turnover is estimated from certificates, which is less accurate.</p>
         @if (toError()) { <div class="msg error">{{ toError() }}</div> }
         @if (toLoading()) { <div class="msg info">Loading…</div> } @else {
@@ -169,6 +192,9 @@ const loadExcel = () => import('../../core/excel');
     .danger-panel p { margin: 6px 0; color: #4b5563; }
     .btn.del { background: #dc2626; }
     .btn.del:hover { background: #b91c1c; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .bar.tight { margin-bottom: 6px; align-items: center; }
+    .bar.tight h2 { margin: 0; }
     .done { align-self: center; font-size: 12px; padding: 6px 10px; }
     table.acts td { padding: 6px; border-bottom: 0; }
     input.right { text-align: right; }
@@ -226,6 +252,76 @@ export class CompaniesPage {
   }
 
   both(d: any) { return showBoth(d); }
+
+  // ---------- Excel: companies ----------
+  impRows = signal<SheetRow[]>([]);
+  impError = signal('');
+  impFile = signal('');
+  importing = signal(false);
+
+  async exportExcel() { (await loadSheets()).exportCompanies(this.companies()); }
+  async template() { (await loadSheets()).companiesTemplate(); }
+
+  async onFile(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.okMsg.set('');
+    this.impError.set('');
+    this.impRows.set([]);
+    this.impFile.set(file.name);
+    try {
+      const rows = await (await loadSheets()).readCompaniesFile(file, this.companies());
+      this.impRows.set(rows);
+      if (!rows.length) this.impError.set('No company rows found in the file.');
+    } catch (err: any) {
+      this.impError.set(err?.message || 'Could not read this file. Please use the Excel Template.');
+    }
+  }
+
+  async runImport() {
+    this.importing.set(true);
+    let saved = 0;
+    for (const row of this.impRows().filter((r) => r.status === 'ready')) {
+      this.patchRow(row, { status: 'saving' });
+      try {
+        await firstValueFrom(this.data.createCompany(row.body));
+        this.patchRow(row, { status: 'saved', message: '' });
+        saved++;
+      } catch (err) {
+        this.patchRow(row, { status: 'failed', message: errorText(err) });
+      }
+    }
+    this.importing.set(false);
+    this.okMsg.set(`✅ Import finished: ${saved} compan${saved === 1 ? 'y' : 'ies'} added.`);
+    this.load();
+  }
+  private patchRow(row: SheetRow, p: Partial<SheetRow>) {
+    this.impRows.update((l) => l.map((r) => (r.rowNo === row.rowNo ? { ...r, ...p } : r)));
+  }
+
+  // ---------- Excel: turnover of one company ----------
+  async exportTurnover(c: any) { (await loadSheets()).exportTurnover(c.name, this.toRows.filter((r) => r.amount !== null)); }
+  async turnoverTemplate() { (await loadSheets()).turnoverTemplate(); }
+  async onTurnoverFile(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.toError.set('');
+    try {
+      const { rows, errors } = await (await loadSheets()).readTurnoverFile(file);
+      if (rows.length) this.toRows = rows.map((r) => ({ ...r }));
+      this.toError.set(errors.length
+        ? `${rows.length} year(s) read; ${errors.length} row(s) skipped: ${errors.join('; ')}`
+        : '');
+      if (rows.length) this.okMsg.set(`⬆ ${rows.length} year(s) read from ${file.name} — check them, then click Save Turnover.`);
+      else if (!errors.length) this.toError.set('No turnover rows found in the file.');
+    } catch (err: any) {
+      this.toError.set(err?.message || 'Could not read this file. Please use the Template.');
+    }
+  }
 
   openEdit(c: any) {
     this.editId.set(c.id);

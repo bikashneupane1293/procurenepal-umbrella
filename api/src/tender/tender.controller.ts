@@ -14,9 +14,11 @@ import { UpdateTenderDto } from './dto/update-tender.dto';
 import { EvaluateJvDto } from '../qualification/dto/evaluate-qualification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ModuleGuard, RequireModule } from '../access/module.guard';
 
 @Controller('tenders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ModuleGuard)
+@RequireModule('bolpatra')
 export class TenderController {
   constructor(private readonly tenderService: TenderService) {}
 

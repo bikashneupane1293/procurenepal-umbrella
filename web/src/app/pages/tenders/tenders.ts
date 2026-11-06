@@ -7,6 +7,12 @@ import { UI_STYLES } from '../../core/ui-styles';
 import { AuthService } from '../../core/auth.service';
 import { DateField } from '../../shared/date-field';
 import { showBoth } from '../../core/nepali-date';
+import { ImportPanel } from '../../shared/import-panel';
+import { PdfFill, PdfApply } from '../../shared/pdf-fill';
+import type { SheetRow } from '../../core/sheets';
+import { firstValueFrom } from 'rxjs';
+
+const loadSheets = () => import('../../core/sheets');
 
 interface KaRow { name: string; unit: string; quantity: number | null; }
 
@@ -30,15 +36,26 @@ const CRITERIA_FIELDS: { key: string; label: string; help: string; kind: 'num' |
 @Component({
   selector: 'app-tenders',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink, DateField],
+  imports: [FormsModule, DecimalPipe, RouterLink, DateField, ImportPanel, PdfFill],
   template: `
     <div class="bar">
       <div>
         <h1>Tenders</h1>
         <p class="sub">Tenders you are considering, with their qualification requirements</p>
       </div>
-      @if (!showForm()) { <button class="btn gold" (click)="openNew()">+ Add Tender</button> }
+      <div class="tools">
+        @if (tenders().length) { <button class="btn light" (click)="exportExcel()">⬇ Export Excel</button> }
+        <button class="btn light" (click)="template()">📄 Excel Template</button>
+        <button class="btn light" (click)="fileInput.click()">⬆ Import Excel</button>
+        <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFile($event)" />
+        @if (!showForm()) { <button class="btn gold" (click)="openNew()">+ Add Tender</button> }
+      </div>
     </div>
+
+    @if (impRows().length || impError()) {
+      <app-import-panel [rows]="impRows()" [headers]="['IFB No.', 'Project', 'Deadline', 'Key activities']" [fileName]="impFile()"
+        [error]="impError()" [busy]="importing()" (run)="runImport()" (closed)="impRows.set([]); impError.set('')" />
+    }
 
     @if (okMsg()) { <div class="msg ok">{{ okMsg() }}</div> }
 
@@ -46,6 +63,8 @@ const CRITERIA_FIELDS: { key: string; label: string; help: string; kind: 'num' |
       <form class="panel" (ngSubmit)="save()">
         <h2>{{ editId() ? 'Edit Tender' : 'New Tender' }}</h2>
         @if (formError()) { <div class="msg error">{{ formError() }}</div> }
+        <app-pdf-fill kind="tender" (filled)="fromPdf($event)" />
+        @if (pdfMsg()) { <div class="msg ok">{{ pdfMsg() }}</div> }
 
         <h3>1. Tender details</h3>
         <div class="grid">
@@ -230,6 +249,7 @@ const CRITERIA_FIELDS: { key: string; label: string; help: string; kind: 'num' |
     .row-actions { white-space: nowrap; }
     .row-actions .btn { margin-left: 6px; text-decoration: none; display: inline-block; }
     .btn.small { padding: 6px 12px; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .danger-panel { border: 2px solid #fecaca; background: #fffafa; }
     .danger-panel h2 { color: #b91c1c; }
     .btn.del { background: #dc2626; }
@@ -290,6 +310,63 @@ export class TendersPage {
   emptyKa(): KaRow { return { name: '', unit: '', quantity: null }; }
 
   num(v: any) { return v == null ? 0 : Number(v); }
+
+  // ---------- PDF ----------
+  pdfMsg = signal('');
+  fromPdf(p: PdfApply) {
+    const f: any = this.f;
+    for (const [k, v] of Object.entries(p.fields)) if (k in f) f[k] = v;
+    if (p.activities.length) {
+      const keep = this.kaRows.filter((r) => r.name.trim());
+      this.kaRows = [...keep, ...p.activities.map((a) => ({ name: a.name, unit: a.unit, quantity: a.quantity }))];
+    }
+    this.pdfMsg.set(`📄 ${Object.keys(p.fields).length} field(s) and ${p.activities.length} key activit${p.activities.length === 1 ? 'y' : 'ies'} filled from ${p.fileName}. Please check every value against the PDF before saving.`);
+  }
+
+  // ---------- Excel ----------
+  impRows = signal<SheetRow[]>([]);
+  impError = signal('');
+  impFile = signal('');
+  importing = signal(false);
+  async exportExcel() { (await loadSheets()).exportTenders(this.tenders()); }
+  async template() { (await loadSheets()).tendersTemplate(); }
+  async onFile(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.okMsg.set('');
+    this.impError.set('');
+    this.impRows.set([]);
+    this.impFile.set(file.name);
+    try {
+      const rows = await (await loadSheets()).readTendersFile(file, this.tenders());
+      this.impRows.set(rows);
+      if (!rows.length) this.impError.set('No tender rows found in the file.');
+    } catch (err: any) {
+      this.impError.set(err?.message || 'Could not read this file. Please use the Excel Template.');
+    }
+  }
+  async runImport() {
+    this.importing.set(true);
+    let saved = 0;
+    for (const row of this.impRows().filter((r) => r.status === 'ready')) {
+      this.patchRow(row, { status: 'saving' });
+      try {
+        await firstValueFrom(this.data.createTender(row.body));
+        this.patchRow(row, { status: 'saved', message: '' });
+        saved++;
+      } catch (err) {
+        this.patchRow(row, { status: 'failed', message: errorText(err) });
+      }
+    }
+    this.importing.set(false);
+    this.okMsg.set(`✅ Import finished: ${saved} tender${saved === 1 ? '' : 's'} added.`);
+    this.load();
+  }
+  private patchRow(row: SheetRow, p: Partial<SheetRow>) {
+    this.impRows.update((l) => l.map((r) => (r.rowNo === row.rowNo ? { ...r, ...p } : r)));
+  }
   both(d: any) { return showBoth(d); }
 
   load() {
@@ -311,6 +388,7 @@ export class TendersPage {
   }
 
   openNew() {
+    this.pdfMsg.set('');
     this.editId.set('');
     this.f = this.emptyForm();
     this.kaRows = [this.emptyKa()];

@@ -34,10 +34,10 @@ export interface ImportRow {
 }
 
 // ---------- Helpers ----------
-function txt(v: any): string {
+export function txt(v: any): string {
   return v === null || v === undefined ? '' : String(v).trim();
 }
-function num(v: any): number | null {
+export function num(v: any): number | null {
   if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number') return v;
   const n = Number(String(v).replace(/,/g, '').trim());
@@ -51,7 +51,7 @@ function validYmd(y: number, m: number, d: number): string | null {
 }
 // Accepts Excel dates, "2025-06-30", "30/06/2025" or a BS date "2082/03/15" (years 2040+ are BS).
 // Returns AD "YYYY-MM-DD", "" (empty) or null (invalid)
-function dateStr(v: any): string | null {
+export function dateStr(v: any): string | null {
   if (v === null || v === undefined || v === '') return '';
   if (v instanceof Date && !isNaN(v.getTime())) {
     return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}`;
@@ -69,17 +69,17 @@ function dateStr(v: any): string | null {
   return null;
 }
 // "2081/82", "2081-82", "2081/2082" -> "2081/82"
-function fyStr(v: any): string | null {
+export function fyStr(v: any): string | null {
   const s = txt(v);
   if (!s) return '';
   const m = s.match(/^(20\d{2})\s*[\/-]\s*(\d{2,4})$/);
   if (!m) return null;
   return `${m[1]}/${m[2].slice(-2)}`;
 }
-function yes(v: any): boolean {
+export function yes(v: any): boolean {
   return ['yes', 'y', 'true', '1', 'checked', 'verified'].includes(txt(v).toLowerCase());
 }
-function autoWidth(ws: XLSX.WorkSheet, cols: string[]) {
+export function autoWidth(ws: XLSX.WorkSheet, cols: string[]) {
   ws['!cols'] = cols.map((c) => ({ wch: Math.max(12, c.length + 2) }));
 }
 

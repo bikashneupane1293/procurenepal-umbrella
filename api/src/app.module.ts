@@ -14,6 +14,7 @@ import { WpiModule } from './wpi/wpi.module';
 import { TurnoverModule } from './turnover/turnover.module';
 import { QualificationModule } from './qualification/qualification.module';
 import { TenderModule } from './tender/tender.module';
+import { AccessModule } from './access/access.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TenderModule } from './tender/tender.module';
     TurnoverModule,
     QualificationModule,
     TenderModule,
+    AccessModule,
   ],
   controllers: [AppController],
   providers: [AppService],

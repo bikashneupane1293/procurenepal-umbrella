@@ -1233,7 +1233,8 @@ export const UserScalarFieldEnum = {
   isVerified: 'isVerified',
   googleId: 'googleId',
   lastLoginAt: 'lastLoginAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  modules: 'modules'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]

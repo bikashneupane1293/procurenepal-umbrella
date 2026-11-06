@@ -43,6 +43,8 @@ model User {
   googleId     String?
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
+  // ERP modules this user may open (empty = every module active in the workspace)
+  modules      String[] @default([])
 
   @@index([tenantId])
 }
