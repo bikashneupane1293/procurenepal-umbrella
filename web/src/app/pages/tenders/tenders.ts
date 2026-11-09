@@ -95,6 +95,12 @@ const CRITERIA_FIELDS: { key: string; label: string; help: string; kind: 'num' |
           <div><label>Contract Period (months)</label>
             <input type="number" min="1" name="t" [(ngModel)]="f.contractPeriodMonths" placeholder="e.g. 24" />
             <div class="help">Used to annualise the estimate (minimum 12)</div></div>
+          <div><label>Bid Security (NPR)</label>
+            <input type="number" min="0" name="bsa" [(ngModel)]="f.bidSecurityAmount" placeholder="As stated in the IFB" />
+            <div class="help">Copied to new bid records (Bid Information). Usually 2–3% of the estimate — use the IFB amount.</div></div>
+          <div><label>Bid Validity (days)</label>
+            <input type="number" min="1" max="365" name="bvd" [(ngModel)]="f.bidValidityDays" placeholder="e.g. 90" />
+            <div class="help">Bid validity expiry = deadline + these days</div></div>
         </div>
 
         <h3>3. Qualification requirements (from the IFB / Section III)</h3>
@@ -305,6 +311,7 @@ export class TendersPage {
       reqSimilarValue: null as number | null, reqSimilarCount: null as number | null,
       reqProjectTypes: [] as string[], similarDescription: '', isComplexWork: false,
       ruleSetId: '', awardMethod: '', notes: '',
+      bidSecurityAmount: null as number | null, bidValidityDays: null as number | null,
     };
   }
   emptyKa(): KaRow { return { name: '', unit: '', quantity: null }; }
@@ -410,6 +417,7 @@ export class TendersPage {
       reqSimilarCount: n(t.reqSimilarCount), reqProjectTypes: [...(t.reqProjectTypes ?? [])],
       similarDescription: t.similarDescription ?? '', isComplexWork: !!t.isComplexWork,
       ruleSetId: t.ruleSetId ?? '', awardMethod: t.awardMethod ?? '', notes: t.notes ?? '',
+      bidSecurityAmount: n(t.bidSecurityAmount), bidValidityDays: n(t.bidValidityDays),
     };
     this.kaRows = (Array.isArray(t.keyActivityReqs) && t.keyActivityReqs.length ? t.keyActivityReqs : [this.emptyKa()])
       .map((a: any) => ({ name: a.name ?? '', unit: a.unit ?? '', quantity: a.quantity ?? null }));
@@ -466,12 +474,12 @@ export class TendersPage {
     }
     if (f.publicationDate) body.publicationDate = f.publicationDate;
     else if (isEdit) body.publicationDate = null;
-    const nums = { boqAmount: f.boqAmount, contractPeriodMonths: f.contractPeriodMonths, reqTurnover: f.reqTurnover, reqBidCapacity: f.reqBidCapacity, reqSimilarValue: f.reqSimilarValue, reqSimilarCount: f.reqSimilarCount };
+    const nums = { boqAmount: f.boqAmount, contractPeriodMonths: f.contractPeriodMonths, reqTurnover: f.reqTurnover, reqBidCapacity: f.reqBidCapacity, reqSimilarValue: f.reqSimilarValue, reqSimilarCount: f.reqSimilarCount, bidSecurityAmount: f.bidSecurityAmount, bidValidityDays: f.bidValidityDays };
     for (const [k, v] of Object.entries(nums)) {
       if (this.has(v)) {
         const n = Number(v);
         if (!isFinite(n) || n < 0) return `Please check the number in "${k}".`;
-        body[k] = ['contractPeriodMonths', 'reqSimilarCount'].includes(k) ? Math.round(n) : n;
+        body[k] = ['contractPeriodMonths', 'reqSimilarCount', 'bidValidityDays'].includes(k) ? Math.round(n) : n;
       } else if (isEdit) body[k] = null;
     }
     const criteria: any = {};

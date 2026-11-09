@@ -89,3 +89,8 @@ export type AnnualTurnover = Prisma.AnnualTurnoverModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model Bid
+ * 
+ */
+export type Bid = Prisma.BidModel

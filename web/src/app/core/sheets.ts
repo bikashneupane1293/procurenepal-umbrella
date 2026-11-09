@@ -147,7 +147,7 @@ export const TENDER_COLS = [
   'Ref', 'IFB No', 'Project Title', 'Procuring Entity', 'Project Type', 'Publication Date', 'Bid Deadline',
   'Cost Estimate (excl. VAT)', 'Contract Period (months)', 'Required Turnover (excl. VAT)',
   'Required Bid Capacity (excl. VAT)', 'Required Similar Contract (excl. VAT)', 'Similar Contracts (count)',
-  'Similar Project Types', 'Complex Works', 'Status', 'Notes',
+  'Similar Project Types', 'Complex Works', 'Status', 'Notes', 'Bid Security (NPR)', 'Bid Validity (days)',
 ];
 export const TENDER_KA_COLS = ['Ref', 'Item Name', 'Unit', 'Quantity'];
 
@@ -161,7 +161,8 @@ export function exportTenders(tenders: any[]) {
     const ref = i + 1;
     t.push([ref, x.ifbNumber, x.projectTitle, x.procuringEntity ?? '', x.projectType ?? '', d10(x.publicationDate), d10(x.deadlineDate),
       n0(x.boqAmount), x.contractPeriodMonths ?? '', n0(x.reqTurnover), n0(x.reqBidCapacity), n0(x.reqSimilarValue),
-      x.reqSimilarCount ?? '', (x.reqProjectTypes ?? []).join(', '), x.isComplexWork ? 'Yes' : 'No', x.status ?? 'active', x.notes ?? '']);
+      x.reqSimilarCount ?? '', (x.reqProjectTypes ?? []).join(', '), x.isComplexWork ? 'Yes' : 'No', x.status ?? 'active', x.notes ?? '',
+      n0(x.bidSecurityAmount), x.bidValidityDays ?? '']);
     for (const a of x.keyActivityReqs ?? []) k.push([ref, a.name, a.unit, Number(a.quantity)]);
   });
   const wb = XLSX.utils.book_new();
@@ -174,9 +175,9 @@ export function tendersTemplate() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, sheet([TENDER_COLS,
     [1, 'BM/NCB/W/2083-84/02', 'Construction of Cuidado Picnic Park', 'Bagmati Municipality', 'BUILDING', '2083/07/15', '2083/08/15',
-      552500000, 24, 630000000, 550000000, 160000000, 1, 'BUILDING', 'No', 'active', 'Copied from the IFB'],
+      552500000, 24, 630000000, 550000000, 160000000, 1, 'BUILDING', 'No', 'active', 'Copied from the IFB', 11050000, 90],
     [2, 'DOR/NCB/2083-84/07', 'Upgrading of Cuidado Feeder Road', 'Department of Roads', 'ROAD', '2026-11-01', '2026-12-01',
-      900000000, 24, '', '', '', '', 'ROAD', 'No', 'active', 'Blank requirements are calculated'],
+      900000000, 24, '', '', '', '', 'ROAD', 'No', 'active', 'Blank requirements are calculated', '', ''],
   ], TENDER_COLS), 'Tenders');
   XLSX.utils.book_append_sheet(wb, sheet([TENDER_KA_COLS,
     [1, 'M25 Concrete', 'm3', 1886], [1, 'Reinforcement Works', 'kg', 239893], [2, 'Asphalt concrete', 'm3', 1200],
@@ -242,6 +243,7 @@ export async function readTendersFile(file: File, existing: any[]): Promise<Shee
       ['Cost Estimate (excl. VAT)', 'boqAmount', false], ['Contract Period (months)', 'contractPeriodMonths', true],
       ['Required Turnover (excl. VAT)', 'reqTurnover', false], ['Required Bid Capacity (excl. VAT)', 'reqBidCapacity', false],
       ['Required Similar Contract (excl. VAT)', 'reqSimilarValue', false], ['Similar Contracts (count)', 'reqSimilarCount', true],
+      ['Bid Security (NPR)', 'bidSecurityAmount', false], ['Bid Validity (days)', 'bidValidityDays', true],
     ];
     for (const [col, key, int] of numbers) {
       const v = num(r[col]);
@@ -251,6 +253,7 @@ export async function readTendersFile(file: File, existing: any[]): Promise<Shee
     }
     if (body.contractPeriodMonths !== undefined && body.contractPeriodMonths < 1) errors.push('Contract Period must be at least 1 month');
     if (body.reqSimilarCount !== undefined && body.reqSimilarCount < 1) errors.push('Similar Contracts (count) must be at least 1');
+    if (body.bidValidityDays !== undefined && (body.bidValidityDays < 1 || body.bidValidityDays > 365)) errors.push('Bid Validity must be 1–365 days');
     if (txt(r['Procuring Entity'])) body.procuringEntity = txt(r['Procuring Entity']);
     if (type) body.projectType = type;
     if (pub) body.publicationDate = pub;
@@ -258,6 +261,119 @@ export async function readTendersFile(file: File, existing: any[]): Promise<Shee
     errors.push(...(kaErr.get(ref) ?? []));
     if (ifb) ifbs.add(ifb.toLowerCase());
     out.push(finish({ rowNo: i + 2, label: [ifb, title, dl || '—', String(body.keyActivityReqs.length)], body, errors, status: 'ready', message: '' }));
+  });
+  return out;
+}
+
+// =================================================================== BIDS (Bid Information)
+export const BID_COLS = [
+  'IFB No', 'Company', 'Bidder Type', 'JV Partners (Company:Share%; …)', 'Decision', 'Decision Reason', 'Status',
+  'Bid Amount (excl. VAT)', 'Submitted Date', 'Bid Security Amount', 'Bid Security Type', 'Bank', 'Guarantee No',
+  'Security Issue Date', 'Security Expiry', 'Bid Validity Expiry', 'Opening Date', 'Rank', 'Intention to Award Date',
+  'Award Date', 'Contract Signing Date', 'Contract Amount (excl. VAT)', 'Performance Security Amount',
+  'Performance Security Expiry', 'Checklist Done', 'Notes',
+];
+const BID_STATUS_LIST = ['PREPARING', 'SUBMITTED', 'OPENED', 'EVALUATED', 'INTENTION_TO_AWARD', 'AWARDED', 'CONTRACT_SIGNED', 'LOST', 'WITHDRAWN', 'CANCELLED'];
+const SEC_TYPES = ['BANK_GUARANTEE', 'CASH_DEPOSIT', 'INSURANCE_BOND', 'DECLARATION'];
+
+export function exportBids(bids: any[]) {
+  const rows = bids.map((b) => [
+    b.tender?.ifbNumber ?? '', b.company?.name ?? '', b.bidderType,
+    (b.jvPartners ?? []).map((p: any) => `${p.name}:${p.share}`).join('; '),
+    b.decision, b.decisionReason ?? '', b.status, n0(b.bidAmount), d10(b.submittedAt), n0(b.bidSecurityAmount),
+    b.bidSecurityType ?? '', b.bidSecurityBank ?? '', b.bidSecurityRef ?? '', d10(b.bidSecurityIssueDate), d10(b.bidSecurityExpiry),
+    d10(b.bidValidityExpiry), d10(b.openingDate), b.rank ?? '', d10(b.intentionDate), d10(b.awardDate), d10(b.contractSignDate),
+    n0(b.contractAmount), n0(b.performanceSecurityAmount), d10(b.performanceSecurityExpiry),
+    `${(b.checklist ?? []).filter((c: any) => c.done).length}/${(b.checklist ?? []).length}`, b.notes ?? '',
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet([BID_COLS, ...rows], BID_COLS), 'Bids');
+  XLSX.writeFile(wb, `ProcureNepal_Bids_${today()}.xlsx`);
+}
+
+export function bidsTemplate() {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet([BID_COLS,
+    ['DOR/NCB/2083-84/07', 'Cuidado Construction Pvt. Ltd.', 'SINGLE', '', 'BID', '', 'SUBMITTED', 85000000, '2083/08/14',
+      2500000, 'BANK_GUARANTEE', 'Nabil Bank Ltd.', 'BG/2083/1234', '2083/08/10', '2083/12/15', '2083/11/13', '2083/08/15', '', '', '', '', '', '', '', '', 'Submitted on e-GP'],
+    ['BM/NCB/W/2083-84/02', 'Cuidado Construction Pvt. Ltd.', 'JV', 'Cuidado Construction Pvt. Ltd.:60; Cuidado–Sharma Nirman Sewa:40', 'BID', '', 'PREPARING',
+      '', '', 11050000, 'BANK_GUARANTEE', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'JV with Sharma'],
+  ], BID_COLS), 'Bids');
+  XLSX.utils.book_append_sheet(wb, help([
+    'ProcureNepal — Bid information import guide',
+    'IFB No and Company must already exist in ProcureNepal (same spelling). A company that already has a bid for that tender is skipped.',
+    'Bidder Type: SINGLE or JV. For a JV list every partner with its share, e.g. "Cuidado Construction Pvt. Ltd.:60; Cuidado–Sharma Nirman Sewa:40" (shares total 100; the Company column is the lead).',
+    `Decision: UNDECIDED, BID or NO_BID. Status: ${BID_STATUS_LIST.join(', ')}.`,
+    `Bid Security Type: ${SEC_TYPES.join(', ')}.`,
+    'Dates: AD as YYYY-MM-DD or BS as YYYY/MM/DD (years 2040 and later are read as BS). Amounts: taxable amount only (excluding VAT), in NPR.',
+    'Bid prices stay inside your own workspace — they are never shared or compared with other ProcureNepal customers.',
+  ]), 'Instructions');
+  XLSX.writeFile(wb, 'ProcureNepal_Bids_Template.xlsx');
+}
+
+export async function readBidsFile(file: File, tenders: any[], companies: any[], existing: any[]): Promise<SheetRow[]> {
+  const rows = rowsOf(await readBook(file), 'Bids');
+  needCols(rows, ['IFB No', 'Company']);
+  const tByIfb = new Map(tenders.map((t) => [String(t.ifbNumber).trim().toLowerCase(), t]));
+  const cByName = new Map(companies.map((c) => [String(c.name).trim().toLowerCase(), c]));
+  const have = new Set(existing.map((b) => `${b.tenderId}|${b.companyId}`));
+  const out: SheetRow[] = [];
+  rows.forEach((r, i) => {
+    if (BID_COLS.every((c) => txt(r[c]) === '')) return;
+    const errors: string[] = [];
+    const t = tByIfb.get(txt(r['IFB No']).toLowerCase());
+    const c = cByName.get(txt(r['Company']).toLowerCase());
+    if (!t) errors.push(`Tender "${txt(r['IFB No'])}" not found — add it on the Tenders page first`);
+    if (!c) errors.push(`Company "${txt(r['Company'])}" not found`);
+    if (t && c && have.has(`${t.id}|${c.id}`)) errors.push('This company already has a bid for this tender — skipped');
+    const type = (txt(r['Bidder Type']) || 'SINGLE').toUpperCase();
+    if (!['SINGLE', 'JV'].includes(type)) errors.push('Bidder Type must be SINGLE or JV');
+    const decision = (txt(r['Decision']) || 'UNDECIDED').toUpperCase().replace(/[\s-]+/g, '_');
+    if (!['UNDECIDED', 'BID', 'NO_BID'].includes(decision)) errors.push('Decision must be UNDECIDED, BID or NO_BID');
+    const status = (txt(r['Status']) || 'PREPARING').toUpperCase().replace(/[\s-]+/g, '_');
+    if (!BID_STATUS_LIST.includes(status)) errors.push(`Status must be one of ${BID_STATUS_LIST.join(', ')}`);
+    const secType = txt(r['Bid Security Type']).toUpperCase().replace(/[\s-]+/g, '_');
+    if (secType && !SEC_TYPES.includes(secType)) errors.push(`Bid Security Type must be one of ${SEC_TYPES.join(', ')}`);
+    const body: any = { tenderId: t?.id, companyId: c?.id, bidderType: type, decision, status };
+    if (type === 'JV') {
+      const parts = txt(r['JV Partners (Company:Share%; …)']).split(/;/).map((x) => x.trim()).filter(Boolean);
+      const partners: any[] = [];
+      for (const p of parts) {
+        const m = p.match(/^(.*?):\s*([\d.]+)\s*%?$/);
+        const pc = m ? cByName.get(m[1].trim().toLowerCase()) : null;
+        if (!m || !pc) { errors.push(`JV partner "${p}" not understood or company not found`); continue; }
+        partners.push({ companyId: pc.id, share: Number(m[2]), isLead: pc.id === c?.id });
+      }
+      if (partners.length < 2) errors.push('A JV needs at least 2 partners with shares');
+      else if (Math.abs(partners.reduce((s, p) => s + p.share, 0) - 100) > 0.01) errors.push('JV shares must total 100');
+      body.jvPartners = partners;
+    }
+    const dates: [string, string][] = [
+      ['Submitted Date', 'submittedAt'], ['Security Issue Date', 'bidSecurityIssueDate'], ['Security Expiry', 'bidSecurityExpiry'],
+      ['Bid Validity Expiry', 'bidValidityExpiry'], ['Opening Date', 'openingDate'], ['Intention to Award Date', 'intentionDate'],
+      ['Award Date', 'awardDate'], ['Contract Signing Date', 'contractSignDate'], ['Performance Security Expiry', 'performanceSecurityExpiry'],
+    ];
+    for (const [col, key] of dates) {
+      const v = dateStr(r[col]);
+      if (v === null) errors.push(`${col} must be YYYY-MM-DD (AD) or YYYY/MM/DD (BS)`);
+      else if (v) body[key] = v;
+    }
+    const nums: [string, string][] = [
+      ['Bid Amount (excl. VAT)', 'bidAmount'], ['Bid Security Amount', 'bidSecurityAmount'], ['Contract Amount (excl. VAT)', 'contractAmount'],
+      ['Performance Security Amount', 'performanceSecurityAmount'], ['Rank', 'rank'],
+    ];
+    for (const [col, key] of nums) {
+      const v = num(r[col]);
+      if (v === null) continue;
+      if (isNaN(v) || v < 0) errors.push(`${col} must be a number ≥ 0`);
+      else body[key] = key === 'rank' ? Math.max(1, Math.round(v)) : v;
+    }
+    if (secType) body.bidSecurityType = secType;
+    for (const [col, key] of [['Decision Reason', 'decisionReason'], ['Bank', 'bidSecurityBank'], ['Guarantee No', 'bidSecurityRef'], ['Notes', 'notes']] as const) {
+      if (txt(r[col])) body[key] = txt(r[col]);
+    }
+    if (t && c) have.add(`${t.id}|${c.id}`);
+    out.push(finish({ rowNo: i + 2, label: [txt(r['IFB No']), txt(r['Company']), type, status], body, errors, status: 'ready', message: '' }));
   });
   return out;
 }

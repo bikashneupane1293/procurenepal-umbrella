@@ -35,11 +35,11 @@ export const MENU: MenuModule[] = [
   {
     key: 'bolpatra', label: 'Bolpatra eGP System', icon: '📋', route: '/bolpatra',
     items: [
-      soon('bolpatra.bid-info', 'Bid Information Management', 'Bid documents, bid security, submission checklist and post-bid status (opening → intention to award → contract) for every tender.', ['bolpatra.tenders', 'bank.guarantee', 'project.info']),
+      { id: 'bolpatra.bid-info', label: 'Bid Information Management', route: '/bids', status: 'built', links: ['bolpatra.tenders', 'bank.guarantee', 'project.info'] },
       { id: 'bolpatra.certificates', label: 'Certificates', route: '/certificates', status: 'built' },
       { id: 'bolpatra.tenders', label: 'Tenders', route: '/tenders', status: 'built' },
       { id: 'bolpatra.qualification', label: 'Qualification', route: '/qualification', status: 'built' },
-      soon('bolpatra.reports', 'Reports', 'Bid / no-bid summary across tenders, win rate, qualification history by company, expiring licences and certificates.', ['bolpatra.tenders', 'bolpatra.qualification']),
+      { id: 'bolpatra.reports', label: 'Reports', route: '/reports', status: 'built', links: ['bolpatra.tenders', 'bolpatra.qualification', 'bolpatra.bid-info'] },
     ],
   },
   {

@@ -406,7 +406,8 @@ export const ModelName = {
   Tender: 'Tender',
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  Bid: 'Bid'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1166,6 +1167,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Bid: {
+      payload: Prisma.$BidPayload<ExtArgs>
+      fields: Prisma.BidFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BidFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BidFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        findFirst: {
+          args: Prisma.BidFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BidFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        findMany: {
+          args: Prisma.BidFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>[]
+        }
+        create: {
+          args: Prisma.BidCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        createMany: {
+          args: Prisma.BidCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BidCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>[]
+        }
+        delete: {
+          args: Prisma.BidDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        update: {
+          args: Prisma.BidUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        deleteMany: {
+          args: Prisma.BidDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BidUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BidUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>[]
+        }
+        upsert: {
+          args: Prisma.BidUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BidPayload>
+        }
+        aggregate: {
+          args: Prisma.BidAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBid>
+        }
+        groupBy: {
+          args: Prisma.BidGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BidGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BidCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BidCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1342,6 +1417,8 @@ export const TenderScalarFieldEnum = {
   awardMethod: 'awardMethod',
   ruleSetId: 'ruleSetId',
   notes: 'notes',
+  bidSecurityAmount: 'bidSecurityAmount',
+  bidValidityDays: 'bidValidityDays',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1397,6 +1474,43 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const BidScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tenderId: 'tenderId',
+  companyId: 'companyId',
+  bidderType: 'bidderType',
+  jvPartners: 'jvPartners',
+  decision: 'decision',
+  decisionReason: 'decisionReason',
+  status: 'status',
+  statusHistory: 'statusHistory',
+  bidAmount: 'bidAmount',
+  submittedAt: 'submittedAt',
+  openingDate: 'openingDate',
+  rank: 'rank',
+  bidSecurityAmount: 'bidSecurityAmount',
+  bidSecurityType: 'bidSecurityType',
+  bidSecurityBank: 'bidSecurityBank',
+  bidSecurityRef: 'bidSecurityRef',
+  bidSecurityIssueDate: 'bidSecurityIssueDate',
+  bidSecurityExpiry: 'bidSecurityExpiry',
+  bidValidityExpiry: 'bidValidityExpiry',
+  intentionDate: 'intentionDate',
+  awardDate: 'awardDate',
+  contractSignDate: 'contractSignDate',
+  contractAmount: 'contractAmount',
+  performanceSecurityAmount: 'performanceSecurityAmount',
+  performanceSecurityExpiry: 'performanceSecurityExpiry',
+  checklist: 'checklist',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BidScalarFieldEnum = (typeof BidScalarFieldEnum)[keyof typeof BidScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1739,6 +1853,7 @@ export type GlobalOmitConfig = {
   qualificationResult?: Prisma.QualificationResultOmit
   annualTurnover?: Prisma.AnnualTurnoverOmit
   auditLog?: Prisma.AuditLogOmit
+  bid?: Prisma.BidOmit
 }
 
 /* Types for Logging */

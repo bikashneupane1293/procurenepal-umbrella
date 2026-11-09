@@ -60,7 +60,8 @@ export const ModelName = {
   Tender: 'Tender',
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  Bid: 'Bid'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -216,6 +217,8 @@ export const TenderScalarFieldEnum = {
   awardMethod: 'awardMethod',
   ruleSetId: 'ruleSetId',
   notes: 'notes',
+  bidSecurityAmount: 'bidSecurityAmount',
+  bidValidityDays: 'bidValidityDays',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -271,6 +274,43 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const BidScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tenderId: 'tenderId',
+  companyId: 'companyId',
+  bidderType: 'bidderType',
+  jvPartners: 'jvPartners',
+  decision: 'decision',
+  decisionReason: 'decisionReason',
+  status: 'status',
+  statusHistory: 'statusHistory',
+  bidAmount: 'bidAmount',
+  submittedAt: 'submittedAt',
+  openingDate: 'openingDate',
+  rank: 'rank',
+  bidSecurityAmount: 'bidSecurityAmount',
+  bidSecurityType: 'bidSecurityType',
+  bidSecurityBank: 'bidSecurityBank',
+  bidSecurityRef: 'bidSecurityRef',
+  bidSecurityIssueDate: 'bidSecurityIssueDate',
+  bidSecurityExpiry: 'bidSecurityExpiry',
+  bidValidityExpiry: 'bidValidityExpiry',
+  intentionDate: 'intentionDate',
+  awardDate: 'awardDate',
+  contractSignDate: 'contractSignDate',
+  contractAmount: 'contractAmount',
+  performanceSecurityAmount: 'performanceSecurityAmount',
+  performanceSecurityExpiry: 'performanceSecurityExpiry',
+  checklist: 'checklist',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BidScalarFieldEnum = (typeof BidScalarFieldEnum)[keyof typeof BidScalarFieldEnum]
 
 
 export const SortOrder = {

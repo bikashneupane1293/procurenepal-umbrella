@@ -131,10 +131,37 @@ export function parseTenderText(text: string): { fields: Suggestions; activities
     const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
     if (c) put('reqSimilarCount', words[c[1].toLowerCase()] ?? Number(c[1]), lines[si]);
   }
+  const bs = find(lines, /\b(Bid Security|Bid Bond|Earnest Money)\b/i);
+  if (bs) put('bidSecurityAmount', moneyIn(bs.rest), bs.line);
+  const bv = find(lines, /\bBid Validity\b|\bbids? (shall )?(be |remain )?valid\b/i);
+  if (bv) {
+    const m = bv.rest.match(/(\d+)\s*days/i) ?? bv.line.match(/(\d+)\s*days/i);
+    if (m) put('bidValidityDays', Number(m[1]), bv.line);
+  }
   const type = guessType(text);
   if (type) put('projectType', type.value, type.line);
 
   return { fields: f, activities: findActivities(lines) };
+}
+
+// ---------------------------------------------------------------- bank guarantee (bid / performance security)
+export function parseGuaranteeText(text: string): { fields: Suggestions; activities: FoundActivity[] } {
+  const lines = toLines(text);
+  const f: Suggestions = {};
+  const put = (key: string, value: any, line: string) => { if (value !== null && value !== undefined && value !== '' && !(key in f)) f[key] = { value, line }; };
+  const bank = lines.find((l) => /\b(Bank|Bikas Bank|Finance)\b.*\b(Ltd|Limited)\.?/i.test(l)) ?? lines.find((l) => /\bBank\b/i.test(l));
+  if (bank) put('bidSecurityBank', bank.replace(/^(issued by|issuing bank)\s*[:\-]?\s*/i, '').trim(), bank);
+  const ref = find(lines, /\b(Guarantee|Bond|BG|Reference|Ref\.?)\s*(No|Number|#)\.?/i);
+  if (ref) put('bidSecurityRef', afterColon(ref.rest).split(' ')[0], ref.line);
+  const amt = find(lines, /\b(Guarantee Amount|Amount of Guarantee|sum of|Amount)\b/i);
+  if (amt) put('bidSecurityAmount', moneyIn(amt.rest) ?? moneyIn(amt.line), amt.line);
+  const iss = find(lines, /\b(Date of Issue|Issue Date|Issued on|Date)\b/i);
+  if (iss) put('bidSecurityIssueDate', dateIn(iss.rest) ?? dateIn(iss.line), iss.line);
+  const exp = find(lines, /\b(valid (up ?to|until|till)|validity|expiry date|expires on|date of expiry)\b/i);
+  if (exp) put('bidSecurityExpiry', dateIn(exp.rest) ?? dateIn(exp.line), exp.line);
+  if (/performance (security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'PERFORMANCE', 'performance guarantee');
+  else if (/bid (security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'BID', 'bid guarantee');
+  return { fields: f, activities: [] };
 }
 
 // ---------------------------------------------------------------- experience certificate

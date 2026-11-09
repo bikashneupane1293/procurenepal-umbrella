@@ -167,6 +167,19 @@ export class CreateTenderDto {
   @IsOptional()
   notes?: string;
 
+  /** Bid security amount stated in the IFB (NPR) — copied to new bid records */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  bidSecurityAmount?: number;
+
+  /** Bid validity in days from the deadline (e.g. 90) — sets the bid validity expiry of new bid records */
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  @IsOptional()
+  bidValidityDays?: number;
+
   @IsString()
   @IsOptional()
   source?: string;

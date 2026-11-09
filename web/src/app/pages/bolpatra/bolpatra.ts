@@ -15,7 +15,8 @@ import { UI_STYLES } from '../../core/ui-styles';
       <a class="card" routerLink="/certificates"><div class="label">📜 Certificates</div><div class="value">{{ certificates() ?? '…' }}</div><div class="hint">Experience certificates and key activities →</div></a>
       <a class="card" routerLink="/tenders"><div class="label">📋 Tenders</div><div class="value">{{ tenders() ?? '…' }}</div><div class="hint">Tenders and their requirements →</div></a>
       <a class="card" routerLink="/qualification"><div class="label">✅ Qualification</div><div class="value">✓</div><div class="hint">Check one, several or all companies →</div></a>
-      <a class="card" [routerLink]="['/soon', 'bolpatra.bid-info']"><div class="label">🗂️ Bid Information</div><div class="value soonv">Soon</div><div class="hint">Bid documents, security, post-bid status</div></a>
+      <a class="card" routerLink="/bids"><div class="label">🗂️ Bid Information</div><div class="value">{{ bids() ?? '…' }}</div><div class="hint">Decision, bid security, checklist, result →</div></a>
+      <a class="card" routerLink="/reports"><div class="label">📊 Reports</div><div class="value">📈</div><div class="hint">Win rate, deadlines, expiring securities →</div></a>
     </section>
 
     <section class="panel io">
@@ -29,6 +30,8 @@ import { UI_STYLES } from '../../core/ui-styles';
             <tr><td>Annual turnover (per company)</td><td><button class="btn light small" (click)="tpl('turnover')">📄 Download</button></td><td><a class="link" routerLink="/companies">Companies → Turnover → Import Excel</a></td></tr>
             <tr><td>Experience certificates + key activities</td><td><button class="btn light small" (click)="tpl('certificates')">📄 Download</button></td><td><a class="link" routerLink="/certificates">Certificates → Import / Export Excel · Add → Read from PDF</a></td></tr>
             <tr><td>Tenders + key activity requirements</td><td><button class="btn light small" (click)="tpl('tenders')">📄 Download</button></td><td><a class="link" routerLink="/tenders">Tenders → Import / Export Excel · Add → Read from PDF</a></td></tr>
+            <tr><td>Bid information (decision, security, result)</td><td><button class="btn light small" (click)="tpl('bids')">📄 Download</button></td><td><a class="link" routerLink="/bids">Bid Information → Import / Export Excel · Open → Read guarantee PDF</a></td></tr>
+            <tr><td>Bolpatra report</td><td>—</td><td><a class="link" routerLink="/reports">Reports → ⬇ Export Excel / 🖨 Print</a></td></tr>
             <tr><td>Qualification report</td><td>—</td><td><a class="link" routerLink="/tenders">Tenders → Check qualification → ⬇ Excel report / 🖨 Print</a></td></tr>
           </tbody>
         </table>
@@ -41,6 +44,7 @@ import { UI_STYLES } from '../../core/ui-styles';
         <li><strong>Companies</strong> (+ audited turnover) → used by every check and every module.</li>
         <li><strong>Certificates</strong> (amounts, dates, key activities, running contracts) → turnover estimate, similar contracts, key activities, bid capacity (FIN-5) and the five-contract limit.</li>
         <li><strong>Tenders</strong> (requirements) → <strong>Qualification</strong> for one, several or all companies, JV builder and partner finder; results are saved in the tender's history.</li>
+        <li><strong>Bid Information</strong> (decision, bid security, checklist, opening → award → contract) → the tender's status updates itself; <strong>Reports</strong> add up bids, win rate, deadlines and expiring securities and licences.</li>
         <li>Coming next: a won tender becomes a <strong>Project</strong>; its bid and performance guarantees go to <strong>Bank Guarantee Management</strong>; on completion, project progress becomes a new <strong>certificate</strong>.</li>
       </ol>
     </section>
@@ -61,15 +65,18 @@ export class BolpatraPage {
   private data = inject(DataService);
   certificates = signal<number | null>(null);
   tenders = signal<number | null>(null);
+  bids = signal<number | null>(null);
 
   constructor() {
     this.data.getCertificates().subscribe({ next: (l) => this.certificates.set(l.length), error: () => this.certificates.set(0) });
     this.data.getTenders().subscribe({ next: (l) => this.tenders.set(l.length), error: () => this.tenders.set(0) });
+    this.data.getBids().subscribe({ next: (l) => this.bids.set(l.length), error: () => this.bids.set(0) });
   }
 
-  async tpl(kind: 'companies' | 'turnover' | 'certificates' | 'tenders') {
+  async tpl(kind: 'companies' | 'turnover' | 'certificates' | 'tenders' | 'bids') {
     if (kind === 'certificates') return (await import('../../core/excel')).downloadTemplate();
     const s = await import('../../core/sheets');
+    if (kind === 'bids') return s.bidsTemplate();
     if (kind === 'companies') s.companiesTemplate();
     else if (kind === 'turnover') s.turnoverTemplate();
     else s.tendersTemplate();

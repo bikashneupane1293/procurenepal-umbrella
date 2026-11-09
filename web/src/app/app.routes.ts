@@ -22,6 +22,8 @@ export const routes: Routes = [
       { path: 'tenders', canActivate: [moduleGuard], loadComponent: () => import('./pages/tenders/tenders').then((m) => m.TendersPage) },
       { path: 'tenders/:id', canActivate: [moduleGuard], loadComponent: () => import('./pages/tenders/tender-detail').then((m) => m.TenderDetailPage) },
       { path: 'qualification', canActivate: [moduleGuard], loadComponent: () => import('./pages/qualification/qualification').then((m) => m.QualificationPage) },
+      { path: 'bids', canActivate: [moduleGuard], loadComponent: () => import('./pages/bids/bids').then((m) => m.BidsPage) },
+      { path: 'reports', canActivate: [moduleGuard], loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsPage) },
       { path: 'soon/:id', loadComponent: () => import('./pages/soon/soon').then((m) => m.SoonPage) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

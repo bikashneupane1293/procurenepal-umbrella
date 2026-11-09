@@ -36,6 +36,16 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 - `GET /access/me` builds the menu; `ModuleGuard` + `@RequireModule('bolpatra')` blocks the API (Tender, Certificate, Qualification controllers). Companies is never blocked.
 - User Setup: `GET /users` (Owner, Super Admin, Director), `POST /users`, `PATCH /users/:id` (Owner, Super Admin). Passwords ≥ 8 with a letter and a number, bcrypt; the workspace always keeps one active Owner; you cannot block yourself; SUPER_ADMIN cannot be assigned.
 
+## Task 1 — Bid Information Management + Reports (Bolpatra)
+- Schema (additive only): `Tender.bidSecurityAmount Decimal(15,2)?`, `Tender.bidValidityDays Int?`; new table `Bid` (one per tender × company, `@@unique([tenderId, companyId])`, cascades from Tender and Company).
+- Bid pipeline: PREPARING → SUBMITTED → OPENED → EVALUATED → INTENTION_TO_AWARD → AWARDED → CONTRACT_SIGNED (+ LOST, WITHDRAWN, CANCELLED); every change is stored in `statusHistory`.
+- Background links: bid security amount copied from the tender; bid validity expiry = deadline + validity days; `submittedAt` filled automatically when a bid reaches a post-submission status; tender status follows its bids (won > submitted > lost > cancelled > active; archived and manually-cancelled tenders untouched); latest saved qualification shown on the bid.
+- Rules enforced: NO_BID only with Preparing/Withdrawn/Cancelled; JV = 2–3 different companies of the same workspace, shares 1–99 totalling 100, one lead; guarantee issue < expiry; award ≤ contract signing; tender/company of a bid cannot change; delete = Owner / Super Admin / Director.
+- API: `GET/POST /bids`, `GET/PATCH/DELETE /bids/:id`, `GET /bolpatra/reports?days=1..365` (default 30) — JWT + `@RequireModule('bolpatra')`.
+- Web: `/bids` (filters, new/edit, JV partners, 13/14-item checklist, guarantee PDF reading, Excel template/import/export), `/reports` (cards, deadlines, status bars, expiring bid/performance securities, bid validity and licences, per company, 12 months, Excel export, print); tender workspace panel; Bolpatra overview cards.
+- Not a PPMO rule source: the 30-day guarantee margin hint and checklist items are guidance, editable per bid.
+- Verified in sandbox: API e2e 38 (bids, access, qualification, verification), unit 81, browser 103 checks (bids 28, tenders 29, Excel/PDF 21, ERP 25).
+
 ## Decisions recorded
 
 - JV rules follow a published Nepal IFB (similar = one partner, key activities = combined, turnover 100/25/40).
@@ -48,7 +58,7 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 
 1. Deploy 6.4A/6.4B/6.5 (db push → git push → Render → cPanel) — needs owner approval.
 2. Phase 6.5 rest: Nepali/English UI toggle, full bidder profile (personnel, equipment, financials, litigation), document vault + expiry alerts.
-3. Phase 6.6: certificate PDF upload (Cloudflare R2) + auto-fill; PDFs in ZIP; bid/performance security calculator; bid readiness checklist; average-bid price scenario tool.
-4. Phase 6.7: EXP/FIN/ELI form autofill, post-bid tracker.
+3. Phase 6.6: certificate PDF upload (Cloudflare R2) + auto-fill; PDFs in ZIP; average-bid price scenario tool.
+4. Phase 6.7: EXP/FIN/ELI form autofill; Bank Guarantee Management linked to bids; won tender → Project.
 5. Admin panel + subscription plans; eSewa/Khalti; WhatsApp OTP; WordPress site.
 6. After full deployment: rotate admin + Supabase DB passwords; Render Starter.

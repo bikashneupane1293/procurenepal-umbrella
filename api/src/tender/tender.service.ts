@@ -29,6 +29,7 @@ export class TenderService {
       'contractPeriodMonths', 'reqTurnover', 'reqBidCapacity', 'reqSimilarValue',
       'reqSimilarCount', 'similarDescription', 'reqActivity', 'reqMinProduction',
       'isComplexWork', 'awardMethod', 'ruleSetId', 'status', 'notes', 'source',
+      'bidSecurityAmount', 'bidValidityDays',
     ] as const;
     for (const k of copy) if ((dto as any)[k] !== undefined) d[k] = (dto as any)[k];
     if (dto.publicationDate !== undefined) {

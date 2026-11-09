@@ -91,6 +91,29 @@ export class DataService {
   getRules(): Observable<any> {
     return this.http.get(`${API_URL}/qualification/rules`);
   }
+
+  // ---------- Bid Information ----------
+  getBids(filter: { tenderId?: string; status?: string; companyId?: string } = {}): Observable<any[]> {
+    const q = Object.entries(filter).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join('&');
+    return this.http.get(`${API_URL}/bids${q ? '?' + q : ''}`).pipe(map(toList));
+  }
+  getBid(id: string): Observable<any> {
+    return this.http.get(`${API_URL}/bids/${id}`);
+  }
+  createBid(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/bids`, body);
+  }
+  updateBid(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/bids/${id}`, body);
+  }
+  deleteBid(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/bids/${id}`);
+  }
+
+  // ---------- Bolpatra Reports ----------
+  getReport(days = 30): Observable<any> {
+    return this.http.get(`${API_URL}/bolpatra/reports?days=${days}`);
+  }
 }
 
 // Turns any backend error into one readable sentence

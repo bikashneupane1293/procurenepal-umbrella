@@ -15,6 +15,7 @@ import { TurnoverModule } from './turnover/turnover.module';
 import { QualificationModule } from './qualification/qualification.module';
 import { TenderModule } from './tender/tender.module';
 import { AccessModule } from './access/access.module';
+import { BidModule } from './bid/bid.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AccessModule } from './access/access.module';
     QualificationModule,
     TenderModule,
     AccessModule,
+    BidModule,
   ],
   controllers: [AppController],
   providers: [AppService],

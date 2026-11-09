@@ -10,6 +10,7 @@ const DECIMAL_FIELDS = new Set([
   'contractAmount', 'finalAmount', 'priceAdjustment', 'jvShare', 'outstandingAmount',
   'boqAmount', 'reqTurnover', 'reqMinProduction', 'reqBidCapacity', 'reqSimilarValue',
   'turnoverAact', 'turnoverRequired', 'amount',
+  'bidAmount', 'bidSecurityAmount', 'contractAmount', 'performanceSecurityAmount',
 ]);
 function decimals(row: Row): Row {
   for (const k of Object.keys(row)) {
@@ -51,13 +52,14 @@ const DEFAULTS: Record<string, () => Row> = {
   annualTurnover: () => ({ source: 'audited', createdAt: new Date(), updatedAt: new Date() }),
   user: () => ({ isActive: true, modules: [], role: 'VIEWER', createdAt: new Date() }),
   tenantFeatureFlag: () => ({ enabled: false, createdAt: new Date() }),
+  bid: () => ({ bidderType: 'SINGLE', decision: 'UNDECIDED', status: 'PREPARING', createdAt: new Date(), updatedAt: new Date() }),
   tenant: () => ({ isActive: true }),
 };
 
 export class FakePrisma {
   db: Record<string, Row[]> = {
     company: [], certificate: [], tender: [], qualificationResult: [],
-    annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [],
+    annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -66,6 +68,7 @@ export class FakePrisma {
     if (include?.certificates) out.certificates = this.db.certificate.filter((c) => c.companyId === row.id);
     if (include?.turnovers) out.turnovers = this.db.annualTurnover.filter((t) => t.companyId === row.id);
     if (include?.company) out.company = this.db.company.find((c) => c.id === row.companyId);
+    if (include?.tender) out.tender = this.db.tender.find((t) => t.id === row.tenderId);
     if (include?.tenant) out.tenant = this.db.tenant.find((t) => t.id === row.tenantId);
     return out;
   }
@@ -94,7 +97,7 @@ export class FakePrisma {
       create: async (a: Row) => {
         const r = decimals({ id: randomUUID(), ...DEFAULTS[name](), ...a.data });
         rows().push(r);
-        return self.select({ ...r }, a.select);
+        return self.select(self.include(name, { ...r }, a.include), a.select);
       },
       createMany: async (a: Row) => {
         for (const d of a.data) rows().push(decimals({ id: randomUUID(), ...DEFAULTS[name](), ...d }));
@@ -105,7 +108,7 @@ export class FakePrisma {
         if (!r) throw new Error('Record to update not found');
         Object.assign(r, a.data, 'updatedAt' in r ? { updatedAt: new Date() } : {});
         decimals(r);
-        return self.select({ ...r }, a.select);
+        return self.select(self.include(name, { ...r }, a.include), a.select);
       },
       upsert: async (a: Row) => {
         const r = rows().find((x) => matches(x, a.where));
@@ -126,7 +129,9 @@ export class FakePrisma {
           // onDelete: Cascade for AnnualTurnover / Certificate
           self.db.annualTurnover = self.db.annualTurnover.filter((t) => t.companyId !== r.id);
           self.db.certificate = self.db.certificate.filter((t) => t.companyId !== r.id);
+          self.db.bid = self.db.bid.filter((t) => t.companyId !== r.id);
         }
+        if (name === 'tender') self.db.bid = self.db.bid.filter((b) => b.tenderId !== r.id); // onDelete: Cascade
         return r;
       },
       count: async (a: Row = {}) => rows().filter((x) => matches(x, a.where)).length,
@@ -146,6 +151,7 @@ export class FakePrisma {
   user = this.model('user');
   tenant = this.model('tenant');
   tenantFeatureFlag = this.model('tenantFeatureFlag');
+  bid = this.model('bid');
 
   async $transaction(ops: Promise<any>[]) {
     const out: any[] = [];

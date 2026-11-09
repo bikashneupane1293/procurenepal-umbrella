@@ -16,9 +16,12 @@ const LABELS: Record<string, string> = {
   contractAmount: 'Contract amount', finalAmount: 'Final amount', priceAdjustment: 'Price adjustment',
   startDate: 'Start date', completionDate: 'Completion date', fiscalYear: 'Fiscal year', jvShare: 'JV share %',
   completionStatus: 'Completion status',
+  bidSecurityAmount: 'Guarantee / bid security amount', bidValidityDays: 'Bid validity (days)',
+  bidSecurityBank: 'Issuing bank', bidSecurityRef: 'Guarantee No.', bidSecurityIssueDate: 'Issue date',
+  bidSecurityExpiry: 'Valid until (expiry)', guaranteeKind: 'Guarantee type',
 };
-const MONEY = new Set(['boqAmount', 'reqTurnover', 'reqBidCapacity', 'reqSimilarValue', 'contractAmount', 'finalAmount', 'priceAdjustment']);
-const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completionDate']);
+const MONEY = new Set(['bidSecurityAmount', 'boqAmount', 'reqTurnover', 'reqBidCapacity', 'reqSimilarValue', 'contractAmount', 'finalAmount', 'priceAdjustment']);
+const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completionDate', 'bidSecurityIssueDate', 'bidSecurityExpiry']);
 
 /**
  * "Read PDF" button + review panel. Reads a tender notice or certificate PDF in the browser,
@@ -31,7 +34,7 @@ const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completi
   template: `
     <div class="pdf-bar">
       <button type="button" class="btn light" (click)="file.click()" [disabled]="busy()">{{ busy() ? 'Reading PDF…' : '📄 Read from PDF' }}</button>
-      <span class="help">{{ kind() === 'tender' ? 'Choose the IFB / bid notice PDF' : 'Choose the experience / completion certificate PDF' }} — the form fills itself, you check and save. The PDF stays on your computer.</span>
+      <span class="help">{{ kind() === 'tender' ? 'Choose the IFB / bid notice PDF' : kind() === 'guarantee' ? 'Choose the bank guarantee (bid / performance security) PDF' : 'Choose the experience / completion certificate PDF' }} — the form fills itself, you check and save. The PDF stays on your computer.</span>
       <input #file type="file" accept="application/pdf,.pdf" hidden (change)="onFile($event)" />
     </div>
     @if (error()) { <div class="msg error">{{ error() }}</div> }
@@ -91,7 +94,7 @@ const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completi
   `],
 })
 export class PdfFill {
-  kind = input<'tender' | 'certificate'>('tender');
+  kind = input<'tender' | 'certificate' | 'guarantee'>('tender');
   filled = output<PdfApply>();
 
   busy = signal(false);
@@ -124,7 +127,8 @@ export class PdfFill {
       if (pdf.scanned) {
         this.error.set('This PDF looks like a scanned image (no text inside), so it cannot be read yet. Please type the values. (Reading scanned PDFs is planned.)');
       } else {
-        const res = this.kind() === 'tender' ? parse.parseTenderText(pdf.text) : parse.parseCertificateText(pdf.text);
+        const k = this.kind();
+        const res = k === 'tender' ? parse.parseTenderText(pdf.text) : k === 'guarantee' ? parse.parseGuaranteeText(pdf.text) : parse.parseCertificateText(pdf.text);
         this.fileName.set(file.name);
         this.keys.set(Object.keys(res.fields));
         this.picked = Object.fromEntries(Object.keys(res.fields).map((k) => [k, true]));

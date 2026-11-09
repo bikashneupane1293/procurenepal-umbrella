@@ -124,6 +124,7 @@ model Company {
 
   certificates    Certificate[]
   turnovers       AnnualTurnover[]
+  bids            Bid[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -192,6 +193,10 @@ model Tender {
   awardMethod       String?
   ruleSetId         String?
   notes             String?
+  // Task 1 — bid information (values stated in the IFB)
+  bidSecurityAmount Decimal? @db.Decimal(15, 2)
+  bidValidityDays   Int?
+  bids              Bid[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
@@ -250,4 +255,47 @@ model AuditLog {
   createdAt   DateTime @default(now())
 
   @@index([tenantId, createdAt])
+}
+
+// ==================== BID INFORMATION (Task 1) ====================
+// One bid record per tender per bidding company (the lead partner for a JV).
+// Bid prices stay inside the workspace (tenantId) — never compared across customers.
+model Bid {
+  id                        String    @id @default(uuid())
+  tenantId                  String
+  tenderId                  String
+  tender                    Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  companyId                 String
+  company                   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bidderType                String    @default("SINGLE") // SINGLE | JV
+  jvPartners                Json?     // [{ companyId, name, share, isLead }]
+  decision                  String    @default("UNDECIDED") // UNDECIDED | BID | NO_BID
+  decisionReason            String?
+  status                    String    @default("PREPARING")
+  statusHistory             Json?     // [{ status, at, byUserId }]
+  bidAmount                 Decimal?  @db.Decimal(15, 2)
+  submittedAt               DateTime?
+  openingDate               DateTime?
+  rank                      Int?
+  bidSecurityAmount         Decimal?  @db.Decimal(15, 2)
+  bidSecurityType           String?   // BANK_GUARANTEE | CASH_DEPOSIT | INSURANCE_BOND | DECLARATION
+  bidSecurityBank           String?
+  bidSecurityRef            String?
+  bidSecurityIssueDate      DateTime?
+  bidSecurityExpiry         DateTime?
+  bidValidityExpiry         DateTime?
+  intentionDate             DateTime?
+  awardDate                 DateTime?
+  contractSignDate          DateTime?
+  contractAmount            Decimal?  @db.Decimal(15, 2)
+  performanceSecurityAmount Decimal?  @db.Decimal(15, 2)
+  performanceSecurityExpiry DateTime?
+  checklist                 Json?     // [{ key, label, done, note }]
+  notes                     String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @default(now()) @updatedAt
+
+  @@unique([tenderId, companyId])
+  @@index([tenantId])
+  @@index([tenantId, status])
 }

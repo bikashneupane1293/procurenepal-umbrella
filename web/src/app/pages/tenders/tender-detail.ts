@@ -7,6 +7,7 @@ import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { QualResult, verdictText } from '../../shared/qual-result';
 import { showBoth } from '../../core/nepali-date';
+import { STATUS_LABEL } from '../../core/bid-labels';
 
 const loadReport = () => import('../../core/report');
 
@@ -55,6 +56,33 @@ interface JvRow { companyId: string; share: number | null; }
         }
         @if (!hasRequirements()) {
           <div class="msg info" style="margin-top:12px">This tender has no cost estimate or requirements yet, so only the licence and running contracts can be checked. <a class="link" [routerLink]="['/tenders']" [queryParams]="{ edit: t.id }">Add requirements →</a></div>
+        }
+      </div>
+
+      <!-- Bid information (Task 1) -->
+      <div class="panel no-print">
+        <div class="bar tight">
+          <h2>Bid information</h2>
+          <a class="btn light small" routerLink="/bids" [queryParams]="{ tender: t.id }">+ Create bid record</a>
+        </div>
+        @if (tenderBids().length) {
+          <div class="table-wrap"><table>
+            <thead><tr><th>Bidder</th><th>Decision</th><th>Status</th><th class="num">Bid (NPR)</th><th>Checklist</th><th></th></tr></thead>
+            <tbody>
+              @for (b of tenderBids(); track b.id) {
+                <tr>
+                  <td>{{ b.company?.name }} @if (b.bidderType === 'JV') { <span class="tag gold">JV</span> }</td>
+                  <td>{{ b.decision === 'NO_BID' ? 'No bid' : b.decision === 'BID' ? 'Bid' : 'Undecided' }}</td>
+                  <td><span class="tag">{{ statusLabel(b.status) }}</span></td>
+                  <td class="num">{{ b.bidAmount != null ? (num(b.bidAmount) | number: '1.0-0') : '—' }}</td>
+                  <td>{{ (b.checklist ?? []).filter(isDone).length }}/{{ (b.checklist ?? []).length }}</td>
+                  <td><a class="link" routerLink="/bids" [queryParams]="{ bid: b.id }">Open →</a></td>
+                </tr>
+              }
+            </tbody>
+          </table></div>
+        } @else {
+          <p class="help">No bid record yet. Create one to track the bid / no-bid decision, bid security, document checklist and the result.</p>
         }
       </div>
 
@@ -239,6 +267,9 @@ export class TenderDetailPage {
   jvError = signal('');
   history = signal<any[]>([]);
   jvResults = signal<any[]>([]);
+  tenderBids = signal<any[]>([]);
+  statusLabel(s: string) { return STATUS_LABEL[s] ?? s; }
+  isDone = (c: any) => !!c.done;
 
   jvRows: JvRow[] = [{ companyId: '', share: 60 }, { companyId: '', share: 40 }];
   leadIndex = 0;
@@ -252,6 +283,7 @@ export class TenderDetailPage {
     });
     this.data.getCompanies().subscribe({ next: (l) => this.companies.set(l), error: () => {} });
     this.loadHistory();
+    this.data.getBids({ tenderId: this.id }).subscribe({ next: (l) => this.tenderBids.set(l), error: () => {} });
   }
 
   num(v: any) { return v == null ? 0 : Number(v); }
