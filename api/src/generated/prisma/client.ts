@@ -114,3 +114,8 @@ export type Project = Prisma.ProjectModel
  * 
  */
 export type BoqItem = Prisma.BoqItemModel
+/**
+ * Model ErpRecord
+ * 
+ */
+export type ErpRecord = Prisma.ErpRecordModel

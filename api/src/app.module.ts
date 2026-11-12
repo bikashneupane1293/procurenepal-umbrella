@@ -18,6 +18,7 @@ import { AccessModule } from './access/access.module';
 import { BidModule } from './bid/bid.module';
 import { BankModule } from './bank/bank.module';
 import { ProjectModule } from './project/project.module';
+import { ErpModule } from './erp/erp.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProjectModule } from './project/project.module';
     BidModule,
     BankModule,
     ProjectModule,
+    ErpModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -411,7 +411,8 @@ export const ModelName = {
   Bank: 'Bank',
   BankGuarantee: 'BankGuarantee',
   Project: 'Project',
-  BoqItem: 'BoqItem'
+  BoqItem: 'BoqItem',
+  ErpRecord: 'ErpRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem" | "erpRecord"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1541,6 +1542,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ErpRecord: {
+      payload: Prisma.$ErpRecordPayload<ExtArgs>
+      fields: Prisma.ErpRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ErpRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ErpRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.ErpRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ErpRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        findMany: {
+          args: Prisma.ErpRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>[]
+        }
+        create: {
+          args: Prisma.ErpRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        createMany: {
+          args: Prisma.ErpRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ErpRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.ErpRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        update: {
+          args: Prisma.ErpRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.ErpRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ErpRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ErpRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.ErpRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ErpRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.ErpRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateErpRecord>
+        }
+        groupBy: {
+          args: Prisma.ErpRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ErpRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ErpRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ErpRecordCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1930,6 +2005,26 @@ export const BoqItemScalarFieldEnum = {
 export type BoqItemScalarFieldEnum = (typeof BoqItemScalarFieldEnum)[keyof typeof BoqItemScalarFieldEnum]
 
 
+export const ErpRecordScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  entity: 'entity',
+  number: 'number',
+  status: 'status',
+  companyId: 'companyId',
+  projectId: 'projectId',
+  date: 'date',
+  total: 'total',
+  data: 'data',
+  lines: 'lines',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ErpRecordScalarFieldEnum = (typeof ErpRecordScalarFieldEnum)[keyof typeof ErpRecordScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1944,6 +2039,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -2275,6 +2377,7 @@ export type GlobalOmitConfig = {
   bankGuarantee?: Prisma.BankGuaranteeOmit
   project?: Prisma.ProjectOmit
   boqItem?: Prisma.BoqItemOmit
+  erpRecord?: Prisma.ErpRecordOmit
 }
 
 /* Types for Logging */

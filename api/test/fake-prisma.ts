@@ -11,7 +11,7 @@ const DECIMAL_FIELDS = new Set([
   'boqAmount', 'reqTurnover', 'reqMinProduction', 'reqBidCapacity', 'reqSimilarValue',
   'turnoverAact', 'turnoverRequired', 'amount',
   'bidAmount', 'bidSecurityAmount', 'contractAmount', 'performanceSecurityAmount',
-  'quantity', 'rate', 'advancePct', 'retentionPct',
+  'total', 'quantity', 'rate', 'advancePct', 'retentionPct',
   'bgLimit', 'defaultMarginPct', 'defaultCommissionPct', 'marginPct', 'marginAmount', 'commissionPct', 'commissionAmount',
 ]);
 function decimals(row: Row): Row {
@@ -59,6 +59,7 @@ const DEFAULTS: Record<string, () => Row> = {
   bank: () => ({ isActive: true, createdAt: new Date(), updatedAt: new Date() }),
   project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
   boqItem: () => ({ isHeading: false, createdAt: new Date() }),
+  erpRecord: () => ({ createdAt: new Date(), updatedAt: new Date() }),
   bankGuarantee: () => ({ status: 'ACTIVE', source: 'MANUAL', bankId: null, bidId: null, tenderId: null, projectId: null, createdAt: new Date(), updatedAt: new Date() }),
 };
 
@@ -66,7 +67,7 @@ export class FakePrisma {
   db: Record<string, Row[]> = {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
-    bank: [], bankGuarantee: [], project: [], boqItem: [],
+    bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -196,6 +197,7 @@ export class FakePrisma {
   bankGuarantee = this.model('bankGuarantee');
   project = this.model('project');
   boqItem = this.model('boqItem');
+  erpRecord = this.model('erpRecord');
 
   async $transaction(ops: Promise<any>[]) {
     const out: any[] = [];

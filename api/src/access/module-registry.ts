@@ -20,11 +20,11 @@ export interface ModuleDef {
 export const MODULES: ModuleDef[] = [
   { key: 'companies', name: 'Companies', core: true, status: 'built' },
   { key: 'bolpatra', name: 'Bolpatra eGP System', status: 'built' },
-  { key: 'procurement', name: 'Procurement & Inventory Management', status: 'planned' },
-  { key: 'fleet', name: 'Vehicle & Fleet Management', status: 'planned' },
-  { key: 'hr', name: 'HR and Operations', status: 'planned' },
-  { key: 'project', name: 'Project Management', status: 'partial' },
-  { key: 'bank', name: 'Bank System', status: 'partial' },
+  { key: 'procurement', name: 'Procurement & Inventory Management', status: 'built' },
+  { key: 'fleet', name: 'Vehicle & Fleet Management', status: 'built' },
+  { key: 'hr', name: 'HR and Operations', status: 'built' },
+  { key: 'project', name: 'Project Management', status: 'built' },
+  { key: 'bank', name: 'Bank System', status: 'built' },
 ];
 
 export const MODULE_KEYS = MODULES.map((m) => m.key);

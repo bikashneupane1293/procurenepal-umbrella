@@ -448,3 +448,28 @@ model BoqItem {
   @@index([projectId])
   @@index([tenantId])
 }
+
+// ==================== ERP ENGINE (Task 4) ====================
+// One table for the registers and documents of Procurement & Inventory, Vehicle & Fleet,
+// HR, Project Management (schedule, progress, petty contractors …) and Bank (loans, LC, assets).
+// What each "entity" holds is defined in api/src/erp/erp.registry.ts.
+model ErpRecord {
+  id        String    @id @default(uuid())
+  tenantId  String
+  entity    String    // e.g. "proc.po"
+  number    String?   // document number from the number series
+  status    String?
+  companyId String?
+  projectId String?
+  date      DateTime?
+  total     Decimal?  @db.Decimal(18, 2)
+  data      Json
+  lines     Json?
+  createdBy String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  @@index([tenantId, entity])
+  @@index([tenantId, entity, status])
+  @@index([tenantId, projectId])
+}

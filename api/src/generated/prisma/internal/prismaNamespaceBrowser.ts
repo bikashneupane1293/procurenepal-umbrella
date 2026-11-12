@@ -65,7 +65,8 @@ export const ModelName = {
   Bank: 'Bank',
   BankGuarantee: 'BankGuarantee',
   Project: 'Project',
-  BoqItem: 'BoqItem'
+  BoqItem: 'BoqItem',
+  ErpRecord: 'ErpRecord'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -434,6 +435,26 @@ export const BoqItemScalarFieldEnum = {
 export type BoqItemScalarFieldEnum = (typeof BoqItemScalarFieldEnum)[keyof typeof BoqItemScalarFieldEnum]
 
 
+export const ErpRecordScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  entity: 'entity',
+  number: 'number',
+  status: 'status',
+  companyId: 'companyId',
+  projectId: 'projectId',
+  date: 'date',
+  total: 'total',
+  data: 'data',
+  lines: 'lines',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ErpRecordScalarFieldEnum = (typeof ErpRecordScalarFieldEnum)[keyof typeof ErpRecordScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -448,6 +469,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

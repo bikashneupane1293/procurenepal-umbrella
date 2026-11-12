@@ -176,6 +176,24 @@ export class DataService {
     return this.http.put(`${API_URL}/projects/${projectId}/boq`, { items, mode });
   }
 
+  // ---------- ERP engine (Procurement, Fleet, HR, Project registers, Bank loans / LC / assets) ----------
+  erpMenu(id: string): Observable<any> { return this.http.get(`${API_URL}/erp/menu/${id}`); }
+  erpOptions(ref: string, projectId?: string): Observable<any[]> {
+    return this.http.get(`${API_URL}/erp/options/${ref}${projectId ? '?projectId=' + encodeURIComponent(projectId) : ''}`).pipe(map(toList));
+  }
+  erpList(entity: string): Observable<any[]> { return this.http.get(`${API_URL}/erp/records/${entity}`).pipe(map(toList)); }
+  erpGet(entity: string, id: string): Observable<any> { return this.http.get(`${API_URL}/erp/records/${entity}/${id}`); }
+  erpCreate(entity: string, body: any): Observable<any> { return this.http.post(`${API_URL}/erp/records/${entity}`, body); }
+  erpUpdate(entity: string, id: string, body: any): Observable<any> { return this.http.patch(`${API_URL}/erp/records/${entity}/${id}`, body); }
+  erpDelete(entity: string, id: string): Observable<any> { return this.http.delete(`${API_URL}/erp/records/${entity}/${id}`); }
+  erpAction(name: string, body: any): Observable<any> { return this.http.post(`${API_URL}/erp/actions/${name}`, body); }
+  erpReport(name: string, params: Record<string, string> = {}): Observable<any> {
+    const q = Object.entries(params).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    return this.http.get(`${API_URL}/erp/reports/${name}${q ? '?' + q : ''}`);
+  }
+  erpDatasets(): Observable<any[]> { return this.http.get(`${API_URL}/erp/csv`).pipe(map(toList)); }
+  erpDataset(key: string): Observable<any> { return this.http.get(`${API_URL}/erp/csv/${key}`); }
+
   // ---------- Bolpatra Reports ----------
   getReport(days = 30): Observable<any> {
     return this.http.get(`${API_URL}/bolpatra/reports?days=${days}`);
