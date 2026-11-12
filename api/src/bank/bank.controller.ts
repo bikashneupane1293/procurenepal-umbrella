@@ -51,9 +51,10 @@ export class BankController {
   list(
     @CurrentUser('tenantId') tenantId: string,
     @Query('status') status?: string, @Query('type') type?: string, @Query('companyId') companyId?: string,
-    @Query('bankId') bankId?: string, @Query('bidId') bidId?: string, @Query('tenderId') tenderId?: string, @Query('days') d?: string,
+    @Query('bankId') bankId?: string, @Query('bidId') bidId?: string, @Query('tenderId') tenderId?: string, @Query('projectId') projectId?: string,
+    @Query('days') d?: string,
   ) {
-    return this.guarantees.list(tenantId, { status, type, companyId, bankId, bidId, tenderId }, days(d));
+    return this.guarantees.list(tenantId, { status, type, companyId, bankId, bidId, tenderId, projectId }, days(d));
   }
   @Get('bank-guarantees/:id')
   get(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {

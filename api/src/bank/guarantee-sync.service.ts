@@ -78,12 +78,13 @@ export class GuaranteeSyncService {
       if (manual) {
         await this.prisma.bankGuarantee.update({
           where: { id: manual.id },
-          data: { bidId: bid.id, tenderId: bid.tenderId, type, history: [...((manual.history as any[]) ?? []), { at, byUserId: userId, action: 'LINKED_TO_BID' }] },
+          data: { bidId: bid.id, tenderId: bid.tenderId, type, projectId: (await this.prisma.project.findFirst({ where: { tenantId, bidId: bid.id }, select: { id: true } }))?.id ?? manual.projectId ?? null, history: [...((manual.history as any[]) ?? []), { at, byUserId: userId, action: 'LINKED_TO_BID' }] },
         });
         return 'linked';
       }
     }
     const bankName = from.bankName || (type === 'PERFORMANCE' ? bid.bidSecurityBank : null) || 'Bank to be confirmed';
+    const project: any = await this.prisma.project.findFirst({ where: { tenantId, bidId: bid.id }, select: { id: true } });
     const banks: any[] = await this.prisma.bank.findMany({ where: { tenantId, companyId: bid.companyId } });
     const bank = banks.find((b) => b.name.trim().toLowerCase() === String(bankName).trim().toLowerCase());
     const amount = n(from.amount);
@@ -103,6 +104,7 @@ export class GuaranteeSyncService {
         guaranteeNo: from.guaranteeNo ?? null,
         bidId: bid.id,
         tenderId: bid.tenderId,
+        projectId: project?.id ?? null,
         beneficiary: bid.tender?.procuringEntity ?? null,
         purpose: `${type === 'BID_SECURITY' ? 'Bid security' : 'Performance security'} — ${bid.tender?.ifbNumber ?? ''} ${bid.tender?.projectTitle ?? ''}`.trim(),
         amount,

@@ -227,6 +227,7 @@ export type CompanyWhereInput = {
   bids?: Prisma.BidListRelationFilter
   banks?: Prisma.BankListRelationFilter
   guarantees?: Prisma.BankGuaranteeListRelationFilter
+  projects?: Prisma.ProjectListRelationFilter
 }
 
 export type CompanyOrderByWithRelationInput = {
@@ -245,6 +246,7 @@ export type CompanyOrderByWithRelationInput = {
   bids?: Prisma.BidOrderByRelationAggregateInput
   banks?: Prisma.BankOrderByRelationAggregateInput
   guarantees?: Prisma.BankGuaranteeOrderByRelationAggregateInput
+  projects?: Prisma.ProjectOrderByRelationAggregateInput
 }
 
 export type CompanyWhereUniqueInput = Prisma.AtLeast<{
@@ -267,6 +269,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   bids?: Prisma.BidListRelationFilter
   banks?: Prisma.BankListRelationFilter
   guarantees?: Prisma.BankGuaranteeListRelationFilter
+  projects?: Prisma.ProjectListRelationFilter
 }, "id" | "tenantId_slug">
 
 export type CompanyOrderByWithAggregationInput = {
@@ -317,6 +320,7 @@ export type CompanyCreateInput = {
   bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateInput = {
@@ -335,6 +339,7 @@ export type CompanyUncheckedCreateInput = {
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUpdateInput = {
@@ -353,6 +358,7 @@ export type CompanyUpdateInput = {
   bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateInput = {
@@ -371,6 +377,7 @@ export type CompanyUncheckedUpdateInput = {
   bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateManyInput = {
@@ -531,6 +538,20 @@ export type CompanyUpdateOneRequiredWithoutGuaranteesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutGuaranteesInput, Prisma.CompanyUpdateWithoutGuaranteesInput>, Prisma.CompanyUncheckedUpdateWithoutGuaranteesInput>
 }
 
+export type CompanyCreateNestedOneWithoutProjectsInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutProjectsInput, Prisma.CompanyUncheckedCreateWithoutProjectsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutProjectsInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutProjectsNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutProjectsInput, Prisma.CompanyUncheckedCreateWithoutProjectsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutProjectsInput
+  upsert?: Prisma.CompanyUpsertWithoutProjectsInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutProjectsInput, Prisma.CompanyUpdateWithoutProjectsInput>, Prisma.CompanyUncheckedUpdateWithoutProjectsInput>
+}
+
 export type CompanyCreateWithoutCertificatesInput = {
   id?: string
   tenantId: string
@@ -546,6 +567,7 @@ export type CompanyCreateWithoutCertificatesInput = {
   bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutCertificatesInput = {
@@ -563,6 +585,7 @@ export type CompanyUncheckedCreateWithoutCertificatesInput = {
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutCertificatesInput = {
@@ -596,6 +619,7 @@ export type CompanyUpdateWithoutCertificatesInput = {
   bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutCertificatesInput = {
@@ -613,6 +637,7 @@ export type CompanyUncheckedUpdateWithoutCertificatesInput = {
   bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutTurnoversInput = {
@@ -630,6 +655,7 @@ export type CompanyCreateWithoutTurnoversInput = {
   bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutTurnoversInput = {
@@ -647,6 +673,7 @@ export type CompanyUncheckedCreateWithoutTurnoversInput = {
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutTurnoversInput = {
@@ -680,6 +707,7 @@ export type CompanyUpdateWithoutTurnoversInput = {
   bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutTurnoversInput = {
@@ -697,6 +725,7 @@ export type CompanyUncheckedUpdateWithoutTurnoversInput = {
   bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutBidsInput = {
@@ -714,6 +743,7 @@ export type CompanyCreateWithoutBidsInput = {
   turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutBidsInput = {
@@ -731,6 +761,7 @@ export type CompanyUncheckedCreateWithoutBidsInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutBidsInput = {
@@ -764,6 +795,7 @@ export type CompanyUpdateWithoutBidsInput = {
   turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutBidsInput = {
@@ -781,6 +813,7 @@ export type CompanyUncheckedUpdateWithoutBidsInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutBanksInput = {
@@ -798,6 +831,7 @@ export type CompanyCreateWithoutBanksInput = {
   turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
   bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutBanksInput = {
@@ -815,6 +849,7 @@ export type CompanyUncheckedCreateWithoutBanksInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutBanksInput = {
@@ -848,6 +883,7 @@ export type CompanyUpdateWithoutBanksInput = {
   turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
   bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutBanksInput = {
@@ -865,6 +901,7 @@ export type CompanyUncheckedUpdateWithoutBanksInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
   bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutGuaranteesInput = {
@@ -882,6 +919,7 @@ export type CompanyCreateWithoutGuaranteesInput = {
   turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
   bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutGuaranteesInput = {
@@ -899,6 +937,7 @@ export type CompanyUncheckedCreateWithoutGuaranteesInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
   banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutGuaranteesInput = {
@@ -932,6 +971,7 @@ export type CompanyUpdateWithoutGuaranteesInput = {
   turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
   bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutGuaranteesInput = {
@@ -949,6 +989,95 @@ export type CompanyUncheckedUpdateWithoutGuaranteesInput = {
   turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
   bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
   banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutProjectsInput = {
+  id?: string
+  tenantId: string
+  name: string
+  slug: string
+  panVat?: string | null
+  licenseClass?: string | null
+  licenseExpiry?: Date | string | null
+  address?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  certificates?: Prisma.CertificateCreateNestedManyWithoutCompanyInput
+  turnovers?: Prisma.AnnualTurnoverCreateNestedManyWithoutCompanyInput
+  bids?: Prisma.BidCreateNestedManyWithoutCompanyInput
+  banks?: Prisma.BankCreateNestedManyWithoutCompanyInput
+  guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutProjectsInput = {
+  id?: string
+  tenantId: string
+  name: string
+  slug: string
+  panVat?: string | null
+  licenseClass?: string | null
+  licenseExpiry?: Date | string | null
+  address?: string | null
+  isActive?: boolean
+  createdAt?: Date | string
+  certificates?: Prisma.CertificateUncheckedCreateNestedManyWithoutCompanyInput
+  turnovers?: Prisma.AnnualTurnoverUncheckedCreateNestedManyWithoutCompanyInput
+  bids?: Prisma.BidUncheckedCreateNestedManyWithoutCompanyInput
+  banks?: Prisma.BankUncheckedCreateNestedManyWithoutCompanyInput
+  guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutProjectsInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutProjectsInput, Prisma.CompanyUncheckedCreateWithoutProjectsInput>
+}
+
+export type CompanyUpsertWithoutProjectsInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutProjectsInput, Prisma.CompanyUncheckedUpdateWithoutProjectsInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutProjectsInput, Prisma.CompanyUncheckedCreateWithoutProjectsInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutProjectsInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutProjectsInput, Prisma.CompanyUncheckedUpdateWithoutProjectsInput>
+}
+
+export type CompanyUpdateWithoutProjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  panVat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  certificates?: Prisma.CertificateUpdateManyWithoutCompanyNestedInput
+  turnovers?: Prisma.AnnualTurnoverUpdateManyWithoutCompanyNestedInput
+  bids?: Prisma.BidUpdateManyWithoutCompanyNestedInput
+  banks?: Prisma.BankUpdateManyWithoutCompanyNestedInput
+  guarantees?: Prisma.BankGuaranteeUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutProjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  panVat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  licenseExpiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  certificates?: Prisma.CertificateUncheckedUpdateManyWithoutCompanyNestedInput
+  turnovers?: Prisma.AnnualTurnoverUncheckedUpdateManyWithoutCompanyNestedInput
+  bids?: Prisma.BidUncheckedUpdateManyWithoutCompanyNestedInput
+  banks?: Prisma.BankUncheckedUpdateManyWithoutCompanyNestedInput
+  guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 
@@ -962,6 +1091,7 @@ export type CompanyCountOutputType = {
   bids: number
   banks: number
   guarantees: number
+  projects: number
 }
 
 export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -970,6 +1100,7 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   bids?: boolean | CompanyCountOutputTypeCountBidsArgs
   banks?: boolean | CompanyCountOutputTypeCountBanksArgs
   guarantees?: boolean | CompanyCountOutputTypeCountGuaranteesArgs
+  projects?: boolean | CompanyCountOutputTypeCountProjectsArgs
 }
 
 /**
@@ -1017,6 +1148,13 @@ export type CompanyCountOutputTypeCountGuaranteesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.BankGuaranteeWhereInput
 }
 
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountProjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectWhereInput
+}
+
 
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1034,6 +1172,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   bids?: boolean | Prisma.Company$bidsArgs<ExtArgs>
   banks?: boolean | Prisma.Company$banksArgs<ExtArgs>
   guarantees?: boolean | Prisma.Company$guaranteesArgs<ExtArgs>
+  projects?: boolean | Prisma.Company$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["company"]>
 
@@ -1083,6 +1222,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   bids?: boolean | Prisma.Company$bidsArgs<ExtArgs>
   banks?: boolean | Prisma.Company$banksArgs<ExtArgs>
   guarantees?: boolean | Prisma.Company$guaranteesArgs<ExtArgs>
+  projects?: boolean | Prisma.Company$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CompanyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1096,6 +1236,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     bids: Prisma.$BidPayload<ExtArgs>[]
     banks: Prisma.$BankPayload<ExtArgs>[]
     guarantees: Prisma.$BankGuaranteePayload<ExtArgs>[]
+    projects: Prisma.$ProjectPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1507,6 +1648,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   bids<T extends Prisma.Company$bidsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$bidsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BidPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   banks<T extends Prisma.Company$banksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$banksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BankPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   guarantees<T extends Prisma.Company$guaranteesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$guaranteesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BankGuaranteePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  projects<T extends Prisma.Company$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2056,6 +2198,30 @@ export type Company$guaranteesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.BankGuaranteeScalarFieldEnum | Prisma.BankGuaranteeScalarFieldEnum[]
+}
+
+/**
+ * Company.projects
+ */
+export type Company$projectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Project
+   */
+  select?: Prisma.ProjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Project
+   */
+  omit?: Prisma.ProjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectInclude<ExtArgs> | null
+  where?: Prisma.ProjectWhereInput
+  orderBy?: Prisma.ProjectOrderByWithRelationInput | Prisma.ProjectOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectScalarFieldEnum | Prisma.ProjectScalarFieldEnum[]
 }
 
 /**

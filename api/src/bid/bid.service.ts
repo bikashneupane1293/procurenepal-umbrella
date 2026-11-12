@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBidDto, UpdateBidDto } from './dto/bid.dto';
 import { GuaranteeSyncService } from '../bank/guarantee-sync.service';
+import { ProjectSyncService } from '../project/project-sync.service';
 import { defaultChecklist, SUBMITTED_ONWARDS, tenderStatusFromBids } from './bid.constants';
 
 const CAN_DELETE_BID = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'];
@@ -26,7 +27,7 @@ const PLAIN_FIELDS = [
  */
 @Injectable()
 export class BidService {
-  constructor(private prisma: PrismaService, private guarantees: GuaranteeSyncService) {}
+  constructor(private prisma: PrismaService, private guarantees: GuaranteeSyncService, private projects: ProjectSyncService) {}
 
   private include = {
     tender: { select: { id: true, ifbNumber: true, projectTitle: true, procuringEntity: true, deadlineDate: true, boqAmount: true, status: true, bidSecurityAmount: true, bidValidityDays: true } },
@@ -58,7 +59,9 @@ export class BidService {
       where: { tenantId, bidId: id },
       select: { id: true, type: true, status: true, guaranteeNo: true, bankName: true, amount: true, expiryDate: true },
     });
-    return { ...bid, qualification: qualification && qualification.tenantId === tenantId ? qualification : null, guarantees };
+    // background link: the project made from this bid, if any
+    const project = await this.prisma.project.findFirst({ where: { tenantId, bidId: id }, select: { id: true, code: true, name: true, status: true } });
+    return { ...bid, qualification: qualification && qualification.tenantId === tenantId ? qualification : null, guarantees, project };
   }
 
   /** Validates JV partners against the workspace and returns them with names. */
@@ -134,6 +137,7 @@ export class BidService {
     const bid = await this.prisma.bid.create({ data, include: this.include });
     await this.syncTender(tenantId, dto.tenderId);
     await this.guarantees.fromBid(tenantId, bid.id, userId);
+    await this.projects.fromBid(tenantId, bid.id, userId, true); // a contract-signed bid becomes a project
     return bid;
   }
 
@@ -160,6 +164,7 @@ export class BidService {
     const saved = await this.prisma.bid.update({ where: { id }, data, include: this.include });
     await this.syncTender(tenantId, bid.tenderId);
     await this.guarantees.fromBid(tenantId, id, userId);
+    await this.projects.fromBid(tenantId, id, userId, true); // a contract-signed bid becomes a project
     return saved;
   }
 

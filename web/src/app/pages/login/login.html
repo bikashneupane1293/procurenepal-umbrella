@@ -40,7 +40,17 @@
       </div>
 
       <h2 class="text-3xl font-bold text-navy-900 mb-2 font-display">Welcome back</h2>
-      <p class="text-gray-600 mb-8">Sign in to your workspace</p>
+      <p class="text-gray-600 mb-4">Sign in to your workspace</p>
+      <div class="mb-6 text-sm" [ngSwitch]="server">
+        <div *ngSwitchCase="'waking'" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+          ⏳ Waking up the server — after a quiet spell it takes up to a minute. You can type your email and password meanwhile.
+        </div>
+        <div *ngSwitchCase="'ready'" class="text-green-700">● Server ready</div>
+        <div *ngSwitchCase="'offline'" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          The server did not answer. Check your internet connection, then reload this page.
+        </div>
+        <div *ngSwitchDefault class="text-gray-500">○ Connecting to the server…</div>
+      </div>
 
       <form (ngSubmit)="onSubmit()" class="space-y-5">
         <div>
@@ -74,6 +84,10 @@
         >
           {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
+
+        <div *ngIf="slowLogin" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+          ⏳ Still signing in — the server is starting up. Please keep this page open (up to a minute).
+        </div>
 
         <div *ngIf="errorMsg" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {{ errorMsg }}

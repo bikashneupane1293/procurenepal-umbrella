@@ -56,6 +56,19 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 - Web: `/banks` and `/bank-guarantees` (summary cards, needs-attention list, limit use per bank, filters, form with guarantee-PDF reading incl. advance / retention detection, mark released, history, Excel template / import / export, "Bring in from bids"); the bid form links to its guarantees.
 - Verified in sandbox: API e2e 49 (bank 11 new), unit 81, browser 132 checks (bank 29 new).
 
+## Task 3 — Project Management: Project Information + BOQ
+- Schema (additive): new tables `Project` (company, tender, bid (unique), code unique per workspace, client, location, contract no / amount (excl. VAT), signing / start / intended / revised / actual completion, period months, defect liability months, advance %, retention %, JV partners, manager, client's engineer, status + history) and `BoqItem` (item no, section, description, unit, quantity (3 dp), rate (2 dp), amount, heading flag); new nullable column `BankGuarantee.projectId` (SetNull). Tender / Bid deletion keeps the project (unlinked); Company deletion removes it; Project deletion removes its BOQ and unlinks guarantees.
+- Background links: a bid saved as CONTRACT_SIGNED becomes a project automatically (code P-001 …, status MOBILIZING, contract amount = contract amount or bid amount, start = signing date, intended completion = start + tender period months, JV partners copied); an AWARDED bid becomes a project with "Create project →" (bid page or Project Information); the bid's guarantees move to the project, and later guarantees of that bid follow; guarantees can be linked to a project directly (same contractor company). Works even when the Project module is switched off.
+- Alerts (guidance): overdue / due within 30 days (uses revised completion if set), BOQ total ≠ contract amount (> 0.1 %), no BOQ yet, performance guarantee expiring before completion, project guarantee expiring.
+- BOQ: amount = quantity × rate computed exactly in integer units (no floating-point drift); a typed amount that differs is reported and not used; lines without quantity and rate are headings; replace or append; max 5,000 lines (API JSON limit raised to 5 MB in `main.ts`). Excel reader finds the header row by itself (S.N./Item No, Description, Unit, Qty, Rate, Amount, Remarks — also Nepali headings), reads every bill sheet, skips Total / Sub-total / Grand total / carried-forward rows.
+- API (module `project`): `GET/POST /projects`, `GET /projects/won-bids`, `POST /projects/from-bid/:bidId`, `GET/PATCH/DELETE /projects/:id`, `GET/PUT /projects/:id/boq`; `GET /bank-guarantees?projectId=`. Delete: Owner / Super Admin / Director.
+- Web: `/projects` (won bids waiting, cards, filters, new project, Excel template / import / export), `/projects/:id` (Information / BOQ / Bank guarantees tabs; BOQ upload with preview + replace/append, inline edit, export), `/boq` (BOQ menu → choose project); bid page shows its project or "Create project →"; guarantee form has a Project field and "+ Add guarantee" from a project.
+- Login page wakes the API as soon as it opens (Render free plan sleeps after 15 min idle, ~1 min to wake) and explains the wait.
+- Verified in sandbox: API e2e 58 (projects 9 new), unit 81, browser 160 checks (projects 28 new).
+
+## Deployment conventions
+- cPanel zip goes to `~/Downloads/procurenepal-web.zip`; delete the old zip first (`rm -f`), otherwise `zip` adds to it and old chunk files are uploaded too.
+
 ## Decisions recorded
 
 - JV rules follow a published Nepal IFB (similar = one partner, key activities = combined, turnover 100/25/40).
@@ -69,6 +82,6 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 1. Deploy 6.4A/6.4B/6.5 (db push → git push → Render → cPanel) — needs owner approval.
 2. Phase 6.5 rest: Nepali/English UI toggle, full bidder profile (personnel, equipment, financials, litigation), document vault + expiry alerts.
 3. Phase 6.6: certificate PDF upload (Cloudflare R2) + auto-fill; PDFs in ZIP; average-bid price scenario tool.
-4. Phase 6.7: EXP/FIN/ELI form autofill; won tender → Project (with its performance / advance guarantees).
+4. Phase 6.7: EXP/FIN/ELI form autofill; project progress → experience certificate.
 5. Admin panel + subscription plans; eSewa/Khalti; WhatsApp OTP; WordPress site.
 6. After full deployment: rotate admin + Supabase DB passwords; Render Starter.

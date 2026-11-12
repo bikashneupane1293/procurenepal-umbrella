@@ -12,6 +12,7 @@ export class CreateGuaranteeDto {
   @IsOptional() @IsString() @MaxLength(80) guaranteeNo?: string;
   @IsOptional() @IsString() @MaxLength(64) bidId?: string | null;
   @IsOptional() @IsString() @MaxLength(64) tenderId?: string | null;
+  @IsOptional() @IsString() @MaxLength(64) projectId?: string | null;
   @IsOptional() @IsString() @MaxLength(200) beneficiary?: string;
   @IsOptional() @IsString() @MaxLength(300) purpose?: string;
   @IsNumber() @Min(1) amount!: number;

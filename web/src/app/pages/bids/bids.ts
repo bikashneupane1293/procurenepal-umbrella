@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { DataService, errorText } from '../../core/data.service';
 import { AuthService } from '../../core/auth.service';
@@ -195,6 +195,12 @@ interface PartnerRow { companyId: string; share: number | null; }
             <input type="number" min="0" name="ca" [(ngModel)]="f.contractAmount" />
             <div class="help tax">Enter taxable amount only (excluding VAT)</div></div>
         </div>
+        @if (b.project; as pr) {
+          <div class="bglink">🏗️ Project: <a class="tag gold" [routerLink]="['/projects', pr.id]">{{ pr.code }} — {{ pr.name }} →</a></div>
+        } @else if (b.status === 'AWARDED' || b.status === 'CONTRACT_SIGNED') {
+          <div class="bglink">🏗️ This bid is won. <button type="button" class="btn small" (click)="makeProject(b)" [disabled]="saving()">Create project →</button>
+            <span class="help">(a bid saved as "Contract signed" becomes a project by itself)</span></div>
+        }
         <h4>Performance security</h4>
         <app-pdf-fill kind="guarantee" (filled)="fromPdf($event, 'performance')" />
         <div class="grid">
@@ -302,6 +308,7 @@ export class BidsPage {
   private data = inject(DataService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   canDelete = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'].includes(this.auth.getUser()?.role);
   statuses = Object.keys(STATUS_LABEL);
@@ -461,9 +468,21 @@ export class BidsPage {
     this.saving.set(true);
     try {
       await firstValueFrom(this.data.updateBid(b.id, body));
-      this.okMsg.set(`✅ Bid saved (${this.label(body.status)}). The tender's status was updated automatically.`);
+      this.okMsg.set(`✅ Bid saved (${this.label(body.status)}). The tender's status was updated automatically.${body.status === 'CONTRACT_SIGNED' ? ' The project was created / kept up to date in Project Information.' : ''}`);
       this.load();
       await this.openById(b.id);
+    } catch (e) {
+      this.formError.set(errorText(e));
+    }
+    this.saving.set(false);
+  }
+
+  async makeProject(b: any) {
+    this.formError.set('');
+    this.saving.set(true);
+    try {
+      const p = await firstValueFrom(this.data.createProjectFromBid(b.id));
+      this.router.navigate(['/projects', p.id], { queryParams: { created: 1 } });
     } catch (e) {
       this.formError.set(errorText(e));
     }

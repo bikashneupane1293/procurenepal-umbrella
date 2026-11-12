@@ -53,6 +53,7 @@ export type BankGuaranteeMinAggregateOutputType = {
   guaranteeNo: string | null
   bidId: string | null
   tenderId: string | null
+  projectId: string | null
   beneficiary: string | null
   purpose: string | null
   amount: runtime.Decimal | null
@@ -84,6 +85,7 @@ export type BankGuaranteeMaxAggregateOutputType = {
   guaranteeNo: string | null
   bidId: string | null
   tenderId: string | null
+  projectId: string | null
   beneficiary: string | null
   purpose: string | null
   amount: runtime.Decimal | null
@@ -115,6 +117,7 @@ export type BankGuaranteeCountAggregateOutputType = {
   guaranteeNo: number
   bidId: number
   tenderId: number
+  projectId: number
   beneficiary: number
   purpose: number
   amount: number
@@ -165,6 +168,7 @@ export type BankGuaranteeMinAggregateInputType = {
   guaranteeNo?: true
   bidId?: true
   tenderId?: true
+  projectId?: true
   beneficiary?: true
   purpose?: true
   amount?: true
@@ -196,6 +200,7 @@ export type BankGuaranteeMaxAggregateInputType = {
   guaranteeNo?: true
   bidId?: true
   tenderId?: true
+  projectId?: true
   beneficiary?: true
   purpose?: true
   amount?: true
@@ -227,6 +232,7 @@ export type BankGuaranteeCountAggregateInputType = {
   guaranteeNo?: true
   bidId?: true
   tenderId?: true
+  projectId?: true
   beneficiary?: true
   purpose?: true
   amount?: true
@@ -346,6 +352,7 @@ export type BankGuaranteeGroupByOutputType = {
   guaranteeNo: string | null
   bidId: string | null
   tenderId: string | null
+  projectId: string | null
   beneficiary: string | null
   purpose: string | null
   amount: runtime.Decimal
@@ -401,6 +408,7 @@ export type BankGuaranteeWhereInput = {
   guaranteeNo?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   bidId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   tenderId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
+  projectId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   beneficiary?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   purpose?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   amount?: Prisma.DecimalFilter<"BankGuarantee"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -424,6 +432,7 @@ export type BankGuaranteeWhereInput = {
   bank?: Prisma.XOR<Prisma.BankNullableScalarRelationFilter, Prisma.BankWhereInput> | null
   bid?: Prisma.XOR<Prisma.BidNullableScalarRelationFilter, Prisma.BidWhereInput> | null
   tender?: Prisma.XOR<Prisma.TenderNullableScalarRelationFilter, Prisma.TenderWhereInput> | null
+  project?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
 }
 
 export type BankGuaranteeOrderByWithRelationInput = {
@@ -437,6 +446,7 @@ export type BankGuaranteeOrderByWithRelationInput = {
   guaranteeNo?: Prisma.SortOrderInput | Prisma.SortOrder
   bidId?: Prisma.SortOrderInput | Prisma.SortOrder
   tenderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  projectId?: Prisma.SortOrderInput | Prisma.SortOrder
   beneficiary?: Prisma.SortOrderInput | Prisma.SortOrder
   purpose?: Prisma.SortOrderInput | Prisma.SortOrder
   amount?: Prisma.SortOrder
@@ -460,6 +470,7 @@ export type BankGuaranteeOrderByWithRelationInput = {
   bank?: Prisma.BankOrderByWithRelationInput
   bid?: Prisma.BidOrderByWithRelationInput
   tender?: Prisma.TenderOrderByWithRelationInput
+  project?: Prisma.ProjectOrderByWithRelationInput
 }
 
 export type BankGuaranteeWhereUniqueInput = Prisma.AtLeast<{
@@ -477,6 +488,7 @@ export type BankGuaranteeWhereUniqueInput = Prisma.AtLeast<{
   guaranteeNo?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   bidId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   tenderId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
+  projectId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   beneficiary?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   purpose?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   amount?: Prisma.DecimalFilter<"BankGuarantee"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -500,6 +512,7 @@ export type BankGuaranteeWhereUniqueInput = Prisma.AtLeast<{
   bank?: Prisma.XOR<Prisma.BankNullableScalarRelationFilter, Prisma.BankWhereInput> | null
   bid?: Prisma.XOR<Prisma.BidNullableScalarRelationFilter, Prisma.BidWhereInput> | null
   tender?: Prisma.XOR<Prisma.TenderNullableScalarRelationFilter, Prisma.TenderWhereInput> | null
+  project?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
 }, "id" | "bidId_type">
 
 export type BankGuaranteeOrderByWithAggregationInput = {
@@ -513,6 +526,7 @@ export type BankGuaranteeOrderByWithAggregationInput = {
   guaranteeNo?: Prisma.SortOrderInput | Prisma.SortOrder
   bidId?: Prisma.SortOrderInput | Prisma.SortOrder
   tenderId?: Prisma.SortOrderInput | Prisma.SortOrder
+  projectId?: Prisma.SortOrderInput | Prisma.SortOrder
   beneficiary?: Prisma.SortOrderInput | Prisma.SortOrder
   purpose?: Prisma.SortOrderInput | Prisma.SortOrder
   amount?: Prisma.SortOrder
@@ -553,6 +567,7 @@ export type BankGuaranteeScalarWhereWithAggregatesInput = {
   guaranteeNo?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
   bidId?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
   tenderId?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
+  projectId?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
   beneficiary?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
   purpose?: Prisma.StringNullableWithAggregatesFilter<"BankGuarantee"> | string | null
   amount?: Prisma.DecimalWithAggregatesFilter<"BankGuarantee"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -604,6 +619,7 @@ export type BankGuaranteeCreateInput = {
   bank?: Prisma.BankCreateNestedOneWithoutGuaranteesInput
   bid?: Prisma.BidCreateNestedOneWithoutGuaranteesInput
   tender?: Prisma.TenderCreateNestedOneWithoutGuaranteesInput
+  project?: Prisma.ProjectCreateNestedOneWithoutGuaranteesInput
 }
 
 export type BankGuaranteeUncheckedCreateInput = {
@@ -617,6 +633,7 @@ export type BankGuaranteeUncheckedCreateInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -668,6 +685,7 @@ export type BankGuaranteeUpdateInput = {
   bank?: Prisma.BankUpdateOneWithoutGuaranteesNestedInput
   bid?: Prisma.BidUpdateOneWithoutGuaranteesNestedInput
   tender?: Prisma.TenderUpdateOneWithoutGuaranteesNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutGuaranteesNestedInput
 }
 
 export type BankGuaranteeUncheckedUpdateInput = {
@@ -681,6 +699,7 @@ export type BankGuaranteeUncheckedUpdateInput = {
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -713,6 +732,7 @@ export type BankGuaranteeCreateManyInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -773,6 +793,7 @@ export type BankGuaranteeUncheckedUpdateManyInput = {
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -820,6 +841,7 @@ export type BankGuaranteeCountOrderByAggregateInput = {
   guaranteeNo?: Prisma.SortOrder
   bidId?: Prisma.SortOrder
   tenderId?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   beneficiary?: Prisma.SortOrder
   purpose?: Prisma.SortOrder
   amount?: Prisma.SortOrder
@@ -860,6 +882,7 @@ export type BankGuaranteeMaxOrderByAggregateInput = {
   guaranteeNo?: Prisma.SortOrder
   bidId?: Prisma.SortOrder
   tenderId?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   beneficiary?: Prisma.SortOrder
   purpose?: Prisma.SortOrder
   amount?: Prisma.SortOrder
@@ -891,6 +914,7 @@ export type BankGuaranteeMinOrderByAggregateInput = {
   guaranteeNo?: Prisma.SortOrder
   bidId?: Prisma.SortOrder
   tenderId?: Prisma.SortOrder
+  projectId?: Prisma.SortOrder
   beneficiary?: Prisma.SortOrder
   purpose?: Prisma.SortOrder
   amount?: Prisma.SortOrder
@@ -1087,6 +1111,48 @@ export type BankGuaranteeUncheckedUpdateManyWithoutBankNestedInput = {
   deleteMany?: Prisma.BankGuaranteeScalarWhereInput | Prisma.BankGuaranteeScalarWhereInput[]
 }
 
+export type BankGuaranteeCreateNestedManyWithoutProjectInput = {
+  create?: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput> | Prisma.BankGuaranteeCreateWithoutProjectInput[] | Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput | Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput[]
+  createMany?: Prisma.BankGuaranteeCreateManyProjectInputEnvelope
+  connect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+}
+
+export type BankGuaranteeUncheckedCreateNestedManyWithoutProjectInput = {
+  create?: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput> | Prisma.BankGuaranteeCreateWithoutProjectInput[] | Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput | Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput[]
+  createMany?: Prisma.BankGuaranteeCreateManyProjectInputEnvelope
+  connect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+}
+
+export type BankGuaranteeUpdateManyWithoutProjectNestedInput = {
+  create?: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput> | Prisma.BankGuaranteeCreateWithoutProjectInput[] | Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput | Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput[]
+  upsert?: Prisma.BankGuaranteeUpsertWithWhereUniqueWithoutProjectInput | Prisma.BankGuaranteeUpsertWithWhereUniqueWithoutProjectInput[]
+  createMany?: Prisma.BankGuaranteeCreateManyProjectInputEnvelope
+  set?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  disconnect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  delete?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  connect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  update?: Prisma.BankGuaranteeUpdateWithWhereUniqueWithoutProjectInput | Prisma.BankGuaranteeUpdateWithWhereUniqueWithoutProjectInput[]
+  updateMany?: Prisma.BankGuaranteeUpdateManyWithWhereWithoutProjectInput | Prisma.BankGuaranteeUpdateManyWithWhereWithoutProjectInput[]
+  deleteMany?: Prisma.BankGuaranteeScalarWhereInput | Prisma.BankGuaranteeScalarWhereInput[]
+}
+
+export type BankGuaranteeUncheckedUpdateManyWithoutProjectNestedInput = {
+  create?: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput> | Prisma.BankGuaranteeCreateWithoutProjectInput[] | Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput[]
+  connectOrCreate?: Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput | Prisma.BankGuaranteeCreateOrConnectWithoutProjectInput[]
+  upsert?: Prisma.BankGuaranteeUpsertWithWhereUniqueWithoutProjectInput | Prisma.BankGuaranteeUpsertWithWhereUniqueWithoutProjectInput[]
+  createMany?: Prisma.BankGuaranteeCreateManyProjectInputEnvelope
+  set?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  disconnect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  delete?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  connect?: Prisma.BankGuaranteeWhereUniqueInput | Prisma.BankGuaranteeWhereUniqueInput[]
+  update?: Prisma.BankGuaranteeUpdateWithWhereUniqueWithoutProjectInput | Prisma.BankGuaranteeUpdateWithWhereUniqueWithoutProjectInput[]
+  updateMany?: Prisma.BankGuaranteeUpdateManyWithWhereWithoutProjectInput | Prisma.BankGuaranteeUpdateManyWithWhereWithoutProjectInput[]
+  deleteMany?: Prisma.BankGuaranteeScalarWhereInput | Prisma.BankGuaranteeScalarWhereInput[]
+}
+
 export type BankGuaranteeCreateWithoutCompanyInput = {
   id?: string
   tenantId: string
@@ -1116,6 +1182,7 @@ export type BankGuaranteeCreateWithoutCompanyInput = {
   bank?: Prisma.BankCreateNestedOneWithoutGuaranteesInput
   bid?: Prisma.BidCreateNestedOneWithoutGuaranteesInput
   tender?: Prisma.TenderCreateNestedOneWithoutGuaranteesInput
+  project?: Prisma.ProjectCreateNestedOneWithoutGuaranteesInput
 }
 
 export type BankGuaranteeUncheckedCreateWithoutCompanyInput = {
@@ -1128,6 +1195,7 @@ export type BankGuaranteeUncheckedCreateWithoutCompanyInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1189,6 +1257,7 @@ export type BankGuaranteeScalarWhereInput = {
   guaranteeNo?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   bidId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   tenderId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
+  projectId?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   beneficiary?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   purpose?: Prisma.StringNullableFilter<"BankGuarantee"> | string | null
   amount?: Prisma.DecimalFilter<"BankGuarantee"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1239,6 +1308,7 @@ export type BankGuaranteeCreateWithoutTenderInput = {
   company: Prisma.CompanyCreateNestedOneWithoutGuaranteesInput
   bank?: Prisma.BankCreateNestedOneWithoutGuaranteesInput
   bid?: Prisma.BidCreateNestedOneWithoutGuaranteesInput
+  project?: Prisma.ProjectCreateNestedOneWithoutGuaranteesInput
 }
 
 export type BankGuaranteeUncheckedCreateWithoutTenderInput = {
@@ -1251,6 +1321,7 @@ export type BankGuaranteeUncheckedCreateWithoutTenderInput = {
   type: string
   guaranteeNo?: string | null
   bidId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1327,6 +1398,7 @@ export type BankGuaranteeCreateWithoutBidInput = {
   company: Prisma.CompanyCreateNestedOneWithoutGuaranteesInput
   bank?: Prisma.BankCreateNestedOneWithoutGuaranteesInput
   tender?: Prisma.TenderCreateNestedOneWithoutGuaranteesInput
+  project?: Prisma.ProjectCreateNestedOneWithoutGuaranteesInput
 }
 
 export type BankGuaranteeUncheckedCreateWithoutBidInput = {
@@ -1339,6 +1411,7 @@ export type BankGuaranteeUncheckedCreateWithoutBidInput = {
   type: string
   guaranteeNo?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1415,6 +1488,7 @@ export type BankGuaranteeCreateWithoutBankInput = {
   company: Prisma.CompanyCreateNestedOneWithoutGuaranteesInput
   bid?: Prisma.BidCreateNestedOneWithoutGuaranteesInput
   tender?: Prisma.TenderCreateNestedOneWithoutGuaranteesInput
+  project?: Prisma.ProjectCreateNestedOneWithoutGuaranteesInput
 }
 
 export type BankGuaranteeUncheckedCreateWithoutBankInput = {
@@ -1427,6 +1501,7 @@ export type BankGuaranteeUncheckedCreateWithoutBankInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1474,6 +1549,96 @@ export type BankGuaranteeUpdateManyWithWhereWithoutBankInput = {
   data: Prisma.XOR<Prisma.BankGuaranteeUpdateManyMutationInput, Prisma.BankGuaranteeUncheckedUpdateManyWithoutBankInput>
 }
 
+export type BankGuaranteeCreateWithoutProjectInput = {
+  id?: string
+  tenantId: string
+  bankName: string
+  branch?: string | null
+  type: string
+  guaranteeNo?: string | null
+  beneficiary?: string | null
+  purpose?: string | null
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Date | string | null
+  expiryDate?: Date | string | null
+  claimExpiryDate?: Date | string | null
+  marginPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: string | null
+  commissionAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  releaseDate?: Date | string | null
+  releaseRef?: string | null
+  source?: string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  company: Prisma.CompanyCreateNestedOneWithoutGuaranteesInput
+  bank?: Prisma.BankCreateNestedOneWithoutGuaranteesInput
+  bid?: Prisma.BidCreateNestedOneWithoutGuaranteesInput
+  tender?: Prisma.TenderCreateNestedOneWithoutGuaranteesInput
+}
+
+export type BankGuaranteeUncheckedCreateWithoutProjectInput = {
+  id?: string
+  tenantId: string
+  companyId: string
+  bankId?: string | null
+  bankName: string
+  branch?: string | null
+  type: string
+  guaranteeNo?: string | null
+  bidId?: string | null
+  tenderId?: string | null
+  beneficiary?: string | null
+  purpose?: string | null
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Date | string | null
+  expiryDate?: Date | string | null
+  claimExpiryDate?: Date | string | null
+  marginPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: string | null
+  commissionAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  releaseDate?: Date | string | null
+  releaseRef?: string | null
+  source?: string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type BankGuaranteeCreateOrConnectWithoutProjectInput = {
+  where: Prisma.BankGuaranteeWhereUniqueInput
+  create: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput>
+}
+
+export type BankGuaranteeCreateManyProjectInputEnvelope = {
+  data: Prisma.BankGuaranteeCreateManyProjectInput | Prisma.BankGuaranteeCreateManyProjectInput[]
+  skipDuplicates?: boolean
+}
+
+export type BankGuaranteeUpsertWithWhereUniqueWithoutProjectInput = {
+  where: Prisma.BankGuaranteeWhereUniqueInput
+  update: Prisma.XOR<Prisma.BankGuaranteeUpdateWithoutProjectInput, Prisma.BankGuaranteeUncheckedUpdateWithoutProjectInput>
+  create: Prisma.XOR<Prisma.BankGuaranteeCreateWithoutProjectInput, Prisma.BankGuaranteeUncheckedCreateWithoutProjectInput>
+}
+
+export type BankGuaranteeUpdateWithWhereUniqueWithoutProjectInput = {
+  where: Prisma.BankGuaranteeWhereUniqueInput
+  data: Prisma.XOR<Prisma.BankGuaranteeUpdateWithoutProjectInput, Prisma.BankGuaranteeUncheckedUpdateWithoutProjectInput>
+}
+
+export type BankGuaranteeUpdateManyWithWhereWithoutProjectInput = {
+  where: Prisma.BankGuaranteeScalarWhereInput
+  data: Prisma.XOR<Prisma.BankGuaranteeUpdateManyMutationInput, Prisma.BankGuaranteeUncheckedUpdateManyWithoutProjectInput>
+}
+
 export type BankGuaranteeCreateManyCompanyInput = {
   id?: string
   tenantId: string
@@ -1484,6 +1649,7 @@ export type BankGuaranteeCreateManyCompanyInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1534,6 +1700,7 @@ export type BankGuaranteeUpdateWithoutCompanyInput = {
   bank?: Prisma.BankUpdateOneWithoutGuaranteesNestedInput
   bid?: Prisma.BidUpdateOneWithoutGuaranteesNestedInput
   tender?: Prisma.TenderUpdateOneWithoutGuaranteesNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutGuaranteesNestedInput
 }
 
 export type BankGuaranteeUncheckedUpdateWithoutCompanyInput = {
@@ -1546,6 +1713,7 @@ export type BankGuaranteeUncheckedUpdateWithoutCompanyInput = {
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1577,6 +1745,7 @@ export type BankGuaranteeUncheckedUpdateManyWithoutCompanyInput = {
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1608,6 +1777,7 @@ export type BankGuaranteeCreateManyTenderInput = {
   type: string
   guaranteeNo?: string | null
   bidId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1658,6 +1828,7 @@ export type BankGuaranteeUpdateWithoutTenderInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutGuaranteesNestedInput
   bank?: Prisma.BankUpdateOneWithoutGuaranteesNestedInput
   bid?: Prisma.BidUpdateOneWithoutGuaranteesNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutGuaranteesNestedInput
 }
 
 export type BankGuaranteeUncheckedUpdateWithoutTenderInput = {
@@ -1670,6 +1841,7 @@ export type BankGuaranteeUncheckedUpdateWithoutTenderInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1701,6 +1873,7 @@ export type BankGuaranteeUncheckedUpdateManyWithoutTenderInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1732,6 +1905,7 @@ export type BankGuaranteeCreateManyBidInput = {
   type: string
   guaranteeNo?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1782,6 +1956,7 @@ export type BankGuaranteeUpdateWithoutBidInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutGuaranteesNestedInput
   bank?: Prisma.BankUpdateOneWithoutGuaranteesNestedInput
   tender?: Prisma.TenderUpdateOneWithoutGuaranteesNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutGuaranteesNestedInput
 }
 
 export type BankGuaranteeUncheckedUpdateWithoutBidInput = {
@@ -1794,6 +1969,7 @@ export type BankGuaranteeUncheckedUpdateWithoutBidInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1825,6 +2001,7 @@ export type BankGuaranteeUncheckedUpdateManyWithoutBidInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1856,6 +2033,7 @@ export type BankGuaranteeCreateManyBankInput = {
   guaranteeNo?: string | null
   bidId?: string | null
   tenderId?: string | null
+  projectId?: string | null
   beneficiary?: string | null
   purpose?: string | null
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1906,12 +2084,142 @@ export type BankGuaranteeUpdateWithoutBankInput = {
   company?: Prisma.CompanyUpdateOneRequiredWithoutGuaranteesNestedInput
   bid?: Prisma.BidUpdateOneWithoutGuaranteesNestedInput
   tender?: Prisma.TenderUpdateOneWithoutGuaranteesNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutGuaranteesNestedInput
 }
 
 export type BankGuaranteeUncheckedUpdateWithoutBankInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.StringFieldUpdateOperationsInput | string
+  branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimExpiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  marginPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commissionAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  releaseDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  releaseRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BankGuaranteeUncheckedUpdateManyWithoutBankInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.StringFieldUpdateOperationsInput | string
+  branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bidId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tenderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimExpiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  marginPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commissionAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  releaseDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  releaseRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BankGuaranteeCreateManyProjectInput = {
+  id?: string
+  tenantId: string
+  companyId: string
+  bankId?: string | null
+  bankName: string
+  branch?: string | null
+  type: string
+  guaranteeNo?: string | null
+  bidId?: string | null
+  tenderId?: string | null
+  beneficiary?: string | null
+  purpose?: string | null
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Date | string | null
+  expiryDate?: Date | string | null
+  claimExpiryDate?: Date | string | null
+  marginPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: string | null
+  commissionAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  releaseDate?: Date | string | null
+  releaseRef?: string | null
+  source?: string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type BankGuaranteeUpdateWithoutProjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankName?: Prisma.StringFieldUpdateOperationsInput | string
+  branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  guaranteeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  beneficiary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  purpose?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  issueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimExpiryDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  marginPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  marginAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionPct?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  commissionBasis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  commissionAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  releaseDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  releaseRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  history?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  company?: Prisma.CompanyUpdateOneRequiredWithoutGuaranteesNestedInput
+  bank?: Prisma.BankUpdateOneWithoutGuaranteesNestedInput
+  bid?: Prisma.BidUpdateOneWithoutGuaranteesNestedInput
+  tender?: Prisma.TenderUpdateOneWithoutGuaranteesNestedInput
+}
+
+export type BankGuaranteeUncheckedUpdateWithoutProjectInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankName?: Prisma.StringFieldUpdateOperationsInput | string
   branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1939,10 +2247,11 @@ export type BankGuaranteeUncheckedUpdateWithoutBankInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type BankGuaranteeUncheckedUpdateManyWithoutBankInput = {
+export type BankGuaranteeUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
+  bankId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bankName?: Prisma.StringFieldUpdateOperationsInput | string
   branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1983,6 +2292,7 @@ export type BankGuaranteeSelect<ExtArgs extends runtime.Types.Extensions.Interna
   guaranteeNo?: boolean
   bidId?: boolean
   tenderId?: boolean
+  projectId?: boolean
   beneficiary?: boolean
   purpose?: boolean
   amount?: boolean
@@ -2006,6 +2316,7 @@ export type BankGuaranteeSelect<ExtArgs extends runtime.Types.Extensions.Interna
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }, ExtArgs["result"]["bankGuarantee"]>
 
 export type BankGuaranteeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2019,6 +2330,7 @@ export type BankGuaranteeSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   guaranteeNo?: boolean
   bidId?: boolean
   tenderId?: boolean
+  projectId?: boolean
   beneficiary?: boolean
   purpose?: boolean
   amount?: boolean
@@ -2042,6 +2354,7 @@ export type BankGuaranteeSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }, ExtArgs["result"]["bankGuarantee"]>
 
 export type BankGuaranteeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2055,6 +2368,7 @@ export type BankGuaranteeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   guaranteeNo?: boolean
   bidId?: boolean
   tenderId?: boolean
+  projectId?: boolean
   beneficiary?: boolean
   purpose?: boolean
   amount?: boolean
@@ -2078,6 +2392,7 @@ export type BankGuaranteeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }, ExtArgs["result"]["bankGuarantee"]>
 
 export type BankGuaranteeSelectScalar = {
@@ -2091,6 +2406,7 @@ export type BankGuaranteeSelectScalar = {
   guaranteeNo?: boolean
   bidId?: boolean
   tenderId?: boolean
+  projectId?: boolean
   beneficiary?: boolean
   purpose?: boolean
   amount?: boolean
@@ -2112,24 +2428,27 @@ export type BankGuaranteeSelectScalar = {
   updatedAt?: boolean
 }
 
-export type BankGuaranteeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "bankId" | "bankName" | "branch" | "type" | "guaranteeNo" | "bidId" | "tenderId" | "beneficiary" | "purpose" | "amount" | "issueDate" | "expiryDate" | "claimExpiryDate" | "marginPct" | "marginAmount" | "commissionPct" | "commissionBasis" | "commissionAmount" | "status" | "releaseDate" | "releaseRef" | "source" | "history" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["bankGuarantee"]>
+export type BankGuaranteeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "companyId" | "bankId" | "bankName" | "branch" | "type" | "guaranteeNo" | "bidId" | "tenderId" | "projectId" | "beneficiary" | "purpose" | "amount" | "issueDate" | "expiryDate" | "claimExpiryDate" | "marginPct" | "marginAmount" | "commissionPct" | "commissionBasis" | "commissionAmount" | "status" | "releaseDate" | "releaseRef" | "source" | "history" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["bankGuarantee"]>
 export type BankGuaranteeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }
 export type BankGuaranteeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }
 export type BankGuaranteeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   bank?: boolean | Prisma.BankGuarantee$bankArgs<ExtArgs>
   bid?: boolean | Prisma.BankGuarantee$bidArgs<ExtArgs>
   tender?: boolean | Prisma.BankGuarantee$tenderArgs<ExtArgs>
+  project?: boolean | Prisma.BankGuarantee$projectArgs<ExtArgs>
 }
 
 export type $BankGuaranteePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2139,6 +2458,7 @@ export type $BankGuaranteePayload<ExtArgs extends runtime.Types.Extensions.Inter
     bank: Prisma.$BankPayload<ExtArgs> | null
     bid: Prisma.$BidPayload<ExtArgs> | null
     tender: Prisma.$TenderPayload<ExtArgs> | null
+    project: Prisma.$ProjectPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2151,6 +2471,7 @@ export type $BankGuaranteePayload<ExtArgs extends runtime.Types.Extensions.Inter
     guaranteeNo: string | null
     bidId: string | null
     tenderId: string | null
+    projectId: string | null
     beneficiary: string | null
     purpose: string | null
     amount: runtime.Decimal
@@ -2568,6 +2889,7 @@ export interface Prisma__BankGuaranteeClient<T, Null = never, ExtArgs extends ru
   bank<T extends Prisma.BankGuarantee$bankArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BankGuarantee$bankArgs<ExtArgs>>): Prisma.Prisma__BankClient<runtime.Types.Result.GetResult<Prisma.$BankPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   bid<T extends Prisma.BankGuarantee$bidArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BankGuarantee$bidArgs<ExtArgs>>): Prisma.Prisma__BidClient<runtime.Types.Result.GetResult<Prisma.$BidPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   tender<T extends Prisma.BankGuarantee$tenderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BankGuarantee$tenderArgs<ExtArgs>>): Prisma.Prisma__TenderClient<runtime.Types.Result.GetResult<Prisma.$TenderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  project<T extends Prisma.BankGuarantee$projectArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BankGuarantee$projectArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2607,6 +2929,7 @@ export interface BankGuaranteeFieldRefs {
   readonly guaranteeNo: Prisma.FieldRef<"BankGuarantee", 'String'>
   readonly bidId: Prisma.FieldRef<"BankGuarantee", 'String'>
   readonly tenderId: Prisma.FieldRef<"BankGuarantee", 'String'>
+  readonly projectId: Prisma.FieldRef<"BankGuarantee", 'String'>
   readonly beneficiary: Prisma.FieldRef<"BankGuarantee", 'String'>
   readonly purpose: Prisma.FieldRef<"BankGuarantee", 'String'>
   readonly amount: Prisma.FieldRef<"BankGuarantee", 'Decimal'>
@@ -3081,6 +3404,25 @@ export type BankGuarantee$tenderArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   include?: Prisma.TenderInclude<ExtArgs> | null
   where?: Prisma.TenderWhereInput
+}
+
+/**
+ * BankGuarantee.project
+ */
+export type BankGuarantee$projectArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Project
+   */
+  select?: Prisma.ProjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Project
+   */
+  omit?: Prisma.ProjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectInclude<ExtArgs> | null
+  where?: Prisma.ProjectWhereInput
 }
 
 /**

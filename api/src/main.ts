@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // large Excel imports (e.g. a BOQ of a few thousand lines) — default is 100 kB
+  app.useBodyParser('json', { limit: '5mb' });
 
   app.useGlobalPipes(
     new ValidationPipe({

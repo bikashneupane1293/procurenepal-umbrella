@@ -11,6 +11,7 @@ const DECIMAL_FIELDS = new Set([
   'boqAmount', 'reqTurnover', 'reqMinProduction', 'reqBidCapacity', 'reqSimilarValue',
   'turnoverAact', 'turnoverRequired', 'amount',
   'bidAmount', 'bidSecurityAmount', 'contractAmount', 'performanceSecurityAmount',
+  'quantity', 'rate', 'advancePct', 'retentionPct',
   'bgLimit', 'defaultMarginPct', 'defaultCommissionPct', 'marginPct', 'marginAmount', 'commissionPct', 'commissionAmount',
 ]);
 function decimals(row: Row): Row {
@@ -56,14 +57,16 @@ const DEFAULTS: Record<string, () => Row> = {
   bid: () => ({ bidderType: 'SINGLE', decision: 'UNDECIDED', status: 'PREPARING', createdAt: new Date(), updatedAt: new Date() }),
   tenant: () => ({ isActive: true }),
   bank: () => ({ isActive: true, createdAt: new Date(), updatedAt: new Date() }),
-  bankGuarantee: () => ({ status: 'ACTIVE', source: 'MANUAL', bankId: null, bidId: null, tenderId: null, createdAt: new Date(), updatedAt: new Date() }),
+  project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
+  boqItem: () => ({ isHeading: false, createdAt: new Date() }),
+  bankGuarantee: () => ({ status: 'ACTIVE', source: 'MANUAL', bankId: null, bidId: null, tenderId: null, projectId: null, createdAt: new Date(), updatedAt: new Date() }),
 };
 
 export class FakePrisma {
   db: Record<string, Row[]> = {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
-    bank: [], bankGuarantee: [],
+    bank: [], bankGuarantee: [], project: [], boqItem: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -76,6 +79,7 @@ export class FakePrisma {
     if (include?.tenant) out.tenant = this.db.tenant.find((t) => t.id === row.tenantId);
     if (include?.bank) out.bank = row.bankId ? this.db.bank.find((b) => b.id === row.bankId) ?? null : null;
     if (include?.bid) out.bid = row.bidId ? this.db.bid.find((b) => b.id === row.bidId) ?? null : null;
+    if (include?.project) out.project = row.projectId ? this.db.project.find((p) => p.id === row.projectId) ?? null : null;
     return out;
   }
 
@@ -138,6 +142,9 @@ export class FakePrisma {
           self.db.bid = self.db.bid.filter((t) => t.companyId !== r.id);
           self.db.bank = self.db.bank.filter((t) => t.companyId !== r.id);
           self.db.bankGuarantee = self.db.bankGuarantee.filter((t) => t.companyId !== r.id);
+          const gone = self.db.project.filter((p) => p.companyId === r.id).map((p) => p.id);
+          self.db.project = self.db.project.filter((p) => p.companyId !== r.id);
+          self.db.boqItem = self.db.boqItem.filter((b) => !gone.includes(b.projectId));
         }
         if (name === 'tender') {
           const gone = self.db.bid.filter((b) => b.tenderId === r.id).map((b) => b.id);
@@ -146,8 +153,19 @@ export class FakePrisma {
             if (g.tenderId === r.id) g.tenderId = null;
             if (gone.includes(g.bidId)) g.bidId = null;
           }
+          for (const p of self.db.project) { // onDelete: SetNull
+            if (p.tenderId === r.id) p.tenderId = null;
+            if (gone.includes(p.bidId)) p.bidId = null;
+          }
         }
-        if (name === 'bid') for (const g of self.db.bankGuarantee) if (g.bidId === r.id) g.bidId = null; // SetNull
+        if (name === 'bid') {
+          for (const g of self.db.bankGuarantee) if (g.bidId === r.id) g.bidId = null; // SetNull
+          for (const p of self.db.project) if (p.bidId === r.id) p.bidId = null;
+        }
+        if (name === 'project') {
+          self.db.boqItem = self.db.boqItem.filter((b) => b.projectId !== r.id); // Cascade
+          for (const g of self.db.bankGuarantee) if (g.projectId === r.id) g.projectId = null; // SetNull
+        }
         if (name === 'bank') for (const g of self.db.bankGuarantee) if (g.bankId === r.id) g.bankId = null; // SetNull
         return r;
       },
@@ -176,6 +194,8 @@ export class FakePrisma {
   bid = this.model('bid');
   bank = this.model('bank');
   bankGuarantee = this.model('bankGuarantee');
+  project = this.model('project');
+  boqItem = this.model('boqItem');
 
   async $transaction(ops: Promise<any>[]) {
     const out: any[] = [];

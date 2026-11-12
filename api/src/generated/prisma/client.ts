@@ -104,3 +104,13 @@ export type Bank = Prisma.BankModel
  * 
  */
 export type BankGuarantee = Prisma.BankGuaranteeModel
+/**
+ * Model Project
+ * 
+ */
+export type Project = Prisma.ProjectModel
+/**
+ * Model BoqItem
+ * 
+ */
+export type BoqItem = Prisma.BoqItemModel

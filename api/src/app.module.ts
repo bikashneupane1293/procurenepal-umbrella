@@ -17,6 +17,7 @@ import { TenderModule } from './tender/tender.module';
 import { AccessModule } from './access/access.module';
 import { BidModule } from './bid/bid.module';
 import { BankModule } from './bank/bank.module';
+import { ProjectModule } from './project/project.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { BankModule } from './bank/bank.module';
     AccessModule,
     BidModule,
     BankModule,
+    ProjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -146,6 +146,36 @@ export class DataService {
     return this.http.post(`${API_URL}/bank-guarantees/sync-from-bids`, {});
   }
 
+  // ---------- Project Management: projects + BOQ ----------
+  getProjects(filter: { status?: string; companyId?: string } = {}): Observable<any[]> {
+    const q = Object.entries(filter).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join('&');
+    return this.http.get(`${API_URL}/projects${q ? '?' + q : ''}`).pipe(map(toList));
+  }
+  getProject(id: string): Observable<any> {
+    return this.http.get(`${API_URL}/projects/${id}`);
+  }
+  getWonBids(): Observable<any[]> {
+    return this.http.get(`${API_URL}/projects/won-bids`).pipe(map(toList));
+  }
+  createProject(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/projects`, body);
+  }
+  createProjectFromBid(bidId: string): Observable<any> {
+    return this.http.post(`${API_URL}/projects/from-bid/${bidId}`, {});
+  }
+  updateProject(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/projects/${id}`, body);
+  }
+  deleteProject(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/projects/${id}`);
+  }
+  getBoq(projectId: string): Observable<any> {
+    return this.http.get(`${API_URL}/projects/${projectId}/boq`);
+  }
+  saveBoq(projectId: string, items: any[], mode: 'replace' | 'append' = 'replace'): Observable<any> {
+    return this.http.put(`${API_URL}/projects/${projectId}/boq`, { items, mode });
+  }
+
   // ---------- Bolpatra Reports ----------
   getReport(days = 30): Observable<any> {
     return this.http.get(`${API_URL}/bolpatra/reports?days=${days}`);

@@ -127,6 +127,7 @@ model Company {
   bids            Bid[]
   banks           Bank[]
   guarantees      BankGuarantee[]
+  projects        Project[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -200,6 +201,7 @@ model Tender {
   bidValidityDays   Int?
   bids              Bid[]
   guarantees        BankGuarantee[]
+  projects          Project[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
@@ -296,6 +298,7 @@ model Bid {
   checklist                 Json?     // [{ key, label, done, note }]
   notes                     String?
   guarantees                BankGuarantee[]
+  project                   Project?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @default(now()) @updatedAt
 
@@ -348,6 +351,8 @@ model BankGuarantee {
   bid              Bid?      @relation(fields: [bidId], references: [id], onDelete: SetNull)
   tenderId         String?
   tender           Tender?   @relation(fields: [tenderId], references: [id], onDelete: SetNull)
+  projectId        String?   // Task 3
+  project          Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   beneficiary      String?
   purpose          String?
   amount           Decimal   @db.Decimal(15, 2)
@@ -373,4 +378,73 @@ model BankGuarantee {
   @@index([tenantId, status])
   @@index([tenantId, expiryDate])
   @@index([bankId])
+  @@index([projectId])
+}
+
+// ==================== PROJECT MANAGEMENT (Task 3) ====================
+// A contract being executed — usually created from a won bid.
+model Project {
+  id                     String    @id @default(uuid())
+  tenantId               String
+  companyId              String
+  company                Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tenderId               String?
+  tender                 Tender?   @relation(fields: [tenderId], references: [id], onDelete: SetNull)
+  bidId                  String?   @unique
+  bid                    Bid?      @relation(fields: [bidId], references: [id], onDelete: SetNull)
+  code                   String
+  name                   String
+  client                 String?   // employer / procuring entity
+  location               String?
+  contractNo             String?
+  projectType            String?
+  contractAmount         Decimal?  @db.Decimal(15, 2) // excluding VAT
+  contractSignDate       DateTime?
+  startDate              DateTime? // work commencement
+  contractPeriodMonths   Int?
+  intendedCompletionDate DateTime?
+  revisedCompletionDate  DateTime? // after extension of time
+  actualCompletionDate   DateTime?
+  defectLiabilityMonths  Int?
+  advancePct             Decimal?  @db.Decimal(5, 2)
+  retentionPct           Decimal?  @db.Decimal(5, 2)
+  bidderType             String    @default("SINGLE") // SINGLE | JV
+  jvPartners             Json?
+  projectManager         String?
+  clientEngineer         String?
+  status                 String    @default("ONGOING") // PLANNED | MOBILIZING | ONGOING | SUSPENDED | COMPLETED | HANDED_OVER | CLOSED | TERMINATED
+  source                 String    @default("MANUAL")  // MANUAL | BID | IMPORT
+  statusHistory          Json?
+  notes                  String?
+  boqItems               BoqItem[]
+  guarantees             BankGuarantee[]
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now()) @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenderId])
+}
+
+// One line of a project's Bill of Quantities (headings have no quantity / rate).
+model BoqItem {
+  id          String   @id @default(uuid())
+  tenantId    String
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sortOrder   Int
+  itemNo      String?
+  section     String?
+  description String
+  unit        String?
+  quantity    Decimal? @db.Decimal(18, 3)
+  rate        Decimal? @db.Decimal(15, 2)
+  amount      Decimal? @db.Decimal(18, 2)
+  isHeading   Boolean  @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+  @@index([tenantId])
 }

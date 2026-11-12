@@ -439,6 +439,7 @@ export type TenderWhereInput = {
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   bids?: Prisma.BidListRelationFilter
   guarantees?: Prisma.BankGuaranteeListRelationFilter
+  projects?: Prisma.ProjectListRelationFilter
 }
 
 export type TenderOrderByWithRelationInput = {
@@ -475,6 +476,7 @@ export type TenderOrderByWithRelationInput = {
   tenant?: Prisma.TenantOrderByWithRelationInput
   bids?: Prisma.BidOrderByRelationAggregateInput
   guarantees?: Prisma.BankGuaranteeOrderByRelationAggregateInput
+  projects?: Prisma.ProjectOrderByRelationAggregateInput
 }
 
 export type TenderWhereUniqueInput = Prisma.AtLeast<{
@@ -515,6 +517,7 @@ export type TenderWhereUniqueInput = Prisma.AtLeast<{
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   bids?: Prisma.BidListRelationFilter
   guarantees?: Prisma.BankGuaranteeListRelationFilter
+  projects?: Prisma.ProjectListRelationFilter
 }, "id" | "tenantId_ifbNumber">
 
 export type TenderOrderByWithAggregationInput = {
@@ -624,6 +627,7 @@ export type TenderCreateInput = {
   tenant: Prisma.TenantCreateNestedOneWithoutTendersInput
   bids?: Prisma.BidCreateNestedManyWithoutTenderInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutTenderInput
 }
 
 export type TenderUncheckedCreateInput = {
@@ -659,6 +663,7 @@ export type TenderUncheckedCreateInput = {
   updatedAt?: Date | string
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutTenderInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutTenderInput
 }
 
 export type TenderUpdateInput = {
@@ -694,6 +699,7 @@ export type TenderUpdateInput = {
   tenant?: Prisma.TenantUpdateOneRequiredWithoutTendersNestedInput
   bids?: Prisma.BidUpdateManyWithoutTenderNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderUncheckedUpdateInput = {
@@ -729,6 +735,7 @@ export type TenderUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bids?: Prisma.BidUncheckedUpdateManyWithoutTenderNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderCreateManyInput = {
@@ -1060,6 +1067,22 @@ export type TenderUpdateOneWithoutGuaranteesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenderUpdateToOneWithWhereWithoutGuaranteesInput, Prisma.TenderUpdateWithoutGuaranteesInput>, Prisma.TenderUncheckedUpdateWithoutGuaranteesInput>
 }
 
+export type TenderCreateNestedOneWithoutProjectsInput = {
+  create?: Prisma.XOR<Prisma.TenderCreateWithoutProjectsInput, Prisma.TenderUncheckedCreateWithoutProjectsInput>
+  connectOrCreate?: Prisma.TenderCreateOrConnectWithoutProjectsInput
+  connect?: Prisma.TenderWhereUniqueInput
+}
+
+export type TenderUpdateOneWithoutProjectsNestedInput = {
+  create?: Prisma.XOR<Prisma.TenderCreateWithoutProjectsInput, Prisma.TenderUncheckedCreateWithoutProjectsInput>
+  connectOrCreate?: Prisma.TenderCreateOrConnectWithoutProjectsInput
+  upsert?: Prisma.TenderUpsertWithoutProjectsInput
+  disconnect?: Prisma.TenderWhereInput | boolean
+  delete?: Prisma.TenderWhereInput | boolean
+  connect?: Prisma.TenderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TenderUpdateToOneWithWhereWithoutProjectsInput, Prisma.TenderUpdateWithoutProjectsInput>, Prisma.TenderUncheckedUpdateWithoutProjectsInput>
+}
+
 export type TenderCreateWithoutTenantInput = {
   id?: string
   ifbNumber: string
@@ -1092,6 +1115,7 @@ export type TenderCreateWithoutTenantInput = {
   updatedAt?: Date | string
   bids?: Prisma.BidCreateNestedManyWithoutTenderInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutTenderInput
 }
 
 export type TenderUncheckedCreateWithoutTenantInput = {
@@ -1126,6 +1150,7 @@ export type TenderUncheckedCreateWithoutTenantInput = {
   updatedAt?: Date | string
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutTenderInput
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutTenderInput
 }
 
 export type TenderCreateOrConnectWithoutTenantInput = {
@@ -1222,6 +1247,7 @@ export type TenderCreateWithoutBidsInput = {
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutTendersInput
   guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutTenderInput
 }
 
 export type TenderUncheckedCreateWithoutBidsInput = {
@@ -1256,6 +1282,7 @@ export type TenderUncheckedCreateWithoutBidsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutTenderInput
 }
 
 export type TenderCreateOrConnectWithoutBidsInput = {
@@ -1306,6 +1333,7 @@ export type TenderUpdateWithoutBidsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutTendersNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderUncheckedUpdateWithoutBidsInput = {
@@ -1340,6 +1368,7 @@ export type TenderUncheckedUpdateWithoutBidsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderCreateWithoutGuaranteesInput = {
@@ -1374,6 +1403,7 @@ export type TenderCreateWithoutGuaranteesInput = {
   updatedAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutTendersInput
   bids?: Prisma.BidCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectCreateNestedManyWithoutTenderInput
 }
 
 export type TenderUncheckedCreateWithoutGuaranteesInput = {
@@ -1408,6 +1438,7 @@ export type TenderUncheckedCreateWithoutGuaranteesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   bids?: Prisma.BidUncheckedCreateNestedManyWithoutTenderInput
+  projects?: Prisma.ProjectUncheckedCreateNestedManyWithoutTenderInput
 }
 
 export type TenderCreateOrConnectWithoutGuaranteesInput = {
@@ -1458,6 +1489,7 @@ export type TenderUpdateWithoutGuaranteesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutTendersNestedInput
   bids?: Prisma.BidUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderUncheckedUpdateWithoutGuaranteesInput = {
@@ -1492,6 +1524,163 @@ export type TenderUncheckedUpdateWithoutGuaranteesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bids?: Prisma.BidUncheckedUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutTenderNestedInput
+}
+
+export type TenderCreateWithoutProjectsInput = {
+  id?: string
+  ifbNumber: string
+  projectTitle: string
+  procuringEntity?: string | null
+  publicationDate?: Date | string | null
+  deadlineDate: Date | string
+  projectType?: string | null
+  boqAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqTurnover?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqActivity?: string | null
+  reqProjectTypes?: Prisma.TenderCreatereqProjectTypesInput | string[]
+  reqMinProduction?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  source?: string
+  contractPeriodMonths?: number | null
+  reqBidCapacity?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarValue?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarCount?: number | null
+  similarDescription?: string | null
+  keyActivityReqs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isComplexWork?: boolean
+  awardMethod?: string | null
+  ruleSetId?: string | null
+  notes?: string | null
+  bidSecurityAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bidValidityDays?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tenant: Prisma.TenantCreateNestedOneWithoutTendersInput
+  bids?: Prisma.BidCreateNestedManyWithoutTenderInput
+  guarantees?: Prisma.BankGuaranteeCreateNestedManyWithoutTenderInput
+}
+
+export type TenderUncheckedCreateWithoutProjectsInput = {
+  id?: string
+  tenantId: string
+  ifbNumber: string
+  projectTitle: string
+  procuringEntity?: string | null
+  publicationDate?: Date | string | null
+  deadlineDate: Date | string
+  projectType?: string | null
+  boqAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqTurnover?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqActivity?: string | null
+  reqProjectTypes?: Prisma.TenderCreatereqProjectTypesInput | string[]
+  reqMinProduction?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: string
+  source?: string
+  contractPeriodMonths?: number | null
+  reqBidCapacity?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarValue?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarCount?: number | null
+  similarDescription?: string | null
+  keyActivityReqs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isComplexWork?: boolean
+  awardMethod?: string | null
+  ruleSetId?: string | null
+  notes?: string | null
+  bidSecurityAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bidValidityDays?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bids?: Prisma.BidUncheckedCreateNestedManyWithoutTenderInput
+  guarantees?: Prisma.BankGuaranteeUncheckedCreateNestedManyWithoutTenderInput
+}
+
+export type TenderCreateOrConnectWithoutProjectsInput = {
+  where: Prisma.TenderWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenderCreateWithoutProjectsInput, Prisma.TenderUncheckedCreateWithoutProjectsInput>
+}
+
+export type TenderUpsertWithoutProjectsInput = {
+  update: Prisma.XOR<Prisma.TenderUpdateWithoutProjectsInput, Prisma.TenderUncheckedUpdateWithoutProjectsInput>
+  create: Prisma.XOR<Prisma.TenderCreateWithoutProjectsInput, Prisma.TenderUncheckedCreateWithoutProjectsInput>
+  where?: Prisma.TenderWhereInput
+}
+
+export type TenderUpdateToOneWithWhereWithoutProjectsInput = {
+  where?: Prisma.TenderWhereInput
+  data: Prisma.XOR<Prisma.TenderUpdateWithoutProjectsInput, Prisma.TenderUncheckedUpdateWithoutProjectsInput>
+}
+
+export type TenderUpdateWithoutProjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ifbNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  projectTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  procuringEntity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicationDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deadlineDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  boqAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqTurnover?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqActivity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reqProjectTypes?: Prisma.TenderUpdatereqProjectTypesInput | string[]
+  reqMinProduction?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  contractPeriodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reqBidCapacity?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarValue?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  similarDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyActivityReqs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isComplexWork?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  awardMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bidSecurityAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bidValidityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tenant?: Prisma.TenantUpdateOneRequiredWithoutTendersNestedInput
+  bids?: Prisma.BidUpdateManyWithoutTenderNestedInput
+  guarantees?: Prisma.BankGuaranteeUpdateManyWithoutTenderNestedInput
+}
+
+export type TenderUncheckedUpdateWithoutProjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  ifbNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  projectTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  procuringEntity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicationDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deadlineDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  boqAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqTurnover?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqActivity?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reqProjectTypes?: Prisma.TenderUpdatereqProjectTypesInput | string[]
+  reqMinProduction?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  contractPeriodMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reqBidCapacity?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarValue?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  reqSimilarCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  similarDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  keyActivityReqs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  criteria?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  isComplexWork?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  awardMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ruleSetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bidSecurityAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  bidValidityDays?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bids?: Prisma.BidUncheckedUpdateManyWithoutTenderNestedInput
+  guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderCreateManyTenantInput = {
@@ -1558,6 +1747,7 @@ export type TenderUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bids?: Prisma.BidUpdateManyWithoutTenderNestedInput
   guarantees?: Prisma.BankGuaranteeUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderUncheckedUpdateWithoutTenantInput = {
@@ -1592,6 +1782,7 @@ export type TenderUncheckedUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bids?: Prisma.BidUncheckedUpdateManyWithoutTenderNestedInput
   guarantees?: Prisma.BankGuaranteeUncheckedUpdateManyWithoutTenderNestedInput
+  projects?: Prisma.ProjectUncheckedUpdateManyWithoutTenderNestedInput
 }
 
 export type TenderUncheckedUpdateManyWithoutTenantInput = {
@@ -1634,11 +1825,13 @@ export type TenderUncheckedUpdateManyWithoutTenantInput = {
 export type TenderCountOutputType = {
   bids: number
   guarantees: number
+  projects: number
 }
 
 export type TenderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bids?: boolean | TenderCountOutputTypeCountBidsArgs
   guarantees?: boolean | TenderCountOutputTypeCountGuaranteesArgs
+  projects?: boolean | TenderCountOutputTypeCountProjectsArgs
 }
 
 /**
@@ -1663,6 +1856,13 @@ export type TenderCountOutputTypeCountBidsArgs<ExtArgs extends runtime.Types.Ext
  */
 export type TenderCountOutputTypeCountGuaranteesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.BankGuaranteeWhereInput
+}
+
+/**
+ * TenderCountOutputType without action
+ */
+export type TenderCountOutputTypeCountProjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectWhereInput
 }
 
 
@@ -1700,6 +1900,7 @@ export type TenderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   bids?: boolean | Prisma.Tender$bidsArgs<ExtArgs>
   guarantees?: boolean | Prisma.Tender$guaranteesArgs<ExtArgs>
+  projects?: boolean | Prisma.Tender$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.TenderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tender"]>
 
@@ -1809,6 +2010,7 @@ export type TenderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   bids?: boolean | Prisma.Tender$bidsArgs<ExtArgs>
   guarantees?: boolean | Prisma.Tender$guaranteesArgs<ExtArgs>
+  projects?: boolean | Prisma.Tender$projectsArgs<ExtArgs>
   _count?: boolean | Prisma.TenderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1824,6 +2026,7 @@ export type $TenderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     tenant: Prisma.$TenantPayload<ExtArgs>
     bids: Prisma.$BidPayload<ExtArgs>[]
     guarantees: Prisma.$BankGuaranteePayload<ExtArgs>[]
+    projects: Prisma.$ProjectPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2253,6 +2456,7 @@ export interface Prisma__TenderClient<T, Null = never, ExtArgs extends runtime.T
   tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   bids<T extends Prisma.Tender$bidsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tender$bidsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BidPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   guarantees<T extends Prisma.Tender$guaranteesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tender$guaranteesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BankGuaranteePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  projects<T extends Prisma.Tender$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tender$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2758,6 +2962,30 @@ export type Tender$guaranteesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.BankGuaranteeScalarFieldEnum | Prisma.BankGuaranteeScalarFieldEnum[]
+}
+
+/**
+ * Tender.projects
+ */
+export type Tender$projectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Project
+   */
+  select?: Prisma.ProjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Project
+   */
+  omit?: Prisma.ProjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectInclude<ExtArgs> | null
+  where?: Prisma.ProjectWhereInput
+  orderBy?: Prisma.ProjectOrderByWithRelationInput | Prisma.ProjectOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectScalarFieldEnum | Prisma.ProjectScalarFieldEnum[]
 }
 
 /**

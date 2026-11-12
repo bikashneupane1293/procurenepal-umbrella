@@ -409,7 +409,9 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   Bid: 'Bid',
   Bank: 'Bank',
-  BankGuarantee: 'BankGuarantee'
+  BankGuarantee: 'BankGuarantee',
+  Project: 'Project',
+  BoqItem: 'BoqItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -425,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1391,6 +1393,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Project: {
+      payload: Prisma.$ProjectPayload<ExtArgs>
+      fields: Prisma.ProjectFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProjectFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProjectFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        findFirst: {
+          args: Prisma.ProjectFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProjectFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        findMany: {
+          args: Prisma.ProjectFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+        }
+        create: {
+          args: Prisma.ProjectCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        createMany: {
+          args: Prisma.ProjectCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProjectCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+        }
+        delete: {
+          args: Prisma.ProjectDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        update: {
+          args: Prisma.ProjectUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProjectDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProjectUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProjectUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProjectUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectPayload>
+        }
+        aggregate: {
+          args: Prisma.ProjectAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProject>
+        }
+        groupBy: {
+          args: Prisma.ProjectGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProjectCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectCountAggregateOutputType> | number
+        }
+      }
+    }
+    BoqItem: {
+      payload: Prisma.$BoqItemPayload<ExtArgs>
+      fields: Prisma.BoqItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BoqItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BoqItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        findFirst: {
+          args: Prisma.BoqItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BoqItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        findMany: {
+          args: Prisma.BoqItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>[]
+        }
+        create: {
+          args: Prisma.BoqItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        createMany: {
+          args: Prisma.BoqItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BoqItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>[]
+        }
+        delete: {
+          args: Prisma.BoqItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        update: {
+          args: Prisma.BoqItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.BoqItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BoqItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BoqItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.BoqItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoqItemPayload>
+        }
+        aggregate: {
+          args: Prisma.BoqItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBoqItem>
+        }
+        groupBy: {
+          args: Prisma.BoqItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BoqItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BoqItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BoqItemCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1698,6 +1848,7 @@ export const BankGuaranteeScalarFieldEnum = {
   guaranteeNo: 'guaranteeNo',
   bidId: 'bidId',
   tenderId: 'tenderId',
+  projectId: 'projectId',
   beneficiary: 'beneficiary',
   purpose: 'purpose',
   amount: 'amount',
@@ -1720,6 +1871,63 @@ export const BankGuaranteeScalarFieldEnum = {
 } as const
 
 export type BankGuaranteeScalarFieldEnum = (typeof BankGuaranteeScalarFieldEnum)[keyof typeof BankGuaranteeScalarFieldEnum]
+
+
+export const ProjectScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  tenderId: 'tenderId',
+  bidId: 'bidId',
+  code: 'code',
+  name: 'name',
+  client: 'client',
+  location: 'location',
+  contractNo: 'contractNo',
+  projectType: 'projectType',
+  contractAmount: 'contractAmount',
+  contractSignDate: 'contractSignDate',
+  startDate: 'startDate',
+  contractPeriodMonths: 'contractPeriodMonths',
+  intendedCompletionDate: 'intendedCompletionDate',
+  revisedCompletionDate: 'revisedCompletionDate',
+  actualCompletionDate: 'actualCompletionDate',
+  defectLiabilityMonths: 'defectLiabilityMonths',
+  advancePct: 'advancePct',
+  retentionPct: 'retentionPct',
+  bidderType: 'bidderType',
+  jvPartners: 'jvPartners',
+  projectManager: 'projectManager',
+  clientEngineer: 'clientEngineer',
+  status: 'status',
+  source: 'source',
+  statusHistory: 'statusHistory',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+export const BoqItemScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  projectId: 'projectId',
+  sortOrder: 'sortOrder',
+  itemNo: 'itemNo',
+  section: 'section',
+  description: 'description',
+  unit: 'unit',
+  quantity: 'quantity',
+  rate: 'rate',
+  amount: 'amount',
+  isHeading: 'isHeading',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type BoqItemScalarFieldEnum = (typeof BoqItemScalarFieldEnum)[keyof typeof BoqItemScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2065,6 +2273,8 @@ export type GlobalOmitConfig = {
   bid?: Prisma.BidOmit
   bank?: Prisma.BankOmit
   bankGuarantee?: Prisma.BankGuaranteeOmit
+  project?: Prisma.ProjectOmit
+  boqItem?: Prisma.BoqItemOmit
 }
 
 /* Types for Logging */

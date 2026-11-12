@@ -21,6 +21,7 @@ export class GuaranteeService {
     bank: { select: { id: true, name: true, branch: true, bgLimit: true } },
     tender: { select: { id: true, ifbNumber: true, projectTitle: true, procuringEntity: true } },
     bid: { select: { id: true, status: true, bidValidityExpiry: true, companyId: true } },
+    project: { select: { id: true, code: true, name: true } },
   };
 
   private decorate(g: any, today: Date, windowDays: number) {
@@ -31,9 +32,9 @@ export class GuaranteeService {
     };
   }
 
-  async list(tenantId: string, f: { status?: string; type?: string; companyId?: string; bankId?: string; bidId?: string; tenderId?: string } = {}, windowDays = 30) {
+  async list(tenantId: string, f: { status?: string; type?: string; companyId?: string; bankId?: string; bidId?: string; tenderId?: string; projectId?: string } = {}, windowDays = 30) {
     const where: any = { tenantId };
-    for (const k of ['type', 'companyId', 'bankId', 'bidId', 'tenderId'] as const) if (f[k]) where[k] = f[k];
+    for (const k of ['type', 'companyId', 'bankId', 'bidId', 'tenderId', 'projectId'] as const) if (f[k]) where[k] = f[k];
     if (f.status === 'OPEN') where.status = { in: OPEN_STATUSES };
     else if (f.status) where.status = f.status;
     const rows = await this.prisma.bankGuarantee.findMany({ where, include: this.include, orderBy: { expiryDate: 'asc' } });
@@ -73,12 +74,21 @@ export class GuaranteeService {
     }
     if (!m.bankName?.trim()) throw new BadRequestException('Choose a bank from the list or type the bank name');
     m.bankName = m.bankName.trim();
+    if (m.projectId) {
+      const project: any = await this.prisma.project.findFirst({ where: { id: m.projectId, tenantId } });
+      if (!project) throw new NotFoundException('Project not found or access denied');
+      if (project.companyId !== m.companyId) throw new BadRequestException('The guarantee must be in the name of the project\'s contractor company');
+      if (!m.bidId && !m.tenderId && project.tenderId) m.tenderId = project.tenderId;
+      if (!m.beneficiary) m.beneficiary = project.client ?? null;
+    }
     if (m.bidId) {
       const bid: any = await this.prisma.bid.findFirst({ where: { id: m.bidId, tenantId }, include: { tender: true } });
       if (!bid) throw new NotFoundException('Bid not found or access denied');
       if (bid.companyId !== m.companyId) throw new BadRequestException('The guarantee must be in the name of the bidding company of the linked bid');
       m.tenderId = bid.tenderId;
       if (!m.beneficiary) m.beneficiary = bid.tender?.procuringEntity ?? null;
+      const bp: any = await this.prisma.project.findFirst({ where: { tenantId, bidId: m.bidId }, select: { id: true } });
+      if (bp) m.projectId = bp.id; // a bid's guarantees belong to the project made from it
       const dup = await this.prisma.bankGuarantee.findFirst({ where: { tenantId, bidId: m.bidId, type: m.type } });
       if (dup && dup.id !== current?.id) throw new ConflictException('This bid already has a guarantee of this type');
     } else if (m.tenderId) {
@@ -109,7 +119,7 @@ export class GuaranteeService {
     if (!(GUARANTEE_TYPES as readonly string[]).includes(dto.type)) throw new BadRequestException('Unknown guarantee type');
     const m: any = {
       tenantId, companyId: dto.companyId, bankId: dto.bankId ?? null, bankName: dto.bankName ?? '', bidId: dto.bidId ?? null,
-      tenderId: dto.tenderId ?? null, status: dto.status ?? (dto.guaranteeNo ? 'ACTIVE' : 'REQUESTED'), source: 'MANUAL',
+      tenderId: dto.tenderId ?? null, projectId: dto.projectId ?? null, status: dto.status ?? (dto.guaranteeNo ? 'ACTIVE' : 'REQUESTED'), source: 'MANUAL',
       ...this.dataFrom(dto),
     };
     await this.resolve(tenantId, m);
@@ -127,7 +137,7 @@ export class GuaranteeService {
       throw new BadRequestException('A guarantee linked to a bid stays with the bidding company');
     }
     const data: any = this.dataFrom(dto);
-    for (const k of ['companyId', 'bankId', 'bankName', 'bidId', 'tenderId'] as const) if ((dto as any)[k] !== undefined) data[k] = (dto as any)[k];
+    for (const k of ['companyId', 'bankId', 'bankName', 'bidId', 'tenderId', 'projectId'] as const) if ((dto as any)[k] !== undefined) data[k] = (dto as any)[k];
     if (dto.bankId === null && dto.bankName === undefined) data.bankName = cur.bankName;
     const m: any = { ...cur, ...data };
     await this.resolve(tenantId, m, cur);
@@ -140,7 +150,7 @@ export class GuaranteeService {
     if (dto.status !== undefined && dto.status !== cur.status) actions.push(`STATUS_${dto.status}`);
     const changes = Object.keys(data).filter((k) => String(data[k] ?? '') !== String(cur[k] ?? ''));
     const out: any = {};
-    for (const k of [...Object.keys(data), 'bankName', 'branch', 'tenderId', 'beneficiary', 'marginPct', 'marginAmount', 'commissionPct', 'commissionBasis', 'commissionAmount', 'releaseDate']) {
+    for (const k of [...Object.keys(data), 'bankName', 'branch', 'tenderId', 'projectId', 'beneficiary', 'marginPct', 'marginAmount', 'commissionPct', 'commissionBasis', 'commissionAmount', 'releaseDate']) {
       if (m[k] !== undefined) out[k] = m[k];
     }
     delete out.tenantId;

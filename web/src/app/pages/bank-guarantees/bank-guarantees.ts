@@ -83,6 +83,7 @@ function estimate(amount: number, pct: number | null, basis: string, issue: stri
         @if (cur(); as g) {
           @if (g.tender) { <p class="help">Tender {{ g.tender.ifbNumber }} — {{ g.tender.projectTitle }}
             @if (g.bidId) { · <a class="link" routerLink="/bids" [queryParams]="{ bid: g.bidId }">Open the bid →</a> }
+            @if (g.project) { · <a class="link" [routerLink]="['/projects', g.project.id]">Project {{ g.project.code }} →</a> }
             · <a class="link" [routerLink]="['/tenders', g.tenderId]">Tender workspace →</a></p> }
           @for (a of g.alerts; track a.code) { <div class="msg" [class]="'msg ' + alertTone(a.code)">{{ alertIcon(a.code) }} {{ a.message }}</div> }
         }
@@ -128,6 +129,13 @@ function estimate(amount: number, pct: number | null, basis: string, issue: stri
               <select name="tenderId" [(ngModel)]="f.tenderId" (ngModelChange)="onTender()">
                 <option value="">— None —</option>
                 @for (t of tenders(); track t.id) { <option [value]="t.id">{{ t.ifbNumber }} — {{ t.projectTitle }}</option> }
+              </select></div>
+          }
+          @if (!f.bidId && projects().length) {
+            <div><label>Project</label>
+              <select name="projectId" [(ngModel)]="f.projectId" (ngModelChange)="onProject()">
+                <option value="">— None —</option>
+                @for (x of companyProjects(); track x.id) { <option [value]="x.id">{{ x.code }} — {{ x.name }}</option> }
               </select></div>
           }
           <div><label>Beneficiary (procuring entity)</label><input name="beneficiary" [(ngModel)]="f.beneficiary" /></div>
@@ -281,7 +289,7 @@ function estimate(amount: number, pct: number | null, basis: string, issue: stri
                   <td>{{ typeLabel(g.type) }}@if (g.source === 'BID') { <div class="help">from bid</div> }</td>
                   <td><strong>{{ g.guaranteeNo || '—' }}</strong><div class="help">{{ g.bankName }}{{ g.branch ? ', ' + g.branch : '' }}</div></td>
                   <td>{{ g.company?.name }}</td>
-                  <td>{{ g.tender?.ifbNumber || '—' }}<div class="help">{{ g.beneficiary }}</div></td>
+                  <td>{{ g.tender?.ifbNumber || '—' }}@if (g.project) { <span class="tag">{{ g.project.code }}</span> }<div class="help">{{ g.beneficiary }}</div></td>
                   <td class="num">{{ num(g.amount) | number: '1.0-0' }}</td>
                   <td>@if (g.expiryDate) { {{ bs(g.expiryDate) }} @if (open(g.status)) { <span class="days" [class.warn]="g.daysLeft <= 15">{{ daysText(g.daysLeft) }}</span> } } @else { — }</td>
                   <td><span class="st" [class]="'st ' + g.status">{{ statusLabel(g.status) }}</span>
@@ -385,6 +393,8 @@ export class BankGuaranteesPage {
   });
   companyBanks = computed(() => this.banks().filter((b) => b.companyId === this.fc() && (b.isActive || b.id === this.f.bankId)));
   companyBids = computed(() => this.bids().filter((b) => b.companyId === this.fc()));
+  projects = signal<any[]>([]);
+  companyProjects = computed(() => this.projects().filter((x) => x.companyId === this.fc()));
   /** company chosen in the form, as a signal so the lists above update */
   fc = signal('');
 
@@ -394,7 +404,9 @@ export class BankGuaranteesPage {
     this.loadBanks();
     this.data.getBids().subscribe({ next: (l) => this.bids.set(l), error: () => {} }); // empty if Bolpatra is off
     this.data.getTenders().subscribe({ next: (l) => this.tenders.set(l), error: () => {} });
+    this.data.getProjects().subscribe({ next: (l) => this.projects.set(l), error: () => {} }); // empty if Project Management is off
     const q = this.route.snapshot.queryParamMap;
+    if (q.get('project')) this.newForProject(q.get('project')!);
     if (q.get('bank')) { this.fBank.set(q.get('bank')!); this.fStatus.set(''); }
     if (q.get('id')) this.openById(q.get('id')!);
   }
@@ -430,7 +442,7 @@ export class BankGuaranteesPage {
 
   // ---------- form ----------
   private blank() {
-    const f: any = { type: 'PERFORMANCE', status: 'ACTIVE', companyId: this.fCompany() || (this.companies().length === 1 ? this.companies()[0].id : ''), bankId: '', bidId: '', tenderId: '' };
+    const f: any = { type: 'PERFORMANCE', status: 'ACTIVE', companyId: this.fCompany() || (this.companies().length === 1 ? this.companies()[0].id : ''), bankId: '', bidId: '', tenderId: '', projectId: '' };
     for (const k of DATE_KEYS) f[k] = '';
     for (const k of NUM_KEYS) f[k] = null;
     for (const k of TEXT_KEYS) f[k] = '';
@@ -451,7 +463,7 @@ export class BankGuaranteesPage {
     this.formError.set('');
     try {
       const g = await firstValueFrom(this.data.getGuarantee(id));
-      const f: any = { type: g.type, status: g.status, companyId: g.companyId, bankId: g.bankId ?? '', bidId: g.bidId ?? '', tenderId: g.tenderId ?? '' };
+      const f: any = { type: g.type, status: g.status, companyId: g.companyId, bankId: g.bankId ?? '', bidId: g.bidId ?? '', tenderId: g.tenderId ?? '', projectId: g.projectId ?? '' };
       for (const k of DATE_KEYS) f[k] = g[k] ? String(g[k]).slice(0, 10) : '';
       for (const k of NUM_KEYS) f[k] = g[k] == null ? null : Number(g[k]);
       for (const k of TEXT_KEYS) f[k] = g[k] ?? '';
@@ -470,6 +482,7 @@ export class BankGuaranteesPage {
     this.fc.set(this.f.companyId);
     if (this.f.bankId && !this.companyBanks().some((b) => b.id === this.f.bankId)) this.f.bankId = '';
     if (this.f.bidId && !this.companyBids().some((b) => b.id === this.f.bidId)) this.f.bidId = '';
+    if (this.f.projectId && !this.companyProjects().some((x) => x.id === this.f.projectId)) this.f.projectId = '';
   }
   onBank() {
     const b = this.banks().find((x) => x.id === this.f.bankId);
@@ -489,6 +502,28 @@ export class BankGuaranteesPage {
       const v = this.f.type === 'BID_SECURITY' ? b.bidSecurityAmount : this.f.type === 'PERFORMANCE' ? b.performanceSecurityAmount : null;
       if (v != null) this.f.amount = Number(v);
     }
+  }
+  /** "+ Add guarantee" from a project page */
+  async newForProject(projectId: string) {
+    try {
+      const p = await firstValueFrom(this.data.getProject(projectId));
+      this.openNew();
+      this.f.companyId = p.companyId;
+      this.fc.set(p.companyId);
+      this.f.projectId = p.id;
+      this.f.tenderId = p.tenderId ?? '';
+      this.f.beneficiary = p.client ?? '';
+      this.f.type = 'ADVANCE_PAYMENT';
+      this.okMsg.set(`New guarantee for project ${p.code} — ${p.name}.`);
+    } catch (e) {
+      this.error.set(errorText(e));
+    }
+  }
+  onProject() {
+    const x = this.projects().find((p) => p.id === this.f.projectId);
+    if (!x) return;
+    if (x.tenderId && !this.f.tenderId) this.f.tenderId = x.tenderId;
+    if (!this.f.beneficiary) this.f.beneficiary = x.client ?? '';
   }
   onTender() {
     const t = this.tenders().find((x) => x.id === this.f.tenderId);
@@ -515,7 +550,7 @@ export class BankGuaranteesPage {
     const f = this.f;
     if (!f.companyId) { this.formError.set('Choose the company that applied for the guarantee.'); return null; }
     if (!f.bankId && !String(f.bankName ?? '').trim()) { this.formError.set('Choose a bank or type the bank name.'); return null; }
-    const body: any = { type: f.type, status: f.status, companyId: f.companyId, bankId: f.bankId || null, bidId: f.bidId || null, tenderId: f.bidId ? null : f.tenderId || null };
+    const body: any = { type: f.type, status: f.status, companyId: f.companyId, bankId: f.bankId || null, bidId: f.bidId || null, tenderId: f.bidId ? null : f.tenderId || null, projectId: f.bidId ? null : f.projectId || null };
     for (const k of DATE_KEYS) body[k] = f[k] || null;
     for (const k of NUM_KEYS) {
       const v = f[k];

@@ -63,7 +63,9 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   Bid: 'Bid',
   Bank: 'Bank',
-  BankGuarantee: 'BankGuarantee'
+  BankGuarantee: 'BankGuarantee',
+  Project: 'Project',
+  BoqItem: 'BoqItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -350,6 +352,7 @@ export const BankGuaranteeScalarFieldEnum = {
   guaranteeNo: 'guaranteeNo',
   bidId: 'bidId',
   tenderId: 'tenderId',
+  projectId: 'projectId',
   beneficiary: 'beneficiary',
   purpose: 'purpose',
   amount: 'amount',
@@ -372,6 +375,63 @@ export const BankGuaranteeScalarFieldEnum = {
 } as const
 
 export type BankGuaranteeScalarFieldEnum = (typeof BankGuaranteeScalarFieldEnum)[keyof typeof BankGuaranteeScalarFieldEnum]
+
+
+export const ProjectScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  tenderId: 'tenderId',
+  bidId: 'bidId',
+  code: 'code',
+  name: 'name',
+  client: 'client',
+  location: 'location',
+  contractNo: 'contractNo',
+  projectType: 'projectType',
+  contractAmount: 'contractAmount',
+  contractSignDate: 'contractSignDate',
+  startDate: 'startDate',
+  contractPeriodMonths: 'contractPeriodMonths',
+  intendedCompletionDate: 'intendedCompletionDate',
+  revisedCompletionDate: 'revisedCompletionDate',
+  actualCompletionDate: 'actualCompletionDate',
+  defectLiabilityMonths: 'defectLiabilityMonths',
+  advancePct: 'advancePct',
+  retentionPct: 'retentionPct',
+  bidderType: 'bidderType',
+  jvPartners: 'jvPartners',
+  projectManager: 'projectManager',
+  clientEngineer: 'clientEngineer',
+  status: 'status',
+  source: 'source',
+  statusHistory: 'statusHistory',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+export const BoqItemScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  projectId: 'projectId',
+  sortOrder: 'sortOrder',
+  itemNo: 'itemNo',
+  section: 'section',
+  description: 'description',
+  unit: 'unit',
+  quantity: 'quantity',
+  rate: 'rate',
+  amount: 'amount',
+  isHeading: 'isHeading',
+  notes: 'notes',
+  createdAt: 'createdAt'
+} as const
+
+export type BoqItemScalarFieldEnum = (typeof BoqItemScalarFieldEnum)[keyof typeof BoqItemScalarFieldEnum]
 
 
 export const SortOrder = {

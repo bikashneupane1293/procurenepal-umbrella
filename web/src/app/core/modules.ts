@@ -84,8 +84,8 @@ export const MENU: MenuModule[] = [
   {
     key: 'project', label: 'Project Management', icon: '🏗️',
     items: [
-      soon('project.info', 'Project Information', 'Projects created from won tenders, with contract data.', ['bolpatra.tenders', 'bolpatra.certificates', 'bank.guarantee']),
-      soon('project.boq', 'BOQ Management — Excel Upload', 'Upload the BOQ from Excel; quantities, rates and progress.', ['project.info', 'project.material-plan', 'project.norms']),
+      { id: 'project.info', label: 'Project Information', route: '/projects', status: 'built', about: 'Projects created from won tenders, with contract data.', links: ['bolpatra.bid-info', 'bolpatra.tenders', 'bolpatra.certificates', 'bank.guarantee'] },
+      { id: 'project.boq', label: 'BOQ Management — Excel Upload', route: '/boq', status: 'built', about: 'Upload the BOQ from Excel; quantities, rates and progress.', links: ['project.info', 'project.material-plan', 'project.norms'] },
       soon('project.documents', 'Document Management', 'Contract, drawings, approvals and correspondence per project.', ['project.info']),
       soon('project.milestones', 'Goal and Milestone Management', 'Milestones with target dates and payment links.', ['project.schedule', 'project.progress']),
       soon('project.schedule', 'Work Schedule and Project Period', 'Work programme, extensions of time.', ['project.milestones', 'project.scurve']),
