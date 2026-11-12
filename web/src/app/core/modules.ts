@@ -102,8 +102,8 @@ export const MENU: MenuModule[] = [
   {
     key: 'bank', label: 'Bank System', icon: '🏦',
     items: [
-      soon('bank.banks', 'Bank Management', 'Bank accounts and facilities.', ['bank.guarantee', 'bank.loans']),
-      soon('bank.guarantee', 'Bank Guarantee Management', 'Bid, performance and advance guarantees with expiry alerts.', ['bolpatra.tenders', 'project.info', 'bank.banks']),
+      { id: 'bank.banks', label: 'Bank Management', route: '/banks', status: 'built', about: 'Banks, accounts and guarantee limits per company.', links: ['bank.guarantee', 'bank.loans'] },
+      { id: 'bank.guarantee', label: 'Bank Guarantee Management', route: '/bank-guarantees', status: 'built', about: 'Bid, performance and advance guarantees with expiry alerts.', links: ['bolpatra.bid-info', 'bolpatra.tenders', 'project.info', 'bank.banks'] },
       soon('bank.loans', 'Loan Management and Amortization', 'Loans with amortization schedules.', ['bank.banks', 'bank.finance']),
       soon('bank.lc', 'LC Management — at Sight, Discounted, Usance', 'Letters of credit for imports.', ['proc.proforma', 'bank.banks']),
       soon('bank.finance', 'Finance Dashboard', 'Cash, guarantees, loans and payables at a glance.', ['bank.banks', 'bank.loans', 'proc.po']),

@@ -125,6 +125,8 @@ model Company {
   certificates    Certificate[]
   turnovers       AnnualTurnover[]
   bids            Bid[]
+  banks           Bank[]
+  guarantees      BankGuarantee[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -197,6 +199,7 @@ model Tender {
   bidSecurityAmount Decimal? @db.Decimal(15, 2)
   bidValidityDays   Int?
   bids              Bid[]
+  guarantees        BankGuarantee[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
@@ -292,10 +295,82 @@ model Bid {
   performanceSecurityExpiry DateTime?
   checklist                 Json?     // [{ key, label, done, note }]
   notes                     String?
+  guarantees                BankGuarantee[]
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @default(now()) @updatedAt
 
   @@unique([tenderId, companyId])
   @@index([tenantId])
   @@index([tenantId, status])
+}
+
+// ==================== BANK SYSTEM (Task 2) ====================
+// A bank (branch) with which a company holds accounts / a guarantee (non-fund) limit.
+model Bank {
+  id                   String    @id @default(uuid())
+  tenantId             String
+  companyId            String
+  company              Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name                 String
+  branch               String?
+  accountNumber        String?
+  accountType          String?   // CURRENT | SAVINGS | OVERDRAFT | FIXED | OTHER
+  bgLimit              Decimal?  @db.Decimal(15, 2) // guarantee (non-fund) limit
+  defaultMarginPct     Decimal?  @db.Decimal(5, 2)
+  defaultCommissionPct Decimal?  @db.Decimal(6, 3)
+  commissionBasis      String?   // QUARTER | YEAR | FLAT
+  contactPerson        String?
+  phone                String?
+  email                String?
+  notes                String?
+  isActive             Boolean   @default(true)
+  guarantees           BankGuarantee[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @default(now()) @updatedAt
+
+  @@index([tenantId])
+  @@index([companyId])
+}
+
+// Bid, performance, advance-payment, retention and other bank guarantees.
+model BankGuarantee {
+  id               String    @id @default(uuid())
+  tenantId         String
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankId           String?
+  bank             Bank?     @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankName         String
+  branch           String?
+  type             String    // BID_SECURITY | PERFORMANCE | ADVANCE_PAYMENT | RETENTION | CUSTOMS | OTHER
+  guaranteeNo      String?
+  bidId            String?
+  bid              Bid?      @relation(fields: [bidId], references: [id], onDelete: SetNull)
+  tenderId         String?
+  tender           Tender?   @relation(fields: [tenderId], references: [id], onDelete: SetNull)
+  beneficiary      String?
+  purpose          String?
+  amount           Decimal   @db.Decimal(15, 2)
+  issueDate        DateTime?
+  expiryDate       DateTime?
+  claimExpiryDate  DateTime?
+  marginPct        Decimal?  @db.Decimal(5, 2)
+  marginAmount     Decimal?  @db.Decimal(15, 2)
+  commissionPct    Decimal?  @db.Decimal(6, 3)
+  commissionBasis  String?   // QUARTER | YEAR | FLAT
+  commissionAmount Decimal?  @db.Decimal(15, 2)
+  status           String    @default("ACTIVE") // REQUESTED | ACTIVE | RELEASED | EXPIRED | CLAIMED | CANCELLED
+  releaseDate      DateTime?
+  releaseRef       String?
+  source           String    @default("MANUAL") // MANUAL | BID | IMPORT
+  history          Json?     // [{ at, byUserId, action, changes }]
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+
+  @@unique([bidId, type])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, expiryDate])
+  @@index([bankId])
 }

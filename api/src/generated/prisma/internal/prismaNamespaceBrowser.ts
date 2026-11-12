@@ -61,7 +61,9 @@ export const ModelName = {
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog',
-  Bid: 'Bid'
+  Bid: 'Bid',
+  Bank: 'Bank',
+  BankGuarantee: 'BankGuarantee'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -311,6 +313,65 @@ export const BidScalarFieldEnum = {
 } as const
 
 export type BidScalarFieldEnum = (typeof BidScalarFieldEnum)[keyof typeof BidScalarFieldEnum]
+
+
+export const BankScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  name: 'name',
+  branch: 'branch',
+  accountNumber: 'accountNumber',
+  accountType: 'accountType',
+  bgLimit: 'bgLimit',
+  defaultMarginPct: 'defaultMarginPct',
+  defaultCommissionPct: 'defaultCommissionPct',
+  commissionBasis: 'commissionBasis',
+  contactPerson: 'contactPerson',
+  phone: 'phone',
+  email: 'email',
+  notes: 'notes',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BankScalarFieldEnum = (typeof BankScalarFieldEnum)[keyof typeof BankScalarFieldEnum]
+
+
+export const BankGuaranteeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  bankId: 'bankId',
+  bankName: 'bankName',
+  branch: 'branch',
+  type: 'type',
+  guaranteeNo: 'guaranteeNo',
+  bidId: 'bidId',
+  tenderId: 'tenderId',
+  beneficiary: 'beneficiary',
+  purpose: 'purpose',
+  amount: 'amount',
+  issueDate: 'issueDate',
+  expiryDate: 'expiryDate',
+  claimExpiryDate: 'claimExpiryDate',
+  marginPct: 'marginPct',
+  marginAmount: 'marginAmount',
+  commissionPct: 'commissionPct',
+  commissionBasis: 'commissionBasis',
+  commissionAmount: 'commissionAmount',
+  status: 'status',
+  releaseDate: 'releaseDate',
+  releaseRef: 'releaseRef',
+  source: 'source',
+  history: 'history',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BankGuaranteeScalarFieldEnum = (typeof BankGuaranteeScalarFieldEnum)[keyof typeof BankGuaranteeScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -159,7 +159,9 @@ export function parseGuaranteeText(text: string): { fields: Suggestions; activit
   if (iss) put('bidSecurityIssueDate', dateIn(iss.rest) ?? dateIn(iss.line), iss.line);
   const exp = find(lines, /\b(valid (up ?to|until|till)|validity|expiry date|expires on|date of expiry)\b/i);
   if (exp) put('bidSecurityExpiry', dateIn(exp.rest) ?? dateIn(exp.line), exp.line);
-  if (/performance (security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'PERFORMANCE', 'performance guarantee');
+  if (/advance (payment )?(security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'ADVANCE', 'advance payment guarantee');
+  else if (/performance (security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'PERFORMANCE', 'performance guarantee');
+  else if (/retention (money )?(security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'RETENTION', 'retention money guarantee');
   else if (/bid (security|guarantee|bond)/i.test(text)) put('guaranteeKind', 'BID', 'bid guarantee');
   return { fields: f, activities: [] };
 }

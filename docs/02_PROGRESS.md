@@ -46,6 +46,16 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 - Not a PPMO rule source: the 30-day guarantee margin hint and checklist items are guidance, editable per bid.
 - Verified in sandbox: API e2e 38 (bids, access, qualification, verification), unit 81, browser 103 checks (bids 28, tenders 29, Excel/PDF 21, ERP 25).
 
+## Task 2 — Bank System: Banks + Bank Guarantee Management
+- Schema (additive only): new tables `Bank` (per company: branch, account, guarantee limit, usual margin %, commission % and basis) and `BankGuarantee` (type, number, bank, company, optional bid / tender, beneficiary, amount, issue / expiry / claim expiry, margin, commission, status, release, history); back-relations on Company, Tender, Bid. Bid / Tender / Bank deletion keeps guarantees (`SetNull`); Company deletion removes them.
+- Types: BID_SECURITY, PERFORMANCE, ADVANCE_PAYMENT, RETENTION, CUSTOMS, OTHER. Statuses: REQUESTED, ACTIVE (both "open", count against the limit), RELEASED, EXPIRED, CLAIMED, CANCELLED.
+- Background links: a bid with a bank-guarantee bid security (bank or number) creates / updates its BID_SECURITY guarantee; a won bid with a performance security amount creates a PERFORMANCE guarantee (REQUESTED); a hand-entered guarantee with the same bank + number is linked instead of duplicated; editing a linked open guarantee writes bank, number, amount and dates back to the bid; closed guarantees are never changed by bid saves; adding a bank attaches guarantees already typed with that name; `POST /bank-guarantees/sync-from-bids` back-fills older bids. Bids keep recording guarantees even when the Bank module is switched off.
+- Alerts: expired but still open, expiring within N days, release due (bid lost / withdrawn / cancelled, or contract signed), bid security valid less than 30 days beyond bid validity (guidance only), active without number. Limit use per bank and over-limit list.
+- Margin and commission are estimates (QUARTER / YEAR = rate per period or part of it; FLAT = once) from the bank's usual rates — not a rule; every value can be overwritten.
+- API (module `bank`): `GET/POST /banks`, `GET/PATCH/DELETE /banks/:id`, `GET/POST /bank-guarantees`, `GET/PATCH/DELETE /bank-guarantees/:id`, `GET /bank-guarantees/summary?days=`, `POST /bank-guarantees/sync-from-bids`. Delete: Owner / Super Admin / Director; a bank with open guarantees cannot be deleted.
+- Web: `/banks` and `/bank-guarantees` (summary cards, needs-attention list, limit use per bank, filters, form with guarantee-PDF reading incl. advance / retention detection, mark released, history, Excel template / import / export, "Bring in from bids"); the bid form links to its guarantees.
+- Verified in sandbox: API e2e 49 (bank 11 new), unit 81, browser 132 checks (bank 29 new).
+
 ## Decisions recorded
 
 - JV rules follow a published Nepal IFB (similar = one partner, key activities = combined, turnover 100/25/40).
@@ -59,6 +69,6 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 1. Deploy 6.4A/6.4B/6.5 (db push → git push → Render → cPanel) — needs owner approval.
 2. Phase 6.5 rest: Nepali/English UI toggle, full bidder profile (personnel, equipment, financials, litigation), document vault + expiry alerts.
 3. Phase 6.6: certificate PDF upload (Cloudflare R2) + auto-fill; PDFs in ZIP; average-bid price scenario tool.
-4. Phase 6.7: EXP/FIN/ELI form autofill; Bank Guarantee Management linked to bids; won tender → Project.
+4. Phase 6.7: EXP/FIN/ELI form autofill; won tender → Project (with its performance / advance guarantees).
 5. Admin panel + subscription plans; eSewa/Khalti; WhatsApp OTP; WordPress site.
 6. After full deployment: rotate admin + Supabase DB passwords; Render Starter.

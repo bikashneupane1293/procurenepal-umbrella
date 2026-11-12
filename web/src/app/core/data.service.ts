@@ -110,6 +110,42 @@ export class DataService {
     return this.http.delete(`${API_URL}/bids/${id}`);
   }
 
+  // ---------- Bank System: banks + guarantees ----------
+  getBanks(companyId?: string): Observable<any[]> {
+    return this.http.get(`${API_URL}/banks${companyId ? '?companyId=' + encodeURIComponent(companyId) : ''}`).pipe(map(toList));
+  }
+  createBank(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/banks`, body);
+  }
+  updateBank(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/banks/${id}`, body);
+  }
+  deleteBank(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/banks/${id}`);
+  }
+  getGuarantees(filter: Record<string, string | undefined> = {}): Observable<any[]> {
+    const q = Object.entries(filter).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v!)}`).join('&');
+    return this.http.get(`${API_URL}/bank-guarantees${q ? '?' + q : ''}`).pipe(map(toList));
+  }
+  getGuarantee(id: string): Observable<any> {
+    return this.http.get(`${API_URL}/bank-guarantees/${id}`);
+  }
+  createGuarantee(body: any): Observable<any> {
+    return this.http.post(`${API_URL}/bank-guarantees`, body);
+  }
+  updateGuarantee(id: string, body: any): Observable<any> {
+    return this.http.patch(`${API_URL}/bank-guarantees/${id}`, body);
+  }
+  deleteGuarantee(id: string): Observable<any> {
+    return this.http.delete(`${API_URL}/bank-guarantees/${id}`);
+  }
+  getGuaranteeSummary(days = 30): Observable<any> {
+    return this.http.get(`${API_URL}/bank-guarantees/summary?days=${days}`);
+  }
+  syncGuaranteesFromBids(): Observable<any> {
+    return this.http.post(`${API_URL}/bank-guarantees/sync-from-bids`, {});
+  }
+
   // ---------- Bolpatra Reports ----------
   getReport(days = 30): Observable<any> {
     return this.http.get(`${API_URL}/bolpatra/reports?days=${days}`);

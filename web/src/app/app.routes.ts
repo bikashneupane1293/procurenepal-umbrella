@@ -24,6 +24,8 @@ export const routes: Routes = [
       { path: 'qualification', canActivate: [moduleGuard], loadComponent: () => import('./pages/qualification/qualification').then((m) => m.QualificationPage) },
       { path: 'bids', canActivate: [moduleGuard], loadComponent: () => import('./pages/bids/bids').then((m) => m.BidsPage) },
       { path: 'reports', canActivate: [moduleGuard], loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsPage) },
+      { path: 'banks', canActivate: [moduleGuard], loadComponent: () => import('./pages/banks/banks').then((m) => m.BanksPage) },
+      { path: 'bank-guarantees', canActivate: [moduleGuard], loadComponent: () => import('./pages/bank-guarantees/bank-guarantees').then((m) => m.BankGuaranteesPage) },
       { path: 'soon/:id', loadComponent: () => import('./pages/soon/soon').then((m) => m.SoonPage) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

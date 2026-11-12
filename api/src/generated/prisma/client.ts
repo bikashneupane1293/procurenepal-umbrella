@@ -94,3 +94,13 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type Bid = Prisma.BidModel
+/**
+ * Model Bank
+ * 
+ */
+export type Bank = Prisma.BankModel
+/**
+ * Model BankGuarantee
+ * 
+ */
+export type BankGuarantee = Prisma.BankGuaranteeModel

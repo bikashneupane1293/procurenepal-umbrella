@@ -24,7 +24,7 @@ export const MODULES: ModuleDef[] = [
   { key: 'fleet', name: 'Vehicle & Fleet Management', status: 'planned' },
   { key: 'hr', name: 'HR and Operations', status: 'planned' },
   { key: 'project', name: 'Project Management', status: 'planned' },
-  { key: 'bank', name: 'Bank System', status: 'planned' },
+  { key: 'bank', name: 'Bank System', status: 'partial' },
 ];
 
 export const MODULE_KEYS = MODULES.map((m) => m.key);

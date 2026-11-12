@@ -166,6 +166,15 @@ interface PartnerRow { companyId: string; share: number | null; }
           <app-date-field label="Valid until (expiry)" [(value)]="f.bidSecurityExpiry" />
           <app-date-field label="Bid validity expiry" [(value)]="f.bidValidityExpiry" />
         </div>
+        @if (b.guarantees?.length) {
+          <div class="bglink">🏦 In Bank Guarantee Management:
+            @for (g of b.guarantees; track g.id) {
+              <a class="tag" routerLink="/bank-guarantees" [queryParams]="{ id: g.id }">{{ g.type === 'BID_SECURITY' ? 'Bid security' : g.type === 'PERFORMANCE' ? 'Performance' : g.type }} · {{ g.guaranteeNo || 'no number' }} · {{ g.status.toLowerCase() }}</a>
+            }
+          </div>
+        } @else if (f.bidSecurityType === 'BANK_GUARANTEE') {
+          <div class="help">When you save, a bank-guarantee bid security (with bank or number) is also recorded in Bank Guarantee Management.</div>
+        }
         @if (validityGap() !== null && validityGap()! < 30) {
           <div class="msg info">Check the bid document: the bid security is usually required to stay valid about 30 days beyond the bid validity (now {{ validityGap() }} days).</div>
         }
@@ -270,6 +279,8 @@ interface PartnerRow { companyId: string; share: number | null; }
     .qual.mid { background: #fef5e0; border-color: #f5d98a; color: #6b4e06; }
     .qual.bad { background: #fef2f2; border-color: #fecaca; color: #7f1d1d; }
     .qual.none { background: #f9fafb; border-color: #e5e7eb; color: #4b5563; }
+    .bglink { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-top: 10px; }
+    .bglink a.tag { text-decoration: none; }
     .partners, .history { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; margin-top: 8px; }
     .checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px; }
     .ck { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; font-size: 13px; border: 1px solid #e1e3e6; border-radius: 8px; padding: 8px 10px; margin: 0; cursor: pointer; }

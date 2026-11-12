@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBidDto, UpdateBidDto } from './dto/bid.dto';
+import { GuaranteeSyncService } from '../bank/guarantee-sync.service';
 import { defaultChecklist, SUBMITTED_ONWARDS, tenderStatusFromBids } from './bid.constants';
 
 const CAN_DELETE_BID = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'];
@@ -25,7 +26,7 @@ const PLAIN_FIELDS = [
  */
 @Injectable()
 export class BidService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private guarantees: GuaranteeSyncService) {}
 
   private include = {
     tender: { select: { id: true, ifbNumber: true, projectTitle: true, procuringEntity: true, deadlineDate: true, boqAmount: true, status: true, bidSecurityAmount: true, bidValidityDays: true } },
@@ -52,7 +53,12 @@ export class BidService {
     const qualification = await this.prisma.qualificationResult.findUnique({
       where: { tenderId_companyId: { tenderId: bid.tenderId, companyId: bid.companyId } },
     });
-    return { ...bid, qualification: qualification && qualification.tenantId === tenantId ? qualification : null };
+    // background link: guarantees recorded in the Bank System for this bid
+    const guarantees = await this.prisma.bankGuarantee.findMany({
+      where: { tenantId, bidId: id },
+      select: { id: true, type: true, status: true, guaranteeNo: true, bankName: true, amount: true, expiryDate: true },
+    });
+    return { ...bid, qualification: qualification && qualification.tenantId === tenantId ? qualification : null, guarantees };
   }
 
   /** Validates JV partners against the workspace and returns them with names. */
@@ -127,6 +133,7 @@ export class BidService {
     this.check(data);
     const bid = await this.prisma.bid.create({ data, include: this.include });
     await this.syncTender(tenantId, dto.tenderId);
+    await this.guarantees.fromBid(tenantId, bid.id, userId);
     return bid;
   }
 
@@ -152,6 +159,7 @@ export class BidService {
     if (merged.decision !== (data.decision ?? bid.decision)) data.decision = merged.decision;
     const saved = await this.prisma.bid.update({ where: { id }, data, include: this.include });
     await this.syncTender(tenantId, bid.tenderId);
+    await this.guarantees.fromBid(tenantId, id, userId);
     return saved;
   }
 

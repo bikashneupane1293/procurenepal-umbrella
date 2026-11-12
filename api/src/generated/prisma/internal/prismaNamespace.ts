@@ -407,7 +407,9 @@ export const ModelName = {
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog',
-  Bid: 'Bid'
+  Bid: 'Bid',
+  Bank: 'Bank',
+  BankGuarantee: 'BankGuarantee'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -423,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1241,6 +1243,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Bank: {
+      payload: Prisma.$BankPayload<ExtArgs>
+      fields: Prisma.BankFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BankFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BankFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        findFirst: {
+          args: Prisma.BankFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BankFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        findMany: {
+          args: Prisma.BankFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>[]
+        }
+        create: {
+          args: Prisma.BankCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        createMany: {
+          args: Prisma.BankCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BankCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>[]
+        }
+        delete: {
+          args: Prisma.BankDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        update: {
+          args: Prisma.BankUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        deleteMany: {
+          args: Prisma.BankDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BankUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BankUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>[]
+        }
+        upsert: {
+          args: Prisma.BankUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankPayload>
+        }
+        aggregate: {
+          args: Prisma.BankAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBank>
+        }
+        groupBy: {
+          args: Prisma.BankGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BankGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BankCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BankCountAggregateOutputType> | number
+        }
+      }
+    }
+    BankGuarantee: {
+      payload: Prisma.$BankGuaranteePayload<ExtArgs>
+      fields: Prisma.BankGuaranteeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BankGuaranteeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BankGuaranteeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        findFirst: {
+          args: Prisma.BankGuaranteeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BankGuaranteeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        findMany: {
+          args: Prisma.BankGuaranteeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>[]
+        }
+        create: {
+          args: Prisma.BankGuaranteeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        createMany: {
+          args: Prisma.BankGuaranteeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BankGuaranteeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>[]
+        }
+        delete: {
+          args: Prisma.BankGuaranteeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        update: {
+          args: Prisma.BankGuaranteeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        deleteMany: {
+          args: Prisma.BankGuaranteeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BankGuaranteeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BankGuaranteeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>[]
+        }
+        upsert: {
+          args: Prisma.BankGuaranteeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BankGuaranteePayload>
+        }
+        aggregate: {
+          args: Prisma.BankGuaranteeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBankGuarantee>
+        }
+        groupBy: {
+          args: Prisma.BankGuaranteeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BankGuaranteeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BankGuaranteeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BankGuaranteeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1511,6 +1661,65 @@ export const BidScalarFieldEnum = {
 } as const
 
 export type BidScalarFieldEnum = (typeof BidScalarFieldEnum)[keyof typeof BidScalarFieldEnum]
+
+
+export const BankScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  name: 'name',
+  branch: 'branch',
+  accountNumber: 'accountNumber',
+  accountType: 'accountType',
+  bgLimit: 'bgLimit',
+  defaultMarginPct: 'defaultMarginPct',
+  defaultCommissionPct: 'defaultCommissionPct',
+  commissionBasis: 'commissionBasis',
+  contactPerson: 'contactPerson',
+  phone: 'phone',
+  email: 'email',
+  notes: 'notes',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BankScalarFieldEnum = (typeof BankScalarFieldEnum)[keyof typeof BankScalarFieldEnum]
+
+
+export const BankGuaranteeScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  companyId: 'companyId',
+  bankId: 'bankId',
+  bankName: 'bankName',
+  branch: 'branch',
+  type: 'type',
+  guaranteeNo: 'guaranteeNo',
+  bidId: 'bidId',
+  tenderId: 'tenderId',
+  beneficiary: 'beneficiary',
+  purpose: 'purpose',
+  amount: 'amount',
+  issueDate: 'issueDate',
+  expiryDate: 'expiryDate',
+  claimExpiryDate: 'claimExpiryDate',
+  marginPct: 'marginPct',
+  marginAmount: 'marginAmount',
+  commissionPct: 'commissionPct',
+  commissionBasis: 'commissionBasis',
+  commissionAmount: 'commissionAmount',
+  status: 'status',
+  releaseDate: 'releaseDate',
+  releaseRef: 'releaseRef',
+  source: 'source',
+  history: 'history',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BankGuaranteeScalarFieldEnum = (typeof BankGuaranteeScalarFieldEnum)[keyof typeof BankGuaranteeScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1854,6 +2063,8 @@ export type GlobalOmitConfig = {
   annualTurnover?: Prisma.AnnualTurnoverOmit
   auditLog?: Prisma.AuditLogOmit
   bid?: Prisma.BidOmit
+  bank?: Prisma.BankOmit
+  bankGuarantee?: Prisma.BankGuaranteeOmit
 }
 
 /* Types for Logging */

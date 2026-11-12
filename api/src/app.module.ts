@@ -16,6 +16,7 @@ import { QualificationModule } from './qualification/qualification.module';
 import { TenderModule } from './tender/tender.module';
 import { AccessModule } from './access/access.module';
 import { BidModule } from './bid/bid.module';
+import { BankModule } from './bank/bank.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { BidModule } from './bid/bid.module';
     TenderModule,
     AccessModule,
     BidModule,
+    BankModule,
   ],
   controllers: [AppController],
   providers: [AppService],
