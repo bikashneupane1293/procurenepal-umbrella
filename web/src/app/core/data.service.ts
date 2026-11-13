@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, firstValueFrom } from 'rxjs';
 import { API_URL } from './config';
 
 // Accepts either a plain list or a list wrapped as { data: [...] } / { items: [...] }
@@ -12,6 +12,10 @@ function toList(res: any): any[] {
 @Injectable({ providedIn: 'root' })
 export class DataService {
   private http = inject(HttpClient);
+
+  // ---------- External References (Task 5) ----------
+  listReferences(): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/references`)); }
+  checkReferences(): Promise<any[]> { return firstValueFrom(this.http.post<any[]>(`${API_URL}/references/check`, {})); }
 
   // ---------- Companies ----------
   getCompanies(): Observable<any[]> {

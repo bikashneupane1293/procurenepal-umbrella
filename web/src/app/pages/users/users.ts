@@ -16,6 +16,7 @@ const ROLES: { value: string; label: string }[] = [
   { value: 'STORE_MANAGER', label: 'Store Manager' },
   { value: 'SITE_ENGINEER', label: 'Site Engineer' },
   { value: 'SUPERVISOR', label: 'Supervisor' },
+  { value: 'HR_MANAGER', label: 'HR and Operations' },
   { value: 'VIEWER', label: 'Viewer (read only)' },
 ];
 const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
@@ -36,6 +37,17 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     @if (okMsg()) { <div class="msg ok">{{ okMsg() }}</div> }
     @if (error()) { <div class="msg error">{{ error() }}</div> }
 
+    @if (activationLink()) {
+      <div class="panel link-panel">
+        <h2>🔗 Activation link</h2>
+        <p class="help">Email sending isn't set up yet, so send this link to the new user yourself (WhatsApp, SMS, email). They will open it and choose their own password. The link works for 7 days.</p>
+        <div class="linkbox">
+          <code>{{ fullLink(activationLink()!) }}</code>
+          <button class="btn light small" (click)="copyLink(activationLink()!)">{{ copied() ? '✅ Copied' : '📋 Copy' }}</button>
+        </div>
+      </div>
+    }
+
     @if (canManage()) {
       <div class="panel">
         <h2>Workspace modules (activation)</h2>
@@ -50,6 +62,27 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
           }
         </div>
         <div class="actions"><button class="btn" (click)="saveModules()" [disabled]="savingMods()">{{ savingMods() ? 'Saving…' : 'Save module activation' }}</button></div>
+      </div>
+
+      <div class="panel">
+        <h2>Sidebar items (fine control)</h2>
+        <p class="help">Switch off a single screen within an active module — the rest of the module stays on. Useful for a submenu nobody on your team uses yet.</p>
+        @for (m of menu; track m.key) {
+          @if (ws[m.key]) {
+            <details class="itemgrp">
+              <summary>{{ m.icon }} {{ m.label }} <small>({{ m.items.length }} items)</small></summary>
+              <div class="mods">
+                @for (i of m.items; track i.id) {
+                  <label class="mod" [class.off]="wsItems[i.id] === false">
+                    <input type="checkbox" [checked]="wsItems[i.id] !== false" (change)="wsItems[i.id] = wsItems[i.id] === false ? true : false" />
+                    <span>{{ i.label }}</span>
+                  </label>
+                }
+              </div>
+            </details>
+          }
+        }
+        <div class="actions"><button class="btn" (click)="saveItems()" [disabled]="savingItems()">{{ savingItems() ? 'Saving…' : 'Save sidebar items' }}</button></div>
       </div>
     }
 
@@ -66,10 +99,16 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
             <input name="phone" [(ngModel)]="f.phone" placeholder="e.g. 98XXXXXXXX" /></div>
           <div><label>Role <span class="req">*</span></label>
             <select name="role" [(ngModel)]="f.role">@for (r of roles; track r.value) { <option [value]="r.value">{{ r.label }}</option> }</select></div>
-          <div><label>{{ editId() ? 'New password (leave blank to keep)' : 'Password' }} @if (!editId()) { <span class="req">*</span> }</label>
-            <input name="password" type="password" [(ngModel)]="f.password" autocomplete="new-password" placeholder="At least 8 characters, a letter and a number" />
-            <div class="help">Give this password to the user privately; ask them to change it later.</div></div>
-          @if (editId()) {
+          <div><label>Custom title shown on screen (optional)</label>
+            <input name="customTitle" [(ngModel)]="f.customTitle" placeholder="e.g. Site Supervisor – Butwal" />
+            <div class="help">Shown instead of the role name in the user list. The role above still controls what they can do.</div></div>
+          @if (!editId()) {
+            <div><label>Password (optional)</label>
+              <input name="password" type="password" [(ngModel)]="f.password" autocomplete="new-password" placeholder="Leave blank to send an activation link instead" />
+              <div class="help">Leave blank: the user gets a link to set their own password. Fill it in to activate the account yourself, right now.</div></div>
+          } @else {
+            <div><label>New password (leave blank to keep)</label>
+              <input name="password" type="password" [(ngModel)]="f.password" autocomplete="new-password" placeholder="At least 8 characters, a letter and a number" /></div>
             <div><label class="inline"><input type="checkbox" name="active" [(ngModel)]="f.isActive" /> Account active</label>
               <div class="help">Untick to block sign-in without deleting the user.</div></div>
           }
@@ -97,7 +136,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
 
     <div class="panel">
       @if (loading()) { <div class="msg info">Loading users…</div> }
-      @else if (!canView()) { <div class="msg info">Only the Owner or a Director can see the user list.</div> }
+      @else if (!canView()) { <div class="msg info">Only the Owner, a Director, or HR and Operations can see the user list.</div> }
       @else {
         <div class="table-wrap">
           <table>
@@ -105,12 +144,19 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
             <tbody>
               @for (u of users(); track u.id) {
                 <tr>
-                  <td><strong>{{ u.fullName }}</strong><div class="help">{{ u.email }}{{ u.phone ? ' · ' + u.phone : '' }}</div></td>
+                  <td><strong>{{ u.fullName }}</strong><div class="help">{{ u.customTitle || u.email }}{{ u.customTitle ? '' : (u.phone ? ' · ' + u.phone : '') }}</div></td>
                   <td><span class="tag gold">{{ u.role }}</span></td>
                   <td>{{ modLabel(u) }}</td>
-                  <td>@if (u.isActive) { <span class="tag green">Active</span> } @else { <span class="tag warn">Blocked</span> }</td>
+                  <td>
+                    @if (u.status === 'PENDING') { <span class="tag warn">Pending activation</span> }
+                    @else if (u.isActive) { <span class="tag green">Active</span> }
+                    @else { <span class="tag warn">Blocked</span> }
+                  </td>
                   <td>{{ u.lastLoginAt ? both(u.lastLoginAt) : '—' }}</td>
-                  <td>@if (canManage() && u.role !== 'SUPER_ADMIN') { <button class="btn light small" (click)="openEdit(u)">Edit</button> }</td>
+                  <td class="rowbtns">
+                    @if (canManage() && u.status === 'PENDING') { <button class="btn light small" (click)="newLink(u)">New link</button> }
+                    @if (canManage() && u.role !== 'SUPER_ADMIN') { <button class="btn light small" (click)="openEdit(u)">Edit</button> }
+                  </td>
                 </tr>
               } @empty { <tr><td colspan="6" class="empty">No users.</td></tr> }
             </tbody>
@@ -118,6 +164,30 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
         </div>
       }
     </div>
+
+    @if (canViewLogins()) {
+      <div class="panel">
+        <h2>Sign-in / sign-out history</h2>
+        <p class="help">Visible to the Owner and HR and Operations. "Open" means the user has not signed out yet (or closed the browser tab without signing out).</p>
+        @if (loadingLogins()) { <div class="msg info">Loading…</div> }
+        @else {
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Signed in</th><th>Signed out</th></tr></thead>
+              <tbody>
+                @for (s of sessions(); track s.id) {
+                  <tr>
+                    <td>{{ s.user?.fullName ?? '—' }}</td>
+                    <td>{{ both(s.loginAt) }}</td>
+                    <td>{{ s.logoutAt ? both(s.logoutAt) : 'Open' }}</td>
+                  </tr>
+                } @empty { <tr><td colspan="3" class="empty">No sign-ins recorded yet.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
   `,
   styles: [UI_STYLES, `
     h3 { font-size: 14px; color: #b8860b; text-transform: uppercase; letter-spacing: .04em; margin: 20px 0 10px; }
@@ -130,7 +200,14 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     label.inline input { width: auto; }
     .all { margin-bottom: 6px; }
     .btn.small { padding: 6px 12px; }
+    .rowbtns { display: flex; gap: 6px; }
     .tag.warn { background: #fef2f2; color: #b91c1c; }
+    .itemgrp { border: 1px solid #e1e3e6; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; }
+    .itemgrp summary { cursor: pointer; font-weight: 700; color: #0a1f3d; padding: 4px 0; }
+    .itemgrp summary small { color: #9ca3af; font-weight: 400; }
+    .link-panel { border-left: 4px solid #d4a017; }
+    .linkbox { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border-radius: 8px; padding: 10px 14px; flex-wrap: wrap; }
+    .linkbox code { word-break: break-all; font-size: 13px; }
   `],
 })
 export class UsersPage {
@@ -148,10 +225,17 @@ export class UsersPage {
   editId = signal('');
   saving = signal(false);
   savingMods = signal(false);
+  savingItems = signal(false);
   formError = signal('');
+  activationLink = signal<string | null>(null);
+  copied = signal(false);
+  sessions = signal<any[]>([]);
+  loadingLogins = signal(false);
   canManage = computed(() => !!this.access.info()?.canManage);
-  canView = computed(() => ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'].includes(this.access.info()?.role ?? this.me?.role));
+  canView = computed(() => ['OWNER', 'SUPER_ADMIN', 'DIRECTOR', 'HR_MANAGER'].includes(this.access.info()?.role ?? this.me?.role));
+  canViewLogins = computed(() => !!this.access.info()?.canViewLogins);
   ws: Record<string, boolean> = Object.fromEntries(MENU.map((m) => [m.key, true]));
+  wsItems: Record<string, boolean> = {};
   f = this.empty();
 
   constructor() { this.init(); }
@@ -159,7 +243,9 @@ export class UsersPage {
   async init() {
     const info = await this.access.load(true);
     this.ws = { ...this.ws, ...info.workspaceModules };
+    this.wsItems = { ...(info.itemFlags ?? {}) };
     await this.loadUsers();
+    if (this.canViewLogins()) this.loadLogins();
   }
   async loadUsers() {
     this.loading.set(true);
@@ -168,9 +254,14 @@ export class UsersPage {
     }
     this.loading.set(false);
   }
+  async loadLogins() {
+    this.loadingLogins.set(true);
+    try { this.sessions.set(await this.access.loginSessions()); } catch { /* not critical */ }
+    this.loadingLogins.set(false);
+  }
 
   empty() {
-    return { email: '', fullName: '', phone: '', role: 'VIEWER', password: '', isActive: true, allModules: true, modules: [] as string[] };
+    return { email: '', fullName: '', phone: '', role: 'VIEWER', password: '', customTitle: '', isActive: true, allModules: true, modules: [] as string[] };
   }
   both(d: any) { return showBoth(String(d)); }
   builtCount(key: string) { return MENU.find((m) => m.key === key)!.items.filter((i) => i.status === 'built').length; }
@@ -181,22 +272,28 @@ export class UsersPage {
   toggleMod(key: string) {
     this.f.modules = this.f.modules.includes(key) ? this.f.modules.filter((k) => k !== key) : [...this.f.modules, key];
   }
+  fullLink(path: string) { return `${location.origin}${path}`; }
+  async copyLink(path: string) {
+    try { await navigator.clipboard.writeText(this.fullLink(path)); this.copied.set(true); setTimeout(() => this.copied.set(false), 2500); } catch { /* clipboard blocked */ }
+  }
 
   openNew() {
     this.editId.set('');
     this.f = this.empty();
     this.formError.set('');
     this.okMsg.set('');
+    this.activationLink.set(null);
     this.showForm.set(true);
   }
   openEdit(u: any) {
     this.editId.set(u.id);
     this.f = {
       email: u.email, fullName: u.fullName ?? '', phone: u.phone ?? '', role: u.role, password: '',
-      isActive: u.isActive, allModules: !u.modules?.length, modules: [...(u.modules ?? [])],
+      customTitle: u.customTitle ?? '', isActive: u.isActive, allModules: !u.modules?.length, modules: [...(u.modules ?? [])],
     };
     this.formError.set('');
     this.okMsg.set('');
+    this.activationLink.set(null);
     this.showForm.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -206,23 +303,40 @@ export class UsersPage {
     const editing = this.editId();
     if (!editing && !/^\S+@\S+\.\S+$/.test(f.email.trim())) { this.formError.set('Please enter a valid email.'); return; }
     if (!f.fullName.trim()) { this.formError.set('Please enter the full name.'); return; }
-    if ((!editing || f.password) && !PASSWORD.test(f.password)) { this.formError.set('Password must be at least 8 characters with a letter and a number.'); return; }
+    if (f.password && !PASSWORD.test(f.password)) { this.formError.set('Password must be at least 8 characters with a letter and a number.'); return; }
     const modules = f.allModules ? [] : f.modules.filter((k) => k !== 'companies');
     if (!f.allModules && !modules.length) { this.formError.set('Tick at least one module, or choose "All modules".'); return; }
-    const body: any = { fullName: f.fullName.trim(), phone: f.phone.trim(), role: f.role, modules };
+    const body: any = { fullName: f.fullName.trim(), phone: f.phone.trim(), role: f.role, modules, customTitle: f.customTitle.trim() };
     if (f.password) body.password = f.password;
     if (editing) body.isActive = f.isActive; else body.email = f.email.trim();
     this.saving.set(true);
     this.formError.set('');
     try {
-      editing ? await this.access.updateUser(editing, body) : await this.access.createUser(body);
+      if (editing) {
+        await this.access.updateUser(editing, body);
+        this.okMsg.set(`✅ ${body.fullName} was updated.`);
+      } else {
+        const created = await this.access.createUser(body);
+        this.okMsg.set(created.activationLink
+          ? `✅ ${body.fullName} was added. Send them the activation link below so they can set their own password.`
+          : `✅ ${body.fullName} was added. They can sign in with ${body.email} and the password you set.`);
+        this.activationLink.set(created.activationLink ?? null);
+      }
       this.showForm.set(false);
-      this.okMsg.set(editing ? `✅ ${body.fullName} was updated.` : `✅ ${body.fullName} was added. They can sign in with ${body.email} and the password you set.`);
       await this.loadUsers();
     } catch (e) {
       this.formError.set(errorText(e));
     }
     this.saving.set(false);
+  }
+
+  async newLink(u: any) {
+    this.error.set('');
+    try {
+      const r = await this.access.activationLink(u.id);
+      this.activationLink.set(r.activationLink);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) { this.error.set(errorText(e)); }
   }
 
   async saveModules() {
@@ -238,5 +352,20 @@ export class UsersPage {
       this.error.set(errorText(e));
     }
     this.savingMods.set(false);
+  }
+
+  async saveItems() {
+    this.savingItems.set(true);
+    this.error.set('');
+    try {
+      const allItemIds = MENU.flatMap((m) => m.items.map((i) => i.id));
+      const changes = Object.fromEntries(allItemIds.map((id) => [id, this.wsItems[id] !== false]));
+      this.wsItems = await this.access.setWorkspaceItems(changes);
+      await this.access.load(true); // refresh the sidebar
+      this.okMsg.set('✅ Sidebar items saved.');
+    } catch (e) {
+      this.error.set(errorText(e));
+    }
+    this.savingItems.set(false);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth.service';
@@ -29,7 +29,9 @@ const OPEN_KEY = 'pn.menu.open';
                     <a class="item sub" [routerLink]="m.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview & templates</a>
                   }
                   @for (i of m.items; track i.id) {
-                    @if (i.status === 'built') {
+                    @if (!access.canItem(i.id)) {
+                      <!-- switched off for this workspace -->
+                    } @else if (i.status === 'built') {
                       <a class="item sub" [routerLink]="i.route" routerLinkActive="active">{{ i.label }}</a>
                     } @else {
                       <a class="item sub soon" [routerLink]="['/soon', i.id]" routerLinkActive="active">{{ i.label }} <small>Soon</small></a>
@@ -89,8 +91,9 @@ const OPEN_KEY = 'pn.menu.open';
 })
 export class ShellLayout {
   private auth = inject(AuthService);
-  private access = inject(AccessService);
+  access = inject(AccessService); // used directly in the template (canItem)
   private router = inject(Router);
+  private el = inject(ElementRef);
   user = this.auth.getUser();
   year = new Date().getFullYear();
 
@@ -113,10 +116,22 @@ export class ShellLayout {
     this.open.set(s);
     try { localStorage.setItem(OPEN_KEY, JSON.stringify([...s])); } catch { /* storage blocked */ }
   }
+  /** Navigation always opens exactly the section you're in (and closes the rest), so you can
+   *  always see where you are — then scrolls that section into view inside the sidebar. */
   private openFor(url: string) {
     const soonId = url.startsWith('/soon/') ? url.split('/')[2] : null;
     const key = soonId ? MENU.find((m) => m.items.some((i) => i.id === soonId))?.key : moduleOfRoute(url.split('?')[0]);
-    if (key && !this.open().has(key)) this.open.set(new Set([...this.open(), key]));
+    if (key) {
+      this.open.set(new Set([key]));
+      try { localStorage.setItem(OPEN_KEY, JSON.stringify([key])); } catch { /* storage blocked */ }
+    }
+    setTimeout(() => this.scrollActiveIntoView(), 60);
+  }
+  private scrollActiveIntoView() {
+    const root: HTMLElement = this.el.nativeElement;
+    const target: HTMLElement | null =
+      root.querySelector('.sidebar .item.active') ?? root.querySelector('.sidebar .group.open .ghead');
+    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
   private readOpen(): Set<string> {
     try { return new Set(JSON.parse(localStorage.getItem(OPEN_KEY) || '["companies","bolpatra"]')); } catch { return new Set(['companies', 'bolpatra']); }

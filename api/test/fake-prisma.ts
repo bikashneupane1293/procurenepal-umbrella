@@ -38,6 +38,8 @@ function matches(row: Row, where: Row = {}): boolean {
     if (v && typeof v === 'object' && !(v instanceof Date)) {
       if ('in' in v) return v.in.includes(row[k]);
       if ('not' in v) return row[k] !== v.not;
+      if ('startsWith' in v) return typeof row[k] === 'string' && row[k].startsWith(v.startsWith);
+      if ('lt' in v) return row[k] < v.lt;
     }
     return row[k] === v;
   });
@@ -52,7 +54,9 @@ const DEFAULTS: Record<string, () => Row> = {
   tender: () => ({ reqProjectTypes: [], status: 'active', source: 'manual', isComplexWork: false, createdAt: new Date(), updatedAt: new Date() }),
   qualificationResult: () => ({ calculatedAt: new Date() }),
   annualTurnover: () => ({ source: 'audited', createdAt: new Date(), updatedAt: new Date() }),
-  user: () => ({ isActive: true, modules: [], role: 'VIEWER', createdAt: new Date() }),
+  user: () => ({ isActive: true, modules: [], role: 'VIEWER', createdAt: new Date(), status: 'ACTIVE', activationToken: null, activationExpires: null, customTitle: null }),
+  loginSession: () => ({ loginAt: new Date(), logoutAt: null }),
+  externalRef: () => ({ fetchedAt: new Date(), changed: false }),
   tenantFeatureFlag: () => ({ enabled: false, createdAt: new Date() }),
   bid: () => ({ bidderType: 'SINGLE', decision: 'UNDECIDED', status: 'PREPARING', createdAt: new Date(), updatedAt: new Date() }),
   tenant: () => ({ isActive: true }),
@@ -68,6 +72,7 @@ export class FakePrisma {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
     bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
+    loginSession: [], externalRef: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -198,6 +203,8 @@ export class FakePrisma {
   project = this.model('project');
   boqItem = this.model('boqItem');
   erpRecord = this.model('erpRecord');
+  loginSession = this.model('loginSession');
+  externalRef = this.model('externalRef');
 
   async $transaction(ops: Promise<any>[]) {
     const out: any[] = [];

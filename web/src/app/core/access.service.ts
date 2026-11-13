@@ -7,8 +7,10 @@ import { MENU } from './modules';
 export interface AccessInfo {
   role: string;
   canManage: boolean;
+  canViewLogins?: boolean;
   modules: string[];
   workspaceModules: Record<string, boolean>;
+  itemFlags?: Record<string, boolean>;
 }
 
 /** Which ERP modules the signed-in user may open (loaded once per session). */
@@ -36,6 +38,12 @@ export class AccessService {
     return i.modules.includes(moduleKey);
   }
 
+  /** A single sidebar item switched off for the workspace (default: on). */
+  canItem(itemId: string): boolean {
+    const f = this.info()?.itemFlags;
+    return f?.[itemId] !== false;
+  }
+
   clear() { this.info.set(null); }
 
   // ---------- User Setup API ----------
@@ -44,5 +52,12 @@ export class AccessService {
   updateUser(id: string, body: any) { return firstValueFrom(this.http.patch<any>(`${API_URL}/users/${id}`, body)); }
   setWorkspaceModules(modules: Record<string, boolean>) {
     return firstValueFrom(this.http.put<Record<string, boolean>>(`${API_URL}/access/workspace-modules`, { modules }));
+  }
+  setWorkspaceItems(items: Record<string, boolean>) {
+    return firstValueFrom(this.http.put<Record<string, boolean>>(`${API_URL}/access/workspace-items`, { items }));
+  }
+  activationLink(userId: string) { return firstValueFrom(this.http.post<any>(`${API_URL}/users/${userId}/activation-link`, {})); }
+  loginSessions(userId?: string) {
+    return firstValueFrom(this.http.get<any[]>(`${API_URL}/users/login-sessions`, { params: userId ? { userId } : {} }));
   }
 }

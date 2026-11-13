@@ -41,6 +41,7 @@ export const MENU: MenuModule[] = [
       { id: 'bolpatra.tenders', label: 'Tenders', route: '/tenders', status: 'built' },
       { id: 'bolpatra.qualification', label: 'Qualification', route: '/qualification', status: 'built' },
       { id: 'bolpatra.reports', label: 'Reports', route: '/reports', status: 'built', links: ['bolpatra.tenders', 'bolpatra.qualification', 'bolpatra.bid-info'] },
+      { id: 'bolpatra.references', label: 'External References (PPMO / NRB)', route: '/references', status: 'built' },
     ],
   },
   {
@@ -93,6 +94,7 @@ export const MENU: MenuModule[] = [
       erp('project.material-plan', 'Raw Material Allocation Planning', 'Materials needed from BOQ × norms, sent as requisitions.', ['project.boq', 'project.norms', 'proc.requisition']),
       erp('project.scurve', 'Variance Chart / S-Curve', 'Planned vs actual progress and cost.', ['project.schedule', 'project.progress']),
       erp('project.progress', 'Progress Report Management', 'Daily / monthly progress; becomes the experience certificate quantities at completion.', ['project.boq', 'bolpatra.certificates']),
+      erp('project.daily-report', 'Daily Site Reporting', 'Daily site diary — weather, manpower, equipment, issues and material use.', ['project.info', 'project.progress']),
       erp('project.reporting', 'Overall Project Reporting', 'Portfolio dashboard across projects.', ['project.progress', 'bank.finance']),
       erp('project.petty', 'Petty Contractor Management', 'Petty contractors, work orders and bills.', ['project.boq', 'bank.finance']),
       erp('project.petty-inventory', 'Petty Contractor Inventory', 'Materials issued to petty contractors.', ['project.petty', 'proc.site-warehouse']),

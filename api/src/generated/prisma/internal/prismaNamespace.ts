@@ -412,7 +412,9 @@ export const ModelName = {
   BankGuarantee: 'BankGuarantee',
   Project: 'Project',
   BoqItem: 'BoqItem',
-  ErpRecord: 'ErpRecord'
+  ErpRecord: 'ErpRecord',
+  LoginSession: 'LoginSession',
+  ExternalRef: 'ExternalRef'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -428,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem" | "erpRecord"
+    modelProps: "tenant" | "user" | "subscription" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem" | "erpRecord" | "loginSession" | "externalRef"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1616,6 +1618,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LoginSession: {
+      payload: Prisma.$LoginSessionPayload<ExtArgs>
+      fields: Prisma.LoginSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LoginSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LoginSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.LoginSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LoginSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        findMany: {
+          args: Prisma.LoginSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>[]
+        }
+        create: {
+          args: Prisma.LoginSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        createMany: {
+          args: Prisma.LoginSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LoginSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.LoginSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        update: {
+          args: Prisma.LoginSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.LoginSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LoginSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LoginSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.LoginSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.LoginSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLoginSession>
+        }
+        groupBy: {
+          args: Prisma.LoginSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LoginSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    ExternalRef: {
+      payload: Prisma.$ExternalRefPayload<ExtArgs>
+      fields: Prisma.ExternalRefFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExternalRefFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExternalRefFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        findFirst: {
+          args: Prisma.ExternalRefFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExternalRefFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        findMany: {
+          args: Prisma.ExternalRefFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>[]
+        }
+        create: {
+          args: Prisma.ExternalRefCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        createMany: {
+          args: Prisma.ExternalRefCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExternalRefCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>[]
+        }
+        delete: {
+          args: Prisma.ExternalRefDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        update: {
+          args: Prisma.ExternalRefUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        deleteMany: {
+          args: Prisma.ExternalRefDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExternalRefUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExternalRefUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>[]
+        }
+        upsert: {
+          args: Prisma.ExternalRefUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExternalRefPayload>
+        }
+        aggregate: {
+          args: Prisma.ExternalRefAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExternalRef>
+        }
+        groupBy: {
+          args: Prisma.ExternalRefGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExternalRefGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExternalRefCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExternalRefCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1684,7 +1834,11 @@ export const UserScalarFieldEnum = {
   googleId: 'googleId',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
-  modules: 'modules'
+  modules: 'modules',
+  status: 'status',
+  activationToken: 'activationToken',
+  activationExpires: 'activationExpires',
+  customTitle: 'customTitle'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1794,6 +1948,7 @@ export const TenderScalarFieldEnum = {
   notes: 'notes',
   bidSecurityAmount: 'bidSecurityAmount',
   bidValidityDays: 'bidValidityDays',
+  readinessChecklist: 'readinessChecklist',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2023,6 +2178,35 @@ export const ErpRecordScalarFieldEnum = {
 } as const
 
 export type ErpRecordScalarFieldEnum = (typeof ErpRecordScalarFieldEnum)[keyof typeof ErpRecordScalarFieldEnum]
+
+
+export const LoginSessionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  loginAt: 'loginAt',
+  logoutAt: 'logoutAt',
+  ip: 'ip',
+  userAgent: 'userAgent'
+} as const
+
+export type LoginSessionScalarFieldEnum = (typeof LoginSessionScalarFieldEnum)[keyof typeof LoginSessionScalarFieldEnum]
+
+
+export const ExternalRefScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  label: 'label',
+  url: 'url',
+  fetchedAt: 'fetchedAt',
+  contentHash: 'contentHash',
+  excerpt: 'excerpt',
+  summary: 'summary',
+  changed: 'changed',
+  error: 'error'
+} as const
+
+export type ExternalRefScalarFieldEnum = (typeof ExternalRefScalarFieldEnum)[keyof typeof ExternalRefScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2378,6 +2562,8 @@ export type GlobalOmitConfig = {
   project?: Prisma.ProjectOmit
   boqItem?: Prisma.BoqItemOmit
   erpRecord?: Prisma.ErpRecordOmit
+  loginSession?: Prisma.LoginSessionOmit
+  externalRef?: Prisma.ExternalRefOmit
 }
 
 /* Types for Logging */

@@ -1,9 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { API_URL } from './config';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private router = inject(Router);
+  private http = inject(HttpClient);
 
   saveSession(token: string, user: any): void {
     localStorage.setItem('token', token);
@@ -35,6 +38,8 @@ export class AuthService {
   }
 
   logout(): void {
+    // best-effort: close the sign-in session on the server (Task 5 login history)
+    this.http.post(`${API_URL}/auth/logout`, {}).subscribe({ next: () => {}, error: () => {} });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.router.navigate(['/login']);

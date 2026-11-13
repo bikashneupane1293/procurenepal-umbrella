@@ -183,4 +183,8 @@ export class CreateTenderDto {
   @IsString()
   @IsOptional()
   source?: string;
+
+  // Task 5 — draft checklist from reading the bid document PDF; the user reviews every item
+  @IsOptional()
+  readinessChecklist?: any;
 }

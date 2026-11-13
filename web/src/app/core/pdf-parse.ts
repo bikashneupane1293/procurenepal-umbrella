@@ -215,3 +215,38 @@ function guessType(text: string): Found | null {
   s.sort((a, b) => b[1] - a[1]);
   return s[0][1] > 0 ? { value: s[0][0], line: `keyword count: ${s[0][0].toLowerCase()} (${s[0][1]})` } : null;
 }
+
+// ---------------------------------------------------------------- Task 5: bid readiness checklist
+// A plain keyword scan over the whole bid document — it only tells you whether a common
+// document / requirement is mentioned somewhere in the text. It is a packing aid, not a
+// compliance check: every row must be verified by the person against the actual document.
+export interface ChecklistItem { key: string; label: string; found: boolean; line: string; }
+
+const CHECKLIST: { key: string; label: string; re: RegExp }[] = [
+  { key: 'bidSecurity', label: 'Bid security / bid bond', re: /\bbid (security|bond)\b|\bearnest money\b/i },
+  { key: 'bidForm', label: 'Bid form (letter of bid)', re: /\bform of bid\b|\bletter of bid\b|\bbid form\b/i },
+  { key: 'priceSchedule', label: 'Price schedule / BOQ', re: /\bprice schedule\b|\bbill of quantities\b|\bBOQ\b/i },
+  { key: 'poa', label: 'Power of attorney', re: /\bpower of attorney\b/i },
+  { key: 'registration', label: 'Firm / company registration certificate', re: /\b(firm|company) registration\b|\bregistration certificate\b/i },
+  { key: 'panVat', label: 'PAN / VAT registration', re: /\bPAN\b.{0,15}\bVAT\b|\bVAT registration\b|\bpermanent account number\b/i },
+  { key: 'taxClearance', label: 'Tax clearance certificate', re: /\btax clearance\b/i },
+  { key: 'jvAgreement', label: 'Joint venture agreement (if a JV)', re: /\bjoint venture agreement\b|\bJV agreement\b/i },
+  { key: 'experience', label: 'Experience / completion certificates of similar work', re: /\bcompletion certificate\b|\bexperience certificate\b|\bsimilar (nature|contract|work)\b/i },
+  { key: 'financials', label: 'Audited financial statements / balance sheet', re: /\baudited (financial|balance)\b|\bbalance sheet\b|\bfinancial statement/i },
+  { key: 'equipment', label: 'Equipment ownership / lease or hire agreement', re: /\bequipment\b.{0,30}\b(owned|own|lease|hire)\b/i },
+  { key: 'personnel', label: 'Key personnel — CVs / qualifications', re: /\bkey personnel\b|\bcurriculum vitae\b|\bCV of\b/i },
+  { key: 'litigation', label: 'Litigation history declaration', re: /\blitigation history\b|\bpending litigation\b/i },
+  { key: 'methodology', label: 'Methodology / work programme', re: /\bmethodology\b|\bwork programme\b|\bwork schedule\b/i },
+  { key: 'qualInfo', label: 'Qualification information form', re: /\bqualification information\b/i },
+  { key: 'bidValidity', label: 'Bid validity period stated', re: /\bbid validity\b|\bbids? shall remain valid\b/i },
+  { key: 'noConflict', label: 'Eligibility / no conflict-of-interest declaration', re: /\bconflict of interest\b|\beligibility\b.{0,20}\bdeclaration\b/i },
+];
+
+export function findDocumentChecklist(text: string): ChecklistItem[] {
+  return CHECKLIST.map((c) => {
+    const m = text.match(c.re);
+    const idx = m?.index ?? -1;
+    const line = idx >= 0 ? text.slice(Math.max(0, idx - 40), idx + 80).replace(/\s+/g, ' ').trim() : '';
+    return { key: c.key, label: c.label, found: !!m, line };
+  });
+}

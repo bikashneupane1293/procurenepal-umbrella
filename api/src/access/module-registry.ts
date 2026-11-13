@@ -39,5 +39,9 @@ export const USER_VIEW_ROLES = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'];
 /** Roles an Owner may give to new users (SUPER_ADMIN is platform staff only) */
 export const ASSIGNABLE_ROLES = [
   'OWNER', 'DIRECTOR', 'PROJECT_DIRECTOR', 'PROCUREMENT_OFFICER', 'ACCOUNTANT',
-  'STORE_MANAGER', 'SITE_ENGINEER', 'SUPERVISOR', 'VIEWER',
+  'STORE_MANAGER', 'SITE_ENGINEER', 'SUPERVISOR', 'HR_MANAGER', 'VIEWER',
 ];
+/** Roles that may view sign-in / sign-out history (Task 5) */
+export const LOGIN_VIEW_ROLES = ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'];
+/** flagKey for a single sidebar item switched off within an active module */
+export const itemFlagKeyOf = (itemId: string) => `item:${itemId}`;

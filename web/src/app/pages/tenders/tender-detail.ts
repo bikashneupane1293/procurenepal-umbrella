@@ -8,6 +8,9 @@ import { UI_STYLES } from '../../core/ui-styles';
 import { QualResult, verdictText } from '../../shared/qual-result';
 import { showBoth } from '../../core/nepali-date';
 import { STATUS_LABEL } from '../../core/bid-labels';
+import { readPdfText } from '../../core/pdf-reader';
+import { parseTenderText, findDocumentChecklist, ChecklistItem, Suggestions } from '../../core/pdf-parse';
+import { tablesToExcel } from '../../core/erp-sheets';
 
 const loadReport = () => import('../../core/report');
 
@@ -56,6 +59,44 @@ interface JvRow { companyId: string; share: number | null; }
         }
         @if (!hasRequirements()) {
           <div class="msg info" style="margin-top:12px">This tender has no cost estimate or requirements yet, so only the licence and running contracts can be checked. <a class="link" [routerLink]="['/tenders']" [queryParams]="{ edit: t.id }">Add requirements →</a></div>
+        }
+      </div>
+
+      <div class="panel no-print">
+        <h2>📄 Bid Document Reader</h2>
+        <p class="help">Upload the full bid document (PDF) to read the values it states and get a draft readiness checklist. This is a reading aid, not a compliance check — verify every row against the actual document before submission.</p>
+        <input type="file" accept="application/pdf" (change)="onPdfChosen($event)" [disabled]="pdfBusy()" />
+        @if (pdfBusy()) { <div class="msg info" style="margin-top:8px">Reading the PDF… large documents can take a little while.</div> }
+        @if (pdfError()) { <div class="msg error" style="margin-top:8px">{{ pdfError() }}</div> }
+        @if (pdfScanned()) { <div class="msg error" style="margin-top:8px">This looks like a scanned PDF (no selectable text), so nothing could be read automatically.</div> }
+
+        @if (suggestions(); as sug) {
+          <h3 style="margin-top:16px">Values found in the document</h3>
+          <table class="tbl">
+            <thead><tr><th>Field</th><th>Found value</th><th>Where (nearby text)</th></tr></thead>
+            <tbody>
+              @for (k of suggestionKeys(); track k) {
+                <tr><td>{{ k }}</td><td>{{ sug[k].value }}</td><td class="muted">{{ sug[k].line }}</td></tr>
+              }
+            </tbody>
+          </table>
+          <p class="help">Compare these with the "Requirements" box above and use "Edit requirements" to correct anything.</p>
+        }
+
+        @if (checklist(); as cl) {
+          <h3 style="margin-top:16px">Draft bid readiness checklist</h3>
+          <table class="tbl">
+            <thead><tr><th></th><th>Document / requirement</th><th>Mentioned in the document?</th></tr></thead>
+            <tbody>
+              @for (c of cl; track c.key) {
+                <tr [class.bad]="!c.found"><td>{{ c.found ? '✅' : '⚠️' }}</td><td>{{ c.label }}</td><td class="muted">{{ c.found ? c.line : 'Not found — check manually' }}</td></tr>
+              }
+            </tbody>
+          </table>
+          <div class="tools" style="margin-top:10px">
+            <button class="btn light" (click)="saveChecklist()" [disabled]="checklistSaved()">{{ checklistSaved() ? '✅ Saved to this tender' : 'Save checklist to this tender' }}</button>
+            <button class="btn light" (click)="exportChecklist()">⬇ Excel checklist</button>
+          </div>
         }
       </div>
 
@@ -273,6 +314,53 @@ export class TenderDetailPage {
 
   jvRows: JvRow[] = [{ companyId: '', share: 60 }, { companyId: '', share: 40 }];
   leadIndex = 0;
+
+  // ---------- Bid Document Reader (Task 5) ----------
+  pdfBusy = signal(false);
+  pdfError = signal('');
+  pdfScanned = signal(false);
+  suggestions = signal<Suggestions | null>(null);
+  checklist = signal<ChecklistItem[] | null>(null);
+  checklistSaved = signal(false);
+  suggestionKeys = computed(() => Object.keys(this.suggestions() ?? {}));
+
+  async onPdfChosen(ev: Event) {
+    const file = (ev.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.pdfBusy.set(true); this.pdfError.set(''); this.pdfScanned.set(false);
+    this.suggestions.set(null); this.checklist.set(null); this.checklistSaved.set(false);
+    try {
+      const { text, scanned } = await readPdfText(file, 80);
+      if (scanned) { this.pdfScanned.set(true); return; }
+      const { fields } = parseTenderText(text);
+      this.suggestions.set(fields);
+      this.checklist.set(findDocumentChecklist(text));
+    } catch (e: any) {
+      this.pdfError.set('Could not read this PDF: ' + (e?.message ?? 'unknown error'));
+    } finally {
+      this.pdfBusy.set(false);
+      (ev.target as HTMLInputElement).value = '';
+    }
+  }
+
+  async saveChecklist() {
+    const cl = this.checklist();
+    if (!cl) return;
+    await firstValueFrom(this.data.updateTender(this.id, {
+      readinessChecklist: { items: cl, checkedAt: new Date().toISOString() },
+    }));
+    this.checklistSaved.set(true);
+  }
+
+  exportChecklist() {
+    const cl = this.checklist();
+    if (!cl) return;
+    tablesToExcel('Bid Readiness Checklist', [{
+      title: 'Checklist',
+      columns: [{ k: 'label', label: 'Document / requirement' }, { k: 'found', label: 'Mentioned in document' }, { k: 'line', label: 'Where' }],
+      rows: cl.map((c) => ({ ...c, found: c.found ? 'Yes' : 'Check manually' })),
+    }]);
+  }
 
   reportResults = computed(() => [...(this.all()?.results ?? []), ...this.jvResults()]);
 

@@ -8,6 +8,7 @@ import { moduleGuard } from './core/module.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginPage },
+  { path: 'activate', loadComponent: () => import('./pages/activate/activate').then((m) => m.ActivatePage) },
   {
     path: '',
     component: ShellLayout,
@@ -26,6 +27,7 @@ export const routes: Routes = [
       { path: 'reports', canActivate: [moduleGuard], loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsPage) },
       { path: 'banks', canActivate: [moduleGuard], loadComponent: () => import('./pages/banks/banks').then((m) => m.BanksPage) },
       { path: 'bank-guarantees', canActivate: [moduleGuard], loadComponent: () => import('./pages/bank-guarantees/bank-guarantees').then((m) => m.BankGuaranteesPage) },
+      { path: 'references', canActivate: [moduleGuard], loadComponent: () => import('./pages/references/references').then((m) => m.ReferencesPage) },
       { path: 'projects', canActivate: [moduleGuard], loadComponent: () => import('./pages/projects/projects').then((m) => m.ProjectsPage) },
       { path: 'projects/:id', canActivate: [moduleGuard], loadComponent: () => import('./pages/projects/project-detail').then((m) => m.ProjectDetailPage) },
       { path: 'boq', canActivate: [moduleGuard], data: { boq: true }, loadComponent: () => import('./pages/projects/projects').then((m) => m.ProjectsPage) },

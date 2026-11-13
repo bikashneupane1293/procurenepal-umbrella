@@ -45,6 +45,13 @@ model User {
   createdAt    DateTime @default(now())
   // ERP modules this user may open (empty = every module active in the workspace)
   modules      String[] @default([])
+  // Task 5 - invite-by-link activation (no email service yet: the Owner copies the link)
+  status            String    @default("ACTIVE") // ACTIVE | PENDING
+  activationToken   String?   @unique
+  activationExpires DateTime?
+  // Task 5 - shown instead of the system role name on screen; the role itself still controls permissions
+  customTitle       String?
+  loginSessions     LoginSession[]
 
   @@index([tenantId])
 }
@@ -60,6 +67,7 @@ enum Role {
   STORE_MANAGER
   SITE_ENGINEER
   SUPERVISOR
+  HR_MANAGER
   VENDOR
 }
 
@@ -199,6 +207,8 @@ model Tender {
   // Task 1 — bid information (values stated in the IFB)
   bidSecurityAmount Decimal? @db.Decimal(15, 2)
   bidValidityDays   Int?
+  // Task 5 - auto-read bid document: a draft checklist for the user to verify, never an approval
+  readinessChecklist Json?
   bids              Bid[]
   guarantees        BankGuarantee[]
   projects          Project[]
@@ -472,4 +482,33 @@ model ErpRecord {
   @@index([tenantId, entity])
   @@index([tenantId, entity, status])
   @@index([tenantId, projectId])
+}
+
+// ==================== Task 5 ====================
+model LoginSession {
+  id        String    @id @default(uuid())
+  tenantId  String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginAt   DateTime  @default(now())
+  logoutAt  DateTime?
+  ip        String?
+  userAgent String?
+
+  @@index([tenantId, userId])
+}
+
+/// Public reference pages checked for changes (PPMO / NRB). Not tenant-scoped: public data only,
+/// never bid prices. A manual "Check now" for now; automatic scheduling is a later decision.
+model ExternalRef {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  label      String
+  url        String
+  fetchedAt  DateTime @default(now())
+  contentHash String?
+  excerpt    String?
+  summary    Json?
+  changed    Boolean  @default(false)
+  error      String?
 }

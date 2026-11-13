@@ -66,7 +66,9 @@ export const ModelName = {
   BankGuarantee: 'BankGuarantee',
   Project: 'Project',
   BoqItem: 'BoqItem',
-  ErpRecord: 'ErpRecord'
+  ErpRecord: 'ErpRecord',
+  LoginSession: 'LoginSession',
+  ExternalRef: 'ExternalRef'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -114,7 +116,11 @@ export const UserScalarFieldEnum = {
   googleId: 'googleId',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
-  modules: 'modules'
+  modules: 'modules',
+  status: 'status',
+  activationToken: 'activationToken',
+  activationExpires: 'activationExpires',
+  customTitle: 'customTitle'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -224,6 +230,7 @@ export const TenderScalarFieldEnum = {
   notes: 'notes',
   bidSecurityAmount: 'bidSecurityAmount',
   bidValidityDays: 'bidValidityDays',
+  readinessChecklist: 'readinessChecklist',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -453,6 +460,35 @@ export const ErpRecordScalarFieldEnum = {
 } as const
 
 export type ErpRecordScalarFieldEnum = (typeof ErpRecordScalarFieldEnum)[keyof typeof ErpRecordScalarFieldEnum]
+
+
+export const LoginSessionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  loginAt: 'loginAt',
+  logoutAt: 'logoutAt',
+  ip: 'ip',
+  userAgent: 'userAgent'
+} as const
+
+export type LoginSessionScalarFieldEnum = (typeof LoginSessionScalarFieldEnum)[keyof typeof LoginSessionScalarFieldEnum]
+
+
+export const ExternalRefScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  label: 'label',
+  url: 'url',
+  fetchedAt: 'fetchedAt',
+  contentHash: 'contentHash',
+  excerpt: 'excerpt',
+  summary: 'summary',
+  changed: 'changed',
+  error: 'error'
+} as const
+
+export type ExternalRefScalarFieldEnum = (typeof ExternalRefScalarFieldEnum)[keyof typeof ExternalRefScalarFieldEnum]
 
 
 export const SortOrder = {

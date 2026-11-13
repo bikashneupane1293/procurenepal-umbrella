@@ -31,6 +31,7 @@ export class TenderService {
       'isComplexWork', 'awardMethod', 'ruleSetId', 'status', 'notes', 'source',
       'bidSecurityAmount', 'bidValidityDays',
     ] as const;
+    if ((dto as any).readinessChecklist !== undefined) d.readinessChecklist = (dto as any).readinessChecklist;
     for (const k of copy) if ((dto as any)[k] !== undefined) d[k] = (dto as any)[k];
     if (dto.publicationDate !== undefined) {
       d.publicationDate = dto.publicationDate ? new Date(dto.publicationDate) : null;

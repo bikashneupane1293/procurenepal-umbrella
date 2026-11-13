@@ -119,3 +119,14 @@ export type BoqItem = Prisma.BoqItemModel
  * 
  */
 export type ErpRecord = Prisma.ErpRecordModel
+/**
+ * Model LoginSession
+ * 
+ */
+export type LoginSession = Prisma.LoginSessionModel
+/**
+ * Model ExternalRef
+ * Public reference pages checked for changes (PPMO / NRB). Not tenant-scoped: public data only,
+ * never bid prices. A manual "Check now" for now; automatic scheduling is a later decision.
+ */
+export type ExternalRef = Prisma.ExternalRefModel

@@ -6,22 +6,28 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   ADMIN_ROLES,
   ALL_ACCESS_ROLES,
   ASSIGNABLE_ROLES,
+  LOGIN_VIEW_ROLES,
   MODULES,
   MODULE_KEYS,
   USER_VIEW_ROLES,
   flagKeyOf,
+  itemFlagKeyOf,
 } from './module-registry';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
 const PUBLIC_USER = {
   id: true, email: true, fullName: true, phone: true, role: true, isActive: true,
-  modules: true, lastLoginAt: true, createdAt: true,
+  modules: true, lastLoginAt: true, createdAt: true, status: true, customTitle: true,
 } as const;
+
+const ACTIVATION_DAYS = 7;
+const ITEM_KEY = /^[a-z0-9.\-]{1,60}$/i;
 
 @Injectable()
 export class AccessService {
@@ -60,6 +66,36 @@ export class AccessService {
     return this.tenantModules(tenantId);
   }
 
+  // ------------------------------------------------------- sidebar items (Task 5)
+  // Item IDs come from the web app's menu (core/modules.ts). The backend does not
+  // repeat that list — any id that looks like one ("project.milestones") is accepted —
+  // so this is enforced in the sidebar; a direct link to a disabled item still opens
+  // until a second check is added to the ERP controller (noted in PROGRESS.md).
+
+  /** { 'project.milestones': false, … } — only overrides are returned; a missing id is ON. */
+  async tenantItems(tenantId: string): Promise<Record<string, boolean>> {
+    const flags = await this.prisma.tenantFeatureFlag.findMany({ where: { tenantId, flagKey: { startsWith: 'item:' } } });
+    const out: Record<string, boolean> = {};
+    for (const f of flags) out[f.flagKey.slice('item:'.length)] = f.enabled;
+    return out;
+  }
+
+  async setTenantItems(tenantId: string, role: string, changes: Record<string, boolean>) {
+    if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can switch sidebar items on or off');
+    for (const [id, enabled] of Object.entries(changes)) {
+      if (!ITEM_KEY.test(id)) throw new BadRequestException(`"${id}" is not a valid item id`);
+      if (typeof enabled !== 'boolean') throw new BadRequestException(`Value for "${id}" must be true or false`);
+    }
+    for (const [id, enabled] of Object.entries(changes)) {
+      await this.prisma.tenantFeatureFlag.upsert({
+        where: { tenantId_flagKey: { tenantId, flagKey: itemFlagKeyOf(id) } },
+        create: { tenantId, flagKey: itemFlagKeyOf(id), enabled, enabledAt: enabled ? new Date() : null },
+        update: { enabled, enabledAt: enabled ? new Date() : null },
+      });
+    }
+    return this.tenantItems(tenantId);
+  }
+
   // ------------------------------------------------------- the signed-in user
 
   /** Modules this user may open = active in the workspace AND allowed for the user. */
@@ -77,8 +113,10 @@ export class AccessService {
     return {
       role,
       canManage: ADMIN_ROLES.includes(role),
+      canViewLogins: LOGIN_VIEW_ROLES.includes(role),
       modules: await this.effectiveModules(tenantId, userId, role),
       workspaceModules: await this.tenantModules(tenantId),
+      itemFlags: await this.tenantItems(tenantId),
       registry: MODULES,
     };
   }
@@ -95,6 +133,8 @@ export class AccessService {
     if (bad.length) throw new BadRequestException(`Unknown module(s): ${bad.join(', ')}`);
   }
 
+  private token() { return randomBytes(32).toString('hex'); }
+
   async createUser(tenantId: string, role: string, dto: CreateUserDto) {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can add users');
     if (!ASSIGNABLE_ROLES.includes(dto.role)) throw new BadRequestException('This role cannot be given');
@@ -102,7 +142,14 @@ export class AccessService {
     const email = dto.email.trim().toLowerCase();
     const exists = await this.prisma.user.findUnique({ where: { email } });
     if (exists) throw new ConflictException('A user with this email already exists');
-    return this.prisma.user.create({
+
+    // Task 5: no password given → create as PENDING with an activation link instead of emailing one
+    // directly (no email service is configured yet; the Owner copies this link and sends it).
+    const invite = !dto.password;
+    const activationToken = invite ? this.token() : null;
+    const placeholder = invite ? await bcrypt.hash(this.token(), 10) : await bcrypt.hash(dto.password!, 10);
+
+    const user = await this.prisma.user.create({
       data: {
         tenantId,
         email,
@@ -110,12 +157,31 @@ export class AccessService {
         phone: dto.phone?.trim() || null,
         role: dto.role as any,
         modules: dto.modules ?? [],
-        passwordHash: await bcrypt.hash(dto.password, 10),
+        customTitle: dto.customTitle?.trim() || null,
+        passwordHash: placeholder,
         isActive: true,
-        isVerified: true,
+        isVerified: !invite,
+        status: invite ? 'PENDING' : 'ACTIVE',
+        activationToken,
+        activationExpires: invite ? new Date(Date.now() + ACTIVATION_DAYS * 86400000) : null,
       },
-      select: PUBLIC_USER,
+      select: { ...PUBLIC_USER, activationToken: true },
     });
+    return { ...user, activationLink: user.activationToken ? `/activate?token=${user.activationToken}` : null };
+  }
+
+  /** Owner lost the first link, or it expired — issue a fresh one. */
+  async getActivationLink(tenantId: string, role: string, id: string) {
+    if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can do this');
+    const user = await this.prisma.user.findFirst({ where: { id, tenantId } });
+    if (!user) throw new NotFoundException('User not found or access denied');
+    if (user.status === 'ACTIVE') throw new BadRequestException('This user has already activated their account');
+    const activationToken = this.token();
+    await this.prisma.user.update({
+      where: { id },
+      data: { activationToken, activationExpires: new Date(Date.now() + ACTIVATION_DAYS * 86400000) },
+    });
+    return { activationLink: `/activate?token=${activationToken}` };
   }
 
   async updateUser(tenantId: string, role: string, actorId: string, id: string, dto: UpdateUserDto) {
@@ -141,7 +207,20 @@ export class AccessService {
     if (dto.role !== undefined) data.role = dto.role;
     if (dto.modules !== undefined) data.modules = dto.modules;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
-    if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 10);
+    if (dto.customTitle !== undefined) data.customTitle = dto.customTitle?.trim() || null;
+    if (dto.password) { data.passwordHash = await bcrypt.hash(dto.password, 10); data.status = 'ACTIVE'; data.activationToken = null; data.activationExpires = null; }
     return this.prisma.user.update({ where: { id }, data, select: PUBLIC_USER });
+  }
+
+  // ------------------------------------------------------- login history (Task 5)
+
+  async listLoginSessions(tenantId: string, role: string, userId?: string) {
+    if (!LOGIN_VIEW_ROLES.includes(role)) throw new ForbiddenException('You cannot view sign-in history');
+    const where: any = { tenantId };
+    if (userId) where.userId = userId;
+    const rows = await this.prisma.loginSession.findMany({ where, orderBy: { loginAt: 'desc' }, take: 300 });
+    const users = await this.prisma.user.findMany({ where: { tenantId }, select: { id: true, fullName: true, email: true } });
+    const byId = new Map(users.map((u) => [u.id, u]));
+    return rows.map((r: any) => ({ ...r, user: byId.get(r.userId) ?? null }));
   }
 }

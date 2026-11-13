@@ -320,6 +320,9 @@ export class ErpService {
       if (d.earning == null) { const v = ex('fleet.vehicle', d.vehicle) ?? {}; const e = r2(num(d.hours) * num(v.hourlyRate) + num(d.km) * num(v.kmRate)); if (e) d.earning = e; }
     }
     if (key === 'fleet.allowance' && d.amount == null) d.amount = r2(num(d.qty) * num(d.rate));
+    if (key === 'project.dailyReport' && d.totalManpower == null) {
+      d.totalManpower = num(d.mason) + num(d.labour) + num(d.welder) + num(d.driver) + num(d.supervisor);
+    }
     if (key === 'fleet.movement' && d.to && d.to < d.from) throw new BadRequestException('"To" is before "From"');
     if (key === 'project.activity' && d.plannedEnd < d.plannedStart) throw new BadRequestException('Planned finish is before planned start');
     if (key === 'project.progress') {
