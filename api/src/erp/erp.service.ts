@@ -44,6 +44,11 @@ export class ErpService {
     const m = menuDef(id);
     if (!m) throw new NotFoundException('Unknown menu item');
     await this.need(user, new Set([moduleOf(id)!]), m.title);
+    // Task 5 follow-up: the sidebar hides a switched-off item, and this closes the same
+    // gap on a direct link / API call — not just a UI-only check any more.
+    if (!(await this.access.itemEnabled(user.tenantId, id))) {
+      throw new ForbiddenException(`${m.title} has been switched off for your workspace. Ask the workspace Owner (Companies → User Setup System).`);
+    }
     return { ...m, tabs: m.tabs.map((t) => (t.entity ? { ...t, def: entityDef(t.entity) } : t)), canDelete: CAN_DELETE_ERP.includes(user.role) };
   }
 

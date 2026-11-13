@@ -24,7 +24,8 @@ describe('ERP registry', () => {
       if (f.type === 'select') expect(f.options!.length).toBeGreaterThan(0);
     }
     expect(new Set(ENTITIES.map((e) => e.key)).size).toBe(ENTITIES.length);
-    expect(MENUS).toHaveLength(41);
+    // 41 at Task 4; +1 project.daily-report (Task 5); +2 bolpatra.litigation / bolpatra.bidder-profile (Task 5c).
+    expect(MENUS).toHaveLength(44);
   });
 });
 

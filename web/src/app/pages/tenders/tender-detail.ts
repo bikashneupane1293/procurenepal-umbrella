@@ -9,7 +9,7 @@ import { QualResult, verdictText } from '../../shared/qual-result';
 import { showBoth } from '../../core/nepali-date';
 import { STATUS_LABEL } from '../../core/bid-labels';
 import { readPdfText } from '../../core/pdf-reader';
-import { parseTenderText, findDocumentChecklist, ChecklistItem, Suggestions } from '../../core/pdf-parse';
+import { parseTenderText, findDocumentChecklist, checklistFromClause21, findKeyClauses, estimateExcludingVat, ChecklistItem, ClauseFind, Suggestions } from '../../core/pdf-parse';
 import { tablesToExcel } from '../../core/erp-sheets';
 
 const loadReport = () => import('../../core/report');
@@ -83,10 +83,27 @@ interface JvRow { companyId: string; share: number | null; }
           <p class="help">Compare these with the "Requirements" box above and use "Edit requirements" to correct anything.</p>
         }
 
-        @if (checklist(); as cl) {
-          <h3 style="margin-top:16px">Draft bid readiness checklist</h3>
+        @if (estimateVat(); as ev) {
+          @if (ev.note) { <div class="msg info" style="margin-top:10px">Estimate excluding VAT: <strong>{{ ev.value | number: '1.0-0' }}</strong>. {{ ev.note }}</div> }
+        }
+
+        @if (keyClauses(); as kc) {
+          <h3 style="margin-top:16px">Clauses you asked to always check</h3>
           <table class="tbl">
-            <thead><tr><th></th><th>Document / requirement</th><th>Mentioned in the document?</th></tr></thead>
+            <thead><tr><th></th><th>Clause</th><th>Text found</th></tr></thead>
+            <tbody>
+              @for (c of kc; track c.ref) {
+                <tr [class.bad]="!c.found"><td>{{ c.found ? '✅' : '⚠️' }}</td><td>{{ c.ref }}<div class="muted">{{ c.title }}</div></td><td class="muted">{{ c.found ? c.text : 'Not found — check manually' }}</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+
+        @if (checklist(); as cl) {
+          <h3 style="margin-top:16px">Bid readiness checklist</h3>
+          <p class="help">{{ clause21Note() }}</p>
+          <table class="tbl">
+            <thead><tr><th></th><th>Document / requirement</th><th>{{ checklistFromClause21Used() ? 'Clause text' : 'Mentioned in the document?' }}</th></tr></thead>
             <tbody>
               @for (c of cl; track c.key) {
                 <tr [class.bad]="!c.found"><td>{{ c.found ? '✅' : '⚠️' }}</td><td>{{ c.label }}</td><td class="muted">{{ c.found ? c.line : 'Not found — check manually' }}</td></tr>
@@ -321,6 +338,15 @@ export class TenderDetailPage {
   pdfScanned = signal(false);
   suggestions = signal<Suggestions | null>(null);
   checklist = signal<ChecklistItem[] | null>(null);
+  checklistFromClause21Used = signal(false);
+  // Kept out of the template: an inline ternary with apostrophes + an em dash broke Angular's template expression parser (caught by a real `ng build`).
+  clause21Note = computed(() =>
+    this.checklistFromClause21Used()
+      ? "Read straight from this document's own ITB Clause 21 \u2014 Sealing and Marking of Bids."
+      : "This document's Clause 21 was not found, so this is a generic checklist \u2014 verify against the actual document.",
+  );
+  keyClauses = signal<ClauseFind[] | null>(null);
+  estimateVat = signal<{ value: number | null; note: string } | null>(null);
   checklistSaved = signal(false);
   suggestionKeys = computed(() => Object.keys(this.suggestions() ?? {}));
 
@@ -329,12 +355,17 @@ export class TenderDetailPage {
     if (!file) return;
     this.pdfBusy.set(true); this.pdfError.set(''); this.pdfScanned.set(false);
     this.suggestions.set(null); this.checklist.set(null); this.checklistSaved.set(false);
+    this.keyClauses.set(null); this.estimateVat.set(null); this.checklistFromClause21Used.set(false);
     try {
       const { text, scanned } = await readPdfText(file, 80);
       if (scanned) { this.pdfScanned.set(true); return; }
       const { fields } = parseTenderText(text);
       this.suggestions.set(fields);
-      this.checklist.set(findDocumentChecklist(text));
+      const own = checklistFromClause21(text);
+      this.checklistFromClause21Used.set(!!own);
+      this.checklist.set(own ?? findDocumentChecklist(text));
+      this.keyClauses.set(findKeyClauses(text));
+      if (fields['boqAmount']) this.estimateVat.set(estimateExcludingVat(fields['boqAmount'].value, fields['boqAmount'].line));
     } catch (e: any) {
       this.pdfError.set('Could not read this PDF: ' + (e?.message ?? 'unknown error'));
     } finally {

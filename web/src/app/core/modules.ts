@@ -42,6 +42,8 @@ export const MENU: MenuModule[] = [
       { id: 'bolpatra.qualification', label: 'Qualification', route: '/qualification', status: 'built' },
       { id: 'bolpatra.reports', label: 'Reports', route: '/reports', status: 'built', links: ['bolpatra.tenders', 'bolpatra.qualification', 'bolpatra.bid-info'] },
       { id: 'bolpatra.references', label: 'External References (PPMO / NRB)', route: '/references', status: 'built' },
+      erp('bolpatra.litigation', 'Litigation History', 'Pending and resolved court / arbitration cases, per company — part of the bidder profile.'),
+      erp('bolpatra.bidder-profile', 'Bidder Profile', 'One place for a company\'s whole qualification picture — staff, equipment, financials and litigation.', ['hr.employees', 'fleet.vehicles', 'bank.assets', 'bolpatra.litigation']),
     ],
   },
   {
@@ -88,7 +90,7 @@ export const MENU: MenuModule[] = [
     items: [
       { id: 'project.info', label: 'Project Information', route: '/projects', status: 'built', about: 'Projects created from won tenders, with contract data.', links: ['bolpatra.bid-info', 'bolpatra.tenders', 'bolpatra.certificates', 'bank.guarantee'] },
       { id: 'project.boq', label: 'BOQ Management — Excel Upload', route: '/boq', status: 'built', about: 'Upload the BOQ from Excel; quantities, rates and progress.', links: ['project.info', 'project.material-plan', 'project.norms'] },
-      erp('project.documents', 'Document Management', 'Contract, drawings, approvals and correspondence per project.', ['project.info']),
+      erp('project.documents', 'Document Management', 'Contract, drawings, approvals and correspondence per project — with an expiry alert list.', ['project.info']),
       erp('project.milestones', 'Goal and Milestone Management', 'Milestones with target dates and payment links.', ['project.schedule', 'project.progress']),
       erp('project.schedule', 'Work Schedule and Project Period', 'Work programme, extensions of time.', ['project.milestones', 'project.scurve']),
       erp('project.material-plan', 'Raw Material Allocation Planning', 'Materials needed from BOQ × norms, sent as requisitions.', ['project.boq', 'project.norms', 'proc.requisition']),

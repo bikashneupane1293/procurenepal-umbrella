@@ -250,3 +250,64 @@ export function findDocumentChecklist(text: string): ChecklistItem[] {
     return { key: c.key, label: c.label, found: !!m, line };
   });
 }
+
+// ---------------------------------------------------------------- Task 5b: named clauses + clause-21 checklist + VAT
+// Feedback from real bid documents: the generic checklist above is a guess; a real Standard
+// Bidding Document (SBD) already lists exactly what it wants, in ITB Clause 21 "Sealing and
+// Marking of Bids" (Section I), and the Bid Data Sheet (Section II) fills in specific ITB/GCC
+// clause numbers. Reading those directly is far more reliable than guessing — still a reading
+// aid, every clause found must be read in full in the actual document before you rely on it.
+export interface ClauseFind { ref: string; title: string; found: boolean; text: string; }
+
+const KEY_CLAUSES: { ref: string; title: string; re: RegExp }[] = [
+  { ref: 'ITB 1.1', title: 'Scope of bid / source of funds (Section II: Bid Data Sheet)', re: /\bITB\s*1\.1\b/i },
+  { ref: 'ITB 2.1', title: 'Eligible bidders (Section II: Bid Data Sheet)', re: /\bITB\s*2\.1\b/i },
+  { ref: 'ITB 2.2', title: 'Eligible bidders — 2.2', re: /\bITB\s*2\.2\b/i },
+  { ref: 'ITB 2.3', title: 'Eligible bidders — 2.3', re: /\bITB\s*2\.3\b/i },
+  { ref: 'ITB 2.4', title: 'Eligible bidders — 2.4', re: /\bITB\s*2\.4\b/i },
+  { ref: 'ITB 19.1', title: 'Bid security (Section II: Bid Data Sheet)', re: /\bITB\s*19\.1\b/i },
+  { ref: 'GCC 1.1(u)', title: 'Definitions — GCC 1.1(u)', re: /\bGCC\s*1\.1\s*\(\s*u\s*\)|\b1\.1\s*\(\s*u\s*\)/i },
+];
+
+/** Looks only for these specific clause references and returns the text right after each one is mentioned. */
+export function findKeyClauses(text: string): ClauseFind[] {
+  return KEY_CLAUSES.map((c) => {
+    const m = text.match(c.re);
+    if (!m || m.index == null) return { ref: c.ref, title: c.title, found: false, text: '' };
+    const excerpt = text.slice(m.index, m.index + 420).replace(/\s+/g, ' ').trim();
+    return { ref: c.ref, title: c.title, found: true, text: excerpt };
+  });
+}
+
+/** The real checklist — straight from this document's own Clause 21 "Sealing and Marking of Bids", not a guess. */
+export function checklistFromClause21(text: string): ChecklistItem[] | null {
+  const m = text.match(/\b(ITB\s*)?21\s*[.:]?\s*Sealing (and|&) Marking of Bid/i);
+  if (!m || m.index == null) return null;
+  let block = text.slice(m.index, m.index + 5000);
+  const nextClause = block.slice(20).search(/\n\s*22\s*[.:]\s*[A-Z]/);
+  if (nextClause >= 0) block = block.slice(0, nextClause + 20);
+
+  const items: ChecklistItem[] = [];
+  const subRe = /\(([a-z])\)\s*([\s\S]+?)(?=\([a-z]\)|$)/g;
+  let mm: RegExpExecArray | null;
+  while ((mm = subRe.exec(block))) {
+    const label = mm[2].replace(/\s+/g, ' ').trim().replace(/[;.,]$/, '');
+    if (label.length > 3 && label.length < 240) items.push({ key: 'clause21-' + mm[1], label, found: true, line: `Clause 21 (${mm[1]})` });
+  }
+  return items.length ? items : null;
+}
+
+/**
+ * PPMO cost estimates (BOQ / Engineer's estimate) are normally prepared exclusive of VAT — VAT is
+ * added on top of the contract price, not built into the estimate used for bid-capacity / turnover
+ * checks. If the document itself says the figure is VAT-inclusive, this divides by 1.13 (13% VAT)
+ * to recover the pre-VAT figure instead. Always shown with its reasoning so it can be checked.
+ */
+export function estimateExcludingVat(rawEstimate: number | null, nearText: string): { value: number | null; note: string } {
+  if (rawEstimate == null) return { value: null, note: '' };
+  const inclusive = /\b(incl(uding|usive)\s+of\s+VAT|VAT\s+included|with\s+VAT)\b/i.test(nearText);
+  const exclusive = /\b(excl(uding|usive)\s+of\s+VAT|VAT\s+excluded|before\s+VAT|without\s+VAT)\b/i.test(nearText);
+  if (exclusive) return { value: rawEstimate, note: 'The document states this estimate excludes VAT — used as read.' };
+  if (inclusive) return { value: Math.round((rawEstimate / 1.13) * 100) / 100, note: 'The document states this estimate includes VAT — divided by 1.13 (PPMO 13% VAT) to get the amount excluding VAT.' };
+  return { value: rawEstimate, note: 'VAT treatment is not stated near the estimate — PPMO cost estimates are normally prepared excluding VAT, so this is used as read. Verify against the document.' };
+}

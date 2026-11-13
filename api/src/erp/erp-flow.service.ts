@@ -176,6 +176,8 @@ export class ErpFlowService {
       case 'progress': return this.progress(user, need('project', 'project'));
       case 'scurve': return this.scurve(user, need('project', 'project'));
       case 'portfolio': return this.portfolio(user);
+      case 'doc-expiry': return this.docExpiry(user);
+      case 'bidder-profile': return this.bidderProfile(user, need('company', 'company'));
       case 'petty-materials': return this.pettyMaterials(user);
       case 'amortization': return this.amortization(user, need('loan', 'loan'));
       case 'finance': return this.finance(user);
@@ -262,6 +264,57 @@ export class ErpFlowService {
     });
     return { title: 'Payables', cards: [{ label: 'Invoiced, not yet paid', value: money(rows.reduce((s, r) => s + r.unpaid, 0)) }, { label: 'Ordered, not yet invoiced', value: money(rows.reduce((s, r) => s + Math.max(0, r.uninvoiced), 0)) }],
       tables: [{ title: 'By purchase order', columns: [c('po', 'PO'), c('vendor', 'Vendor'), c('status', 'Status'), c('total', 'PO total', true), c('invoiced', 'Invoiced', true), c('paid', 'Paid', true), c('unpaid', 'Unpaid', true), c('uninvoiced', 'Not invoiced', true)], rows }] };
+  }
+
+  private async docExpiry(user: ErpUser): Promise<Report> {
+    const t = user.tenantId;
+    const docs = await this.erp.raw(t, 'project.document');
+    const pn = await this.names(t, 'project', docs.map((d: any) => d.data.project));
+    const rows: Row[] = [];
+    for (const x of docs) {
+      if (!x.data.expiry) continue;
+      const days = daysTo(x.data.expiry);
+      if (days <= 60) rows.push({ project: pn(x.data.project), title: x.data.title, type: String(x.data.docType ?? '').replace(/_/g, ' ').toLowerCase(), expiry: x.data.expiry, days, _tone: days < 0 ? 'bad' : 'warn' });
+    }
+    rows.sort((a, b) => a.days - b.days);
+    return { title: 'Expiring documents', cards: [
+      { label: 'Already expired', value: rows.filter((r) => r.days < 0).length, tone: rows.some((r) => r.days < 0) ? 'bad' : '' },
+      { label: 'Due in 60 days', value: rows.filter((r) => r.days >= 0).length }],
+      tables: [{ title: 'Documents', columns: [c('project', 'Project'), c('title', 'Title'), c('type', 'Type'), c('expiry', 'Expiry'), c('days', 'Days left', true)], rows,
+        note: 'Only documents with an expiry date entered on Document Management are shown here.' }] };
+  }
+
+  private async bidderProfile(user: ErpUser, companyId: string): Promise<Report> {
+    const t = user.tenantId;
+    const company = await this.db.company.findFirst({ where: { id: companyId, tenantId: t } });
+    if (!company) throw new NotFoundException('Company not found or access denied');
+    const employees = (await this.erp.raw(t, 'hr.employee')).filter((e: any) => e.data.company === companyId);
+    const vehicles = (await this.erp.raw(t, 'fleet.vehicle')).filter((v: any) => v.data.company === companyId);
+    const assets = (await this.erp.raw(t, 'bank.asset')).filter((a: any) => a.data.company === companyId);
+    const cases = (await this.erp.raw(t, 'bolpatra.litigation')).filter((l: any) => l.data.company === companyId);
+    const turnovers = await this.db.annualTurnover.findMany({ where: { tenantId: t, companyId } }) as any[];
+    const assetValue = assets.reduce((s: number, a: any) => s + num(a.data.currentValue ?? a.data.cost), 0);
+    const avgTurnover = turnovers.length ? r2(turnovers.reduce((s, x) => s + num(x.amount), 0) / turnovers.length) : 0;
+    const openCases = cases.filter((x: any) => x.status === 'ONGOING');
+    return { title: `Bidder profile — ${company.name}`,
+      cards: [
+        { label: 'Employees', value: employees.filter((e: any) => e.status !== 'LEFT').length, hint: `${employees.length} on record` },
+        { label: 'Vehicles / equipment', value: vehicles.filter((v: any) => v.status !== 'SOLD').length },
+        { label: 'Fixed assets (current value)', value: money(assetValue) },
+        { label: 'Average annual turnover', value: money(avgTurnover), hint: `${turnovers.length} year(s) on record` },
+        { label: 'Open litigation', value: openCases.length, tone: openCases.length ? 'warn' : '' },
+      ],
+      tables: [
+        { title: 'Key staff', columns: [c('name', 'Name'), c('designation', 'Designation'), c('type', 'Type'), c('joinDate', 'Joined')],
+          rows: employees.filter((e: any) => e.status !== 'LEFT').map((e: any) => ({ name: e.data.name, designation: e.data.designation ?? '', type: e.data.type ?? '', joinDate: e.data.joinDate ?? '' })) },
+        { title: 'Vehicles / equipment', columns: [c('name', 'Name'), c('type', 'Type'), c('ownership', 'Ownership'), c('regNo', 'Registration')],
+          rows: vehicles.filter((v: any) => v.status !== 'SOLD').map((v: any) => ({ name: v.data.name, type: v.data.type ?? '', ownership: v.data.ownership ?? '', regNo: v.data.regNo ?? '' })) },
+        { title: 'Fixed assets', columns: [c('name', 'Asset'), c('assetType', 'Type'), c('currentValue', 'Current value (NPR)', true)],
+          rows: assets.map((a: any) => ({ name: a.data.name, assetType: a.data.assetType ?? '', currentValue: num(a.data.currentValue ?? a.data.cost) })) },
+        { title: 'Litigation history', columns: [c('caseTitle', 'Case'), c('court', 'Court / forum'), c('status', 'Status'), c('amountInvolved', 'Amount (NPR)', true)],
+          rows: cases.map((x: any) => ({ caseTitle: x.data.caseTitle, court: x.data.court ?? '', status: x.status, amountInvolved: num(x.data.amountInvolved) })) },
+      ],
+      note: 'Pulled from Employee User Setup, Vehicle Information Setup, Fixed Assets and Litigation History — keep those registers up to date for this to be accurate.' };
   }
 
   private async fleetExpiry(user: ErpUser): Promise<Report> {

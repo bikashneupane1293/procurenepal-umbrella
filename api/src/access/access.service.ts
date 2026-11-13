@@ -80,6 +80,12 @@ export class AccessService {
     return out;
   }
 
+  /** false only when the Owner explicitly switched this one sidebar item off. */
+  async itemEnabled(tenantId: string, itemId: string): Promise<boolean> {
+    const f = await this.prisma.tenantFeatureFlag.findUnique({ where: { tenantId_flagKey: { tenantId, flagKey: itemFlagKeyOf(itemId) } } });
+    return f ? f.enabled : true;
+  }
+
   async setTenantItems(tenantId: string, role: string, changes: Record<string, boolean>) {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can switch sidebar items on or off');
     for (const [id, enabled] of Object.entries(changes)) {

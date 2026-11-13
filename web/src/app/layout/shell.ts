@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { AccessService } from '../core/access.service';
+import { I18nService } from '../core/i18n.service';
 import { MENU, MenuModule, moduleOfRoute } from '../core/modules';
 
 const OPEN_KEY = 'pn.menu.open';
@@ -16,11 +17,11 @@ const OPEN_KEY = 'pn.menu.open';
       <aside class="sidebar">
         <div class="brand"><span class="gold">Procure</span>Nepal</div>
         <nav>
-          <a class="item top" routerLink="/dashboard" routerLinkActive="active">🏠 Dashboard</a>
+          <a class="item top" routerLink="/dashboard" routerLinkActive="active">🏠 {{ i18n.t('dashboard') }}</a>
           @for (m of visible(); track m.key) {
             <div class="group" [class.open]="isOpen(m.key)">
               <button class="ghead" type="button" (click)="toggle(m.key)" [attr.aria-expanded]="isOpen(m.key)">
-                <span>{{ m.icon }} {{ m.label }}</span>
+                <span>{{ m.icon }} {{ i18n.modLabel(m.key, m.label) }}</span>
                 <span class="chev">{{ isOpen(m.key) ? '▾' : '▸' }}</span>
               </button>
               @if (isOpen(m.key)) {
@@ -46,9 +47,10 @@ const OPEN_KEY = 'pn.menu.open';
 
       <div class="main">
         <header class="topbar">
+          <button class="lang" type="button" (click)="i18n.toggle()" [attr.aria-label]="'Switch language'">{{ i18n.lang() === 'en' ? 'ने ' : 'EN ' }}</button>
           <span class="email">{{ user?.email }}</span>
           <span class="role">{{ user?.role }}</span>
-          <button class="logout" (click)="logout()">Logout</button>
+          <button class="logout" (click)="logout()">{{ i18n.t('logout') }}</button>
         </header>
         <router-outlet />
         <footer class="copy">© {{ year }} Cuidado Technology Pvt. Ltd. · ProcureNepal · All rights reserved.</footer>
@@ -80,6 +82,8 @@ const OPEN_KEY = 'pn.menu.open';
     .role { background: #fef5e0; color: #b8860b; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 12px; }
     .logout { background: #0a1f3d; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .logout:hover { background: #1e3a5f; }
+    .lang { background: #fff; color: #0a1f3d; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .lang:hover { background: #f3f4f6; }
     .copy { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e1e3e6; font-size: 12px; color: #9ca3af; text-align: center; }
     @media (max-width: 768px) {
       .shell { flex-direction: column; }
@@ -94,6 +98,7 @@ export class ShellLayout {
   access = inject(AccessService); // used directly in the template (canItem)
   private router = inject(Router);
   private el = inject(ElementRef);
+  i18n = inject(I18nService); // used directly in the template (toggle, t, modLabel)
   user = this.auth.getUser();
   year = new Date().getFullYear();
 

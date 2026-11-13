@@ -207,6 +207,12 @@ export const ENTITIES: EntityDef[] = [
       f('part', 'Parts of structure', 'text', R), f('workDescription', 'Description of work', 'text', R),
       f('gridLocation', 'Grid location', 'text'), f('progressStatus', 'Progress status', 'select', { options: ['Not started', 'In progress', 'Completed', 'Delayed'] }),
       f('remarks', 'Remarks') ] } },
+  { key: 'bolpatra.litigation', title: 'Litigation history', one: 'litigation case', labelField: 'caseTitle', statuses: ['ONGOING', 'RESOLVED', 'WITHDRAWN'],
+    help: 'Part of the bidder profile — pending or resolved court / arbitration cases, per company.',
+    fields: [
+    f('company', 'Company', 'ref', { ref: 'company', req: true, list: true }), f('caseTitle', 'Case / matter', 'text', R),
+    f('court', 'Court / arbitration forum', 'text', L), f('filedDate', 'Filed on', 'date', L),
+    f('amountInvolved', 'Amount involved (NPR)', 'money'), f('resolvedDate', 'Resolved on', 'date'), f('outcome', 'Outcome / order'), notes] },
   { key: 'project.petty', title: 'Petty contractors', one: 'petty contractor', fields: [
     f('name', 'Name', 'text', R), f('panNo', 'PAN no.', 'text', L), f('phone', 'Phone', 'text', L), f('address', 'Address'), f('trade', 'Trade (masonry, formwork …)', 'text', L), notes] },
   { key: 'project.workorder', title: 'Work orders', one: 'work order', series: 'WO', labelField: 'scope', statuses: ['DRAFT', 'ISSUED', 'COMPLETED', 'CANCELLED'], fields: [
@@ -254,6 +260,7 @@ export const entityDef = (key: string) => ENTITIES.find((e) => e.key === key);
 const E = (entity: string, title?: string): TabDef => ({ kind: 'entity', entity, title: title ?? entityDef(entity)!.title });
 const P = (report: string, title: string, params: TabDef['params'] = []): TabDef => ({ kind: 'report', report, title, params });
 const projectParam = [{ k: 'project', label: 'Project', ref: 'project', req: true }];
+const companyParam = [{ k: 'company', label: 'Company', ref: 'company', req: true }];
 const range = [{ k: 'from', label: 'From', type: 'date' as const }, { k: 'to', label: 'To', type: 'date' as const }];
 const stockTabs = [E('proc.warehouse'), P('stock', 'Stock by warehouse', [{ k: 'warehouse', label: 'Warehouse', ref: 'proc.warehouse' }])];
 
@@ -282,13 +289,15 @@ export const MENUS: MenuDef[] = [
   { id: 'fleet.allowance', title: 'Allowance Setup and Management', about: 'Driver / operator allowances; unpaid ones are picked up by payroll.', tabs: [E('fleet.allowance')] },
   { id: 'hr.employees', title: 'Employee User Setup', about: 'Employee records with salary and bank details.', tabs: [E('hr.employee')] },
   { id: 'hr.payroll', title: 'Payroll Setup', about: 'Monthly salary sheet with SSF and bank payment list.', tabs: [E('hr.payroll')] },
-  { id: 'project.documents', title: 'Document Management', about: 'Contract, drawings, approvals and correspondence per project.', tabs: [E('project.document')] },
+  { id: 'project.documents', title: 'Document Management', about: 'Contract, drawings, approvals and correspondence per project.', tabs: [E('project.document'), P('doc-expiry', 'Expiring documents')] },
   { id: 'project.milestones', title: 'Goal and Milestone Management', about: 'Milestones with target dates and linked payments.', tabs: [E('project.milestone')] },
   { id: 'project.schedule', title: 'Work Schedule and Project Period', about: 'Work programme and extensions of time.', tabs: [E('project.activity'), E('project.eot')] },
   { id: 'project.material-plan', title: 'Raw Material Allocation Planning', about: 'Materials needed = BOQ quantity × norm; compare with what was issued and raise a requisition for the balance.', tabs: [P('material-plan', 'Material plan', projectParam)] },
   { id: 'project.scurve', title: 'Variance Chart / S-Curve', about: 'Planned progress (work schedule) against actual progress (progress reports).', tabs: [P('scurve', 'S-curve', projectParam)] },
   { id: 'project.progress', title: 'Progress Report Management', about: 'Quantities done per BOQ item; at completion they become the experience certificate.', tabs: [E('project.progress'), P('progress', 'BOQ progress summary', projectParam)] },
   { id: 'project.daily-report', title: 'Daily Site Reporting', about: 'Daily site diary — weather, manpower, equipment, issues and material use, per project, per day.', tabs: [E('project.dailyReport')] },
+  { id: 'bolpatra.litigation', title: 'Litigation History', about: 'Pending and resolved court / arbitration cases, per company — part of the bidder profile.', tabs: [E('bolpatra.litigation')] },
+  { id: 'bolpatra.bidder-profile', title: 'Bidder Profile', about: 'One place for a company\'s whole qualification picture — staff, equipment, financials and litigation — for Bolpatra bid preparation.', tabs: [P('bidder-profile', 'Bidder profile', companyParam)] },
   { id: 'project.reporting', title: 'Overall Project Reporting', about: 'All projects at a glance.', tabs: [P('portfolio', 'Portfolio')] },
   { id: 'project.petty', title: 'Petty Contractor Management', about: 'Petty contractors, work orders and bills.', tabs: [E('project.petty'), E('project.workorder'), E('project.pettybill')] },
   { id: 'project.petty-inventory', title: 'Petty Contractor Inventory', about: 'Materials issued to petty contractors from the site warehouse.', tabs: [E('project.petty-issue'), P('petty-materials', 'Issued per contractor')] },
@@ -303,15 +312,16 @@ export const MENUS: MenuDef[] = [
 ];
 export const menuDef = (id: string) => MENUS.find((m) => m.id === id);
 
-const PREFIX_MODULE: Record<string, string> = { proc: 'procurement', fleet: 'fleet', hr: 'hr', project: 'project', bank: 'bank' };
+const PREFIX_MODULE: Record<string, string> = { proc: 'procurement', fleet: 'fleet', hr: 'hr', project: 'project', bank: 'bank', bolpatra: 'bolpatra' };
 /** 'proc.po' → 'procurement' */
 export const moduleOf = (key: string) => PREFIX_MODULE[key.split('.')[0]] ?? null;
 /** which module a report belongs to */
 export const REPORT_MODULE: Record<string, string> = {
   stock: 'procurement', compare: 'procurement', payables: 'procurement',
   'fleet-expiry': 'fleet', 'fleet-where': 'fleet', 'fleet-earnings': 'fleet',
-  'material-plan': 'project', scurve: 'project', progress: 'project', portfolio: 'project', 'petty-materials': 'project',
+  'material-plan': 'project', scurve: 'project', progress: 'project', portfolio: 'project', 'petty-materials': 'project', 'doc-expiry': 'project',
   amortization: 'bank', finance: 'bank', 'bank-loan': 'bank',
+  'bidder-profile': 'bolpatra',
 };
 /** documents that move stock */
 export const STOCK_ENTITIES = ['proc.grn', 'proc.transfer', 'proc.dispatch', 'proc.return', 'project.petty-issue'];
