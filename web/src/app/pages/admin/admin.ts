@@ -3,6 +3,7 @@
 // workspace, and shows honest platform-wide numbers. Billing is a labelled placeholder until
 // eSewa / Khalti merchant credentials exist. © Cuidado Technology Pvt. Ltd.
 import { Component, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { DataService } from '../../core/data.service';
@@ -11,7 +12,7 @@ import { UI_STYLES } from '../../core/ui-styles';
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   template: `
     <h1>🛡️ Admin Panel</h1>
     <p class="sub">Platform-wide — every workspace on ProcureNepal, not just your own.</p>
