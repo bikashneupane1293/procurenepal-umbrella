@@ -59,7 +59,8 @@ const DEFAULTS: Record<string, () => Row> = {
   externalRef: () => ({ fetchedAt: new Date(), changed: false }),
   tenantFeatureFlag: () => ({ enabled: false, createdAt: new Date() }),
   bid: () => ({ bidderType: 'SINGLE', decision: 'UNDECIDED', status: 'PREPARING', createdAt: new Date(), updatedAt: new Date() }),
-  tenant: () => ({ isActive: true }),
+  tenant: () => ({ isActive: true, createdAt: new Date() }),
+  subscription: () => ({ plan: 'FREE', status: 'ACTIVE', startsAt: new Date(), createdAt: new Date() }),
   bank: () => ({ isActive: true, createdAt: new Date(), updatedAt: new Date() }),
   project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
   boqItem: () => ({ isHeading: false, createdAt: new Date() }),
@@ -72,7 +73,7 @@ export class FakePrisma {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
     bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
-    loginSession: [], externalRef: [],
+    loginSession: [], externalRef: [], subscription: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -86,6 +87,7 @@ export class FakePrisma {
     if (include?.bank) out.bank = row.bankId ? this.db.bank.find((b) => b.id === row.bankId) ?? null : null;
     if (include?.bid) out.bid = row.bidId ? this.db.bid.find((b) => b.id === row.bidId) ?? null : null;
     if (include?.project) out.project = row.projectId ? this.db.project.find((p) => p.id === row.projectId) ?? null : null;
+    if (include?.subscriptions) out.subscriptions = this.db.subscription.filter((s) => s.tenantId === row.id);
     return out;
   }
 

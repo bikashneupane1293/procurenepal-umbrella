@@ -32,6 +32,7 @@ export const routes: Routes = [
       { path: 'projects/:id', canActivate: [moduleGuard], loadComponent: () => import('./pages/projects/project-detail').then((m) => m.ProjectDetailPage) },
       { path: 'boq', canActivate: [moduleGuard], data: { boq: true }, loadComponent: () => import('./pages/projects/projects').then((m) => m.ProjectsPage) },
       { path: 'm/:menuId', canActivate: [moduleGuard], loadComponent: () => import('./pages/erp/erp-page').then((m) => m.ErpPage) },
+      { path: 'admin', loadComponent: () => import('./pages/admin/admin').then((m) => m.AdminPage) },
       { path: 'soon/:id', loadComponent: () => import('./pages/soon/soon').then((m) => m.SoonPage) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
     ],

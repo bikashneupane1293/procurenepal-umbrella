@@ -115,6 +115,16 @@ interface JvRow { companyId: string; share: number | null; }
             <button class="btn light" (click)="exportChecklist()">⬇ Excel checklist</button>
           </div>
         }
+
+        @if (rawPdfText()) {
+          <div style="margin-top:16px">
+            <button class="btn light" (click)="showRawText.set(!showRawText())">{{ showRawText() ? 'Hide extracted text' : 'Show extracted text (to check what was read)' }}</button>
+            @if (showRawText()) {
+              <p class="help" style="margin-top:6px">This is exactly what was read from the PDF, before any field matching. If a value above looks wrong or missing, search for it here — if it's garbled or missing here too, that's a reading problem to report; if it reads fine here but wasn't picked up above, that's a matching-rule problem.</p>
+              <textarea readonly rows="14" style="width:100%;font-family:monospace;font-size:12px;white-space:pre-wrap">{{ rawPdfText() }}</textarea>
+            }
+          </div>
+        }
       </div>
 
       <!-- Bid information (Task 1) -->
@@ -337,6 +347,8 @@ export class TenderDetailPage {
   pdfError = signal('');
   pdfScanned = signal(false);
   suggestions = signal<Suggestions | null>(null);
+  rawPdfText = signal('');
+  showRawText = signal(false);
   checklist = signal<ChecklistItem[] | null>(null);
   checklistFromClause21Used = signal(false);
   // Kept out of the template: an inline ternary with apostrophes + an em dash broke Angular's template expression parser (caught by a real `ng build`).
@@ -356,8 +368,10 @@ export class TenderDetailPage {
     this.pdfBusy.set(true); this.pdfError.set(''); this.pdfScanned.set(false);
     this.suggestions.set(null); this.checklist.set(null); this.checklistSaved.set(false);
     this.keyClauses.set(null); this.estimateVat.set(null); this.checklistFromClause21Used.set(false);
+    this.rawPdfText.set(''); this.showRawText.set(false);
     try {
       const { text, scanned } = await readPdfText(file, 80);
+      this.rawPdfText.set(text);
       if (scanned) { this.pdfScanned.set(true); return; }
       const { fields } = parseTenderText(text);
       this.suggestions.set(fields);

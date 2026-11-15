@@ -17,6 +17,14 @@ export class DataService {
   listReferences(): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/references`)); }
   checkReferences(): Promise<any[]> { return firstValueFrom(this.http.post<any[]>(`${API_URL}/references/check`, {})); }
 
+  // ---------- Admin panel (Task 5c, Super Admin only) ----------
+  adminTenants(): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/admin/tenants`)); }
+  adminTenant(id: string): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/tenants/${id}`)); }
+  adminSetPlan(id: string, body: any): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/tenants/${id}/plan`, body)); }
+  adminToggleActive(id: string, isActive: boolean): Promise<any> { return firstValueFrom(this.http.patch<any>(`${API_URL}/admin/tenants/${id}/active`, { isActive })); }
+  adminStats(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/stats`)); }
+  adminBilling(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/billing`)); }
+
   // ---------- Companies ----------
   getCompanies(): Observable<any[]> {
     return this.http.get(`${API_URL}/companies`).pipe(map(toList));

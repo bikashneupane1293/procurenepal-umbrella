@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProcureNepal — Construction ERP for Nepal Contractors</title>
+<meta name="description" content="ProcureNepal is a construction ERP built for Nepal's PPMO e-GP bidders — bid management, bank guarantees, procurement, fleet, HR and project tracking in one place." />
+<style>
+  :root {
+    --navy: #0a1f3d;
+    --navy-2: #0f2d54;
+    --gold: #d4a017;
+    --gold-2: #f5b942;
+    --ink: #1f2937;
+    --muted: #5b6878;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #e5e8ec;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  a { color: var(--navy); text-decoration: none; }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+  header.site {
+    background: var(--navy);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header.site .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { font-size: 20px; font-weight: 800; color: #fff; }
+  .brand .gold { color: var(--gold); }
+  nav.top a { color: #e8eef6; margin-left: 22px; font-size: 14px; font-weight: 600; }
+  nav.top a:hover { color: var(--gold-2); }
+  .btn {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: 0;
+  }
+  .btn.gold { background: var(--gold); color: var(--navy); }
+  .btn.gold:hover { background: var(--gold-2); }
+  .btn.outline { background: transparent; border: 1.5px solid #fff; color: #fff; }
+  .btn.outline:hover { background: rgba(255,255,255,0.1); }
+
+  section.hero { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 60%, #163a66 100%); color: #fff; padding: 76px 0 90px; }
+  section.hero h1 { font-size: 42px; line-height: 1.2; max-width: 680px; margin: 0 0 18px; }
+  section.hero h1 .gold { color: var(--gold); }
+  section.hero p.lead { font-size: 18px; color: #cdd8e6; max-width: 600px; margin: 0 0 30px; }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+  .hero-note { margin-top: 22px; font-size: 13px; color: #9fb0c8; }
+
+  section.features { padding: 70px 0; }
+  section.features h2 { text-align: center; font-size: 28px; margin: 0 0 8px; }
+  section.features p.sub { text-align: center; color: var(--muted); margin: 0 0 44px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
+  .card .ico { font-size: 28px; margin-bottom: 10px; }
+  .card h3 { font-size: 17px; margin: 0 0 8px; }
+  .card p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  section.why { background: #fff; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 60px 0; }
+  .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .why-grid h2 { font-size: 26px; margin: 0 0 16px; }
+  .why-list { list-style: none; padding: 0; margin: 0; }
+  .why-list li { display: flex; gap: 10px; padding: 9px 0; font-size: 15px; color: var(--ink); }
+  .why-list li .tick { color: var(--gold); font-weight: 800; }
+  .stat-card { background: var(--navy); color: #fff; border-radius: 16px; padding: 32px; }
+  .stat-card .n { font-size: 36px; font-weight: 800; color: var(--gold); }
+  .stat-card .lbl { font-size: 14px; color: #cdd8e6; margin-top: 4px; }
+  .stat-row { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.15); }
+
+  section.cta { padding: 70px 0; text-align: center; }
+  section.cta h2 { font-size: 28px; margin: 0 0 12px; }
+  section.cta p { color: var(--muted); margin: 0 0 28px; }
+
+  footer.site { background: var(--navy); color: #cdd8e6; padding: 34px 0; font-size: 13px; }
+  footer.site .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  footer.site a { color: #cdd8e6; }
+  footer.site a:hover { color: var(--gold-2); }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .why-grid { grid-template-columns: 1fr; }
+    section.hero h1 { font-size: 32px; }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+    nav.top { display: none; }
+    section.hero { padding: 54px 0 64px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand"><span class="gold">Procure</span>Nepal</div>
+    <nav class="top">
+      <a href="#features">Features</a>
+      <a href="#why">Why ProcureNepal</a>
+      <a href="https://app.procurenepal.com" class="btn gold" style="margin-left:22px">Open the app</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Run your construction business like an <span class="gold">ERP</span>, bid like a <span class="gold">pro</span>.</h1>
+    <p class="lead">ProcureNepal is a construction ERP built specifically for Nepal's contractors and PPMO e-GP (Bolpatra) bidders — bid tracking, bank guarantees, procurement, fleet, HR and project management, all in one workspace.</p>
+    <div class="hero-ctas">
+      <a href="https://app.procurenepal.com" class="btn gold">Open the app →</a>
+      <a href="#features" class="btn outline">See what's inside</a>
+    </div>
+    <p class="hero-note">Built in Nepal, for Nepal's procurement rules — by Cuidado Technology Pvt. Ltd.</p>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="wrap">
+    <h2>Everything a contractor's office needs</h2>
+    <p class="sub">One login, one workspace — switch modules on or off as your business needs them.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ico">📋</div>
+        <h3>Bolpatra eGP System</h3>
+        <p>Track every tender and bid, read a bid document's own checklist automatically, manage qualification and JV partnerships, and keep a litigation-history and bidder-profile record ready for submission.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🏦</div>
+        <h3>Bank Guarantee Management</h3>
+        <p>Bid security, performance, advance and retention guarantees per bank with expiry alerts, release tracking, and limit usage — linked automatically to the bid or project they belong to.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🏗️</div>
+        <h3>Project Management</h3>
+        <p>From a won bid to a live project automatically: BOQ, schedule, progress reports, S-curve, daily site reporting and document management with expiry alerts.</p>
+      </div>
+      <div class="card">
+        <div class="ico">📦</div>
+        <h3>Procurement &amp; Inventory</h3>
+        <p>Requisition → RFQ → comparison → purchase order → goods receipt → stock, with vendor management and payables — one connected chain.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🚚</div>
+        <h3>Vehicle &amp; Fleet</h3>
+        <p>Maintenance, tax and insurance renewals, trip and movement logs, and per-vehicle earning vs. expense — know what every vehicle actually costs you.</p>
+      </div>
+      <div class="card">
+        <div class="ico">👥</div>
+        <h3>HR &amp; Operations</h3>
+        <p>Employee records, payroll with SSF, custom roles and titles, and sign-in history for Owners and HR to see who's working when.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="why" id="why">
+  <div class="wrap why-grid">
+    <div>
+      <h2>Why contractors are choosing ProcureNepal</h2>
+      <ul class="why-list">
+        <li><span class="tick">✓</span> Built around Nepal's own PPMO procurement rules, not a generic template</li>
+        <li><span class="tick">✓</span> Modules switch on or off per workspace and per user — pay attention to, and pay for, only what you use</li>
+        <li><span class="tick">✓</span> PDF and Excel upload with template download on almost every page</li>
+        <li><span class="tick">✓</span> Your bid prices and bid documents stay private to your own workspace</li>
+        <li><span class="tick">✓</span> Nepali / English interface toggle, with more coverage on the way</li>
+      </ul>
+    </div>
+    <div class="stat-card">
+      <div class="n">6</div>
+      <div class="lbl">connected ERP areas — Bolpatra, Bank, Project, Procurement, Fleet, HR</div>
+      <div class="stat-row">
+        <div><div class="n" style="font-size:24px">44+</div><div class="lbl">registers &amp; reports ready to use</div></div>
+        <div><div class="n" style="font-size:24px">1</div><div class="lbl">login for your whole office</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>Ready to run your next bid properly?</h2>
+    <p>Sign in to your workspace, or get in touch to set one up for your company.</p>
+    <a href="https://app.procurenepal.com" class="btn gold">Open the app →</a>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <div>© <span id="y"></span> Cuidado Technology Pvt. Ltd. · ProcureNepal · All rights reserved.</div>
+    <div><a href="https://app.procurenepal.com">app.procurenepal.com</a></div>
+  </div>
+</footer>
+
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>

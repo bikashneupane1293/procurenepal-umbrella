@@ -29,21 +29,60 @@ export async function readPdfText(file: File | ArrayBuffer, maxPages = 30): Prom
   }
   const pages = doc.numPages;
   await task.destroy();
-  const text = out.join('\n');
+  const text = cleanupText(out.join('\n'));
   return { text, pages, scanned: text.replace(/\s/g, '').length < 40 };
 }
 
-/** Group text items by their y position into lines, left to right. */
-export function itemsToLines(items: { str: string; transform: number[] }[]): string {
-  const rows = new Map<number, { x: number; s: string }[]>();
+/** Common PDF-export artifacts that confuse plain keyword/regex matching if left in. */
+const LIGATURES: Record<string, string> = { 'ﬀ': 'ff', 'ﬁ': 'fi', 'ﬂ': 'fl', 'ﬃ': 'ffi', 'ﬄ': 'ffl', 'ﬅ': 'st', 'ﬆ': 'st' };
+function cleanupText(s: string): string {
+  return s
+    .replace(/­/g, '') // soft hyphen (invisible, but splits words like "Reg­istration")
+    .replace(/[  -  ]/g, ' ') // NBSP and other "space-like" unicode gaps
+    .replace(/[‘’]/g, "'") // curly single quotes → plain, so our own regex/string matches still work
+    .replace(/[“”]/g, '"')
+    .replace(/[ﬀ-ﬆ]/g, (m) => LIGATURES[m] ?? m);
+}
+
+/**
+ * Group text items by their y position into lines, left to right, and only insert a space
+ * between two runs when the visual gap between them is wide enough to be a real word break.
+ * Government Word→PDF exports very often split one word across several text "runs" (a bold
+ * span mid-sentence, a different sub-font for one character, etc.) with no gap between them —
+ * blindly inserting a space at every run boundary turns "Rs. 50,00,000" or "Bid Security" into
+ * "R s. 50,00,000" / "Bi d Security", which then fails every keyword/amount pattern silently.
+ */
+export function itemsToLines(items: { str: string; transform: number[]; width?: number }[]): string {
+  const rows = new Map<number, { x: number; s: string; w: number }[]>();
   for (const it of items) {
-    if (!it.str?.trim()) continue;
+    if (!it.str) continue;
     const y = Math.round(it.transform[5] / 3) * 3; // tolerate small baseline differences
     const x = it.transform[4];
-    rows.set(y, [...(rows.get(y) ?? []), { x, s: it.str }]);
+    const fontSize = Math.hypot(it.transform[0], it.transform[1]) || 10;
+    const w = it.width && it.width > 0 ? it.width : fontSize * 0.5 * Math.max(1, it.str.length);
+    rows.set(y, [...(rows.get(y) ?? []), { x, s: it.str, w }]);
   }
   return [...rows.entries()]
     .sort((a, b) => b[0] - a[0])
-    .map(([, r]) => r.sort((a, b) => a.x - b.x).map((c) => c.s).join(' '))
+    .map(([, r]) => {
+      const sorted = r.sort((a, b) => a.x - b.x);
+      let line = '';
+      let prevEndX: number | null = null;
+      let prevFontGuess = 10;
+      for (const c of sorted) {
+        if (prevEndX != null && line.length) {
+          const gap = c.x - prevEndX;
+          const alreadySpaced = /\s$/.test(line) || /^\s/.test(c.s);
+          // A gap wider than roughly a quarter of the current run's own character size reads as
+          // a genuine word break; anything tighter (including slightly negative, from kerning)
+          // is the same word continuing in a new font/style run.
+          if (!alreadySpaced && gap > Math.max(1, prevFontGuess * 0.22)) line += ' ';
+        }
+        line += c.s;
+        prevEndX = c.x + c.w;
+        prevFontGuess = c.w / Math.max(1, c.s.length);
+      }
+      return line;
+    })
     .join('\n');
 }

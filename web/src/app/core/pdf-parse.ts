@@ -24,7 +24,7 @@ export function parseAmount(s: string): number | null {
 /** Money after a label: needs Rs/NRs before it or crore/lakh after it (so "One (1)" is not read as money). */
 function moneyIn(text: string): number | null {
   const m =
-    text.match(/(?:N?Rs\.?|NPR)\s*:?\s*([\d][\d,]*(?:\.\d+)?\s*(?:crore|cr\.?|lakhs?|lacs?|million)?)/i) ??
+    text.match(/(?:N\s?Rs\.?|NPR)\s*:?\s*([\d][\d,]*(?:\.\d+)?\s*(?:crore|cr\.?|lakhs?|lacs?|million)?)/i) ??
     text.match(/([\d][\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?))\b/i);
   return m ? parseAmount(m[1]) : null;
 }
@@ -56,12 +56,13 @@ export function toLines(text: string): string[] {
   return text.split(/\r?\n/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
 }
 /** First line matching label; returns the line and the text after the label (plus the next line for wrapped values). */
-function find(lines: string[], label: RegExp): { line: string; rest: string } | null {
+function find(lines: string[], label: RegExp, lookahead = 2): { line: string; rest: string } | null {
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(label);
     if (m) {
-      const rest = lines[i].slice((m.index ?? 0) + m[0].length);
-      return { line: lines[i], rest: rest + ' ' + (lines[i + 1] ?? '') };
+      const sameLine = lines[i].slice((m.index ?? 0) + m[0].length);
+      const nextLines = lines.slice(i + 1, i + 1 + lookahead).join(' ');
+      return { line: lines[i], rest: (sameLine + ' ' + nextLines).trim() };
     }
   }
   return null;

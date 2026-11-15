@@ -18,6 +18,9 @@ const OPEN_KEY = 'pn.menu.open';
         <div class="brand"><span class="gold">Procure</span>Nepal</div>
         <nav>
           <a class="item top" routerLink="/dashboard" routerLinkActive="active">🏠 {{ i18n.t('dashboard') }}</a>
+          @if (user?.role === 'SUPER_ADMIN') {
+            <a class="item top" routerLink="/admin" routerLinkActive="active">🛡️ Admin Panel</a>
+          }
           @for (m of visible(); track m.key) {
             <div class="group" [class.open]="isOpen(m.key)">
               <button class="ghead" type="button" (click)="toggle(m.key)" [attr.aria-expanded]="isOpen(m.key)">
