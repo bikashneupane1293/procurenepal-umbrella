@@ -89,4 +89,47 @@ describe('Admin Panel: tenants (e2e)', () => {
     const row = list.find((t: any) => t.id === newTenantId);
     expect(row).toMatchObject({ name: 'Acme Builders Pvt. Ltd.', ownerEmail: 'ram@acme.example', plan: 'STARTER' });
   });
+
+  it('plans: lists every module and each plan\'s default modules (Super Admin only)', async () => {
+    await http().get('/admin/plans').set(as('ownerX')).expect(403);
+    const p = (await http().get('/admin/plans').set(as('super1')).expect(200)).body;
+    expect(p.modules.map((m: any) => m.key)).toEqual(['companies', 'bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank']);
+    expect(p.presets.STARTER).toEqual(['bolpatra', 'procurement', 'hr']);
+  });
+
+  it('Super Admin edits one workspace\'s modules (overrides its plan), Owner cannot exceed them, then resets to the plan default', async () => {
+    await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('ownerX')).send({ modules: ['bank'] }).expect(403);
+    await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('super1')).send({ modules: ['companies'] }).expect(400); // core is never "granted"
+    await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('super1')).send({ modules: ['spaceship'] }).expect(400);
+    await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('super1')).send({}).expect(400);
+
+    const r = (await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('super1')).send({ modules: ['bolpatra', 'fleet'] }).expect(200)).body;
+    expect(r).toMatchObject({ plan: 'STARTER', custom: true, unlockedModules: ['bolpatra', 'fleet'] });
+    let me = (await http().get('/access/me').set(as('ram')).expect(200)).body;
+    expect(me.modules).toEqual(['companies', 'bolpatra', 'fleet']);
+    expect(me.planCustom).toBe(true);
+    // the workspace Owner cannot switch on something Super Admin didn't grant
+    await http().put('/access/workspace-modules').set(as('ram')).send({ modules: { hr: true } }).expect(400);
+    expect((await http().get(`/admin/tenants/${newTenantId}`).set(as('super1')).expect(200)).body.modules.custom).toBe(true);
+
+    const back = (await http().put(`/admin/tenants/${newTenantId}/modules`).set(as('super1')).send({ usePlanDefault: true }).expect(200)).body;
+    expect(back).toMatchObject({ plan: 'STARTER', custom: false, unlockedModules: ['bolpatra', 'procurement', 'hr'] });
+    me = (await http().get('/access/me').set(as('ram')).expect(200)).body;
+    expect(me.modules).toEqual(['companies', 'bolpatra', 'procurement', 'hr']);
+  });
+
+  it('Set plan and Create organization can both carry Super Admin\'s exact module choice', async () => {
+    await http().post(`/admin/tenants/${newTenantId}/plan`).set(as('super1')).send({ plan: 'ENTERPRISE', modules: ['bolpatra', 'bank'] }).expect(201);
+    expect((await http().get('/access/me').set(as('ram')).expect(200)).body.modules).toEqual(['companies', 'bolpatra', 'bank']);
+    await http().post(`/admin/tenants/${newTenantId}/plan`).set(as('super1')).send({ plan: 'ENTERPRISE', modules: ['nope'] }).expect(400);
+
+    const c = (await http().post('/admin/tenants').set(as('super1'))
+      .send({ tenantName: 'Custom Co', ownerName: 'Sita Rai', ownerEmail: 'sita@custom.example', plan: 'FREE', modules: ['bolpatra', 'project'] })
+      .expect(201)).body;
+    tok.sita = sign(c.owner.id);
+    const me = (await http().get('/access/me').set(as('sita')).expect(200)).body;
+    expect(me).toMatchObject({ plan: 'FREE', planCustom: true, modules: ['companies', 'bolpatra', 'project'] });
+    await http().post('/admin/tenants').set(as('super1'))
+      .send({ tenantName: 'Bad Co', ownerName: 'Bad Co', ownerEmail: 'bad@co.example', modules: ['companies'] }).expect(400);
+  });
 });

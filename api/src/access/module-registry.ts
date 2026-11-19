@@ -44,6 +44,16 @@ export const PLAN_MODULES: Record<string, string[]> = {
   PROFESSIONAL: ['bolpatra', 'procurement', 'fleet', 'hr', 'project'],
   ENTERPRISE: ['bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank'],
 };
+/**
+ * flagKey for a module Super Admin has explicitly chosen for (or withheld from) one workspace.
+ * When any of these rows exist for a workspace they replace the plan's default list entirely —
+ * Super Admin's per-workspace choice always wins over the plan preset.
+ */
+export const entitleFlagKeyOf = (moduleKey: string) => `entitle:${moduleKey}`;
+export const ENTITLE_PREFIX = 'entitle:';
+/** Non-core modules — the ones a plan / Super Admin can grant or withhold. */
+export const GRANTABLE_MODULE_KEYS = MODULES.filter((m) => !m.core).map((m) => m.key);
+
 /** Modules a given plan unlocks (core modules are always included on top of this). */
 export const modulesUnlockedByPlan = (plan: string): string[] => PLAN_MODULES[plan] ?? PLAN_MODULES['FREE'];
 

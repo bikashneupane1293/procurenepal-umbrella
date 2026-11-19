@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class SetPlanDto {
   @IsIn(['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'])
@@ -21,6 +21,10 @@ export class SetPlanDto {
 
   @IsOptional() @IsString()
   note?: string;
+
+  /** Optional: the exact modules Super Admin chose for this workspace (replaces the plan's default list). */
+  @IsOptional() @IsArray() @IsString({ each: true })
+  modules?: string[];
 }
 
 export class ToggleTenantDto {
@@ -52,4 +56,18 @@ export class CreateTenantDto {
 
   @IsOptional() @IsIn(['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'])
   plan?: string;
+
+  /** Optional: the exact modules Super Admin chose (replaces the plan's default list). */
+  @IsOptional() @IsArray() @IsString({ each: true })
+  modules?: string[];
+}
+
+/** Super Admin sets exactly which modules one workspace gets, or resets it to its plan's default. */
+export class SetModulesDto {
+  @IsOptional() @IsArray() @IsString({ each: true })
+  modules?: string[];
+
+  /** true = remove Super Admin's per-workspace choice and go back to the plan's default list. */
+  @IsOptional() @IsBoolean()
+  usePlanDefault?: boolean;
 }

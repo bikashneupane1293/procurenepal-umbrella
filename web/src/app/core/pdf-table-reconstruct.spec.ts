@@ -1,4 +1,4 @@
-import { reconstructTable, findAnchorTableOnPage, PdfTextItem } from './pdf-table-reconstruct';
+import { reconstructTable, findAnchorTableOnPage, checklistFromDocumentTable, PdfTextItem } from './pdf-table-reconstruct';
 import { ITB21_PAGE20_FIXTURE } from './itb21-page20.fixture';
 
 // Regression fixture: raw pdf.js items captured from the REAL tender PDF's page 20, containing
@@ -185,5 +185,24 @@ describe('pdf-table-reconstruct (Phase 1A, isolated module)', () => {
     ];
     const result = reconstructTable(items);
     expect(result.table).toBeNull();
+  });
+
+  it('turns the real ITB 21 table into readiness-checklist rows (document label + requirement/format)', () => {
+    const page = findAnchorTableOnPage(ITB21_PAGE20_FIXTURE);
+    const items = checklistFromDocumentTable({ table: page.table!, pageNumber: 20, warnings: [] });
+    expect(items).not.toBeNull();
+    expect(items!.length).toBe(10);
+    expect(items![0]).toMatchObject({ label: 'Letter of Technical Bid', found: true, line: 'Mandatory — PDF' });
+    expect(items![1].label).toBe('Bid Security / Bank Guarantee');
+    expect(items![7]).toMatchObject({ label: 'Joint venture agreement', line: 'Mandatory in case of JV Bids Only — PDF' });
+  });
+
+  it('refuses to build a checklist from a table without a named Document column or with low confidence', () => {
+    const page = findAnchorTableOnPage(ITB21_PAGE20_FIXTURE);
+    const t = page.table!;
+    expect(checklistFromDocumentTable(null)).toBeNull();
+    expect(checklistFromDocumentTable({ table: { ...t, headers: undefined }, pageNumber: 20, warnings: [] })).toBeNull();
+    expect(checklistFromDocumentTable({ table: { ...t, headers: ['No.', 'Item', 'Qty', 'Rate'] }, pageNumber: 20, warnings: [] })).toBeNull();
+    expect(checklistFromDocumentTable({ table: { ...t, confidence: 0.6 }, pageNumber: 20, warnings: [] })).toBeNull();
   });
 });

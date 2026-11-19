@@ -11,9 +11,12 @@ export interface AccessInfo {
   modules: string[];
   workspaceModules: Record<string, boolean>;
   itemFlags?: Record<string, boolean>;
-  /** The workspace's current plan and the module keys that plan unlocks (Task 7). */
-  plan?: string;
-  planModules?: string[];
+  /** The workspace's plan and the module keys it may use (Task 8/9). Both are null when no plan
+   *  has ever been recorded — meaning unrestricted, not "no modules". planCustom = true when
+   *  Super Admin chose this workspace's modules explicitly (overriding the plan's defaults). */
+  plan?: string | null;
+  planModules?: string[] | null;
+  planCustom?: boolean;
 }
 
 /** Which ERP modules the signed-in user may open (loaded once per session). */

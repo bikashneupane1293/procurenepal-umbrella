@@ -14,7 +14,7 @@ import { tablesToExcel } from '../../core/erp-sheets';
 // Phase 1B: experimental table reconstruction — additive only. Never imported by, or imported
 // into, pdf-reader.ts/pdf-parse.ts; the flat extraction above is untouched and remains the
 // default. This is called only when the local, disabled-by-default toggle below is turned on.
-import { findAnchorTableInPdf, DocumentTableResult } from '../../core/pdf-table-reconstruct';
+import { findAnchorTableInPdf, checklistFromDocumentTable, DocumentTableResult } from '../../core/pdf-table-reconstruct';
 
 const loadReport = () => import('../../core/report');
 
@@ -107,7 +107,7 @@ interface JvRow { companyId: string; share: number | null; }
           <h3 style="margin-top:16px">Bid readiness checklist</h3>
           <p class="help">{{ clause21Note() }}</p>
           <table class="tbl">
-            <thead><tr><th></th><th>Document / requirement</th><th>{{ checklistFromClause21Used() ? 'Clause text' : 'Mentioned in the document?' }}</th></tr></thead>
+            <thead><tr><th></th><th>Document / requirement</th><th>{{ checklistColumnTitle() }}</th></tr></thead>
             <tbody>
               @for (c of cl; track c.key) {
                 <tr [class.bad]="!c.found"><td>{{ c.found ? '✅' : '⚠️' }}</td><td>{{ c.label }}</td><td class="muted">{{ c.found ? c.line : 'Not found — check manually' }}</td></tr>
@@ -138,7 +138,7 @@ interface JvRow { companyId: string; share: number | null; }
         @if (experimentalTableReader() && hasPdfFile()) {
           <div class="panel exp-panel" style="margin-top:12px">
             <h3>🧪 Experimental: reconstructed table</h3>
-            <p class="help">Reading aid only — not verified, and not used for any readiness checklist, qualification, or eligibility decision. Compare it against "Show extracted text" above before relying on it.</p>
+            <p class="help">Reading aid only — not used for any qualification or eligibility decision. The readiness checklist above uses this table only when the document's Clause 21 has no item list of its own, and then says so (with page and read confidence). Compare it against "Show extracted text" above before relying on it.</p>
             <button class="btn light" (click)="tryExperimentalTableReader()" [disabled]="experimentalBusy()">{{ experimentalBusy() ? 'Scanning pages…' : (experimentalTried() ? 'Scan again' : 'Scan this PDF for a table') }}</button>
 
             @if (experimentalError()) { <div class="msg error" style="margin-top:8px">{{ experimentalError() }}</div> }
@@ -153,7 +153,7 @@ interface JvRow { companyId: string; share: number | null; }
                 }
                 <table class="tbl" style="margin-top:10px">
                   <thead><tr>
-                    @for (col of er.table.columns; track col.index) { <th>Column {{ col.index + 1 }}</th> }
+                    @for (col of er.table.columns; track col.index) { <th>{{ er.table.headers?.[col.index] || ('Column ' + (col.index + 1)) }}</th> }
                   </tr></thead>
                   <tbody>
                     @for (row of er.table.rows; track row.rowIndex) {
@@ -400,10 +400,20 @@ export class TenderDetailPage {
   checklist = signal<ChecklistItem[] | null>(null);
   checklistFromClause21Used = signal(false);
   // Kept out of the template: an inline ternary with apostrophes + an em dash broke Angular's template expression parser (caught by a real `ng build`).
-  clause21Note = computed(() =>
-    this.checklistFromClause21Used()
-      ? "Read straight from this document's own ITB Clause 21 \u2014 Sealing and Marking of Bids."
-      : "This document's Clause 21 was not found, so this is a generic checklist \u2014 verify against the actual document.",
+  /** Page / confidence of the required-documents table, when the checklist came from it. */
+  checklistTablePage = signal<number | null>(null);
+  checklistTableConfidence = signal(0);
+  clause21Note = computed(() => {
+    if (this.checklistFromClause21Used()) return "Read straight from this document's own ITB Clause 21 \u2014 Sealing and Marking of Bids.";
+    const page = this.checklistTablePage();
+    if (page) {
+      return "Read from this document's own required-documents table (page " + page + ', read confidence ' +
+        Math.round(this.checklistTableConfidence() * 100) + "%). Clause 21's text has no item list of its own in this document, so the table was used \u2014 verify every row against the document.";
+    }
+    return "This document's Clause 21 was not found, so this is a generic checklist \u2014 verify against the actual document.";
+  });
+  checklistColumnTitle = computed(() =>
+    this.checklistFromClause21Used() ? 'Clause text' : this.checklistTablePage() ? 'Requirement / format' : 'Mentioned in the document?',
   );
   keyClauses = signal<ClauseFind[] | null>(null);
   estimateVat = signal<{ value: number | null; note: string } | null>(null);
@@ -429,6 +439,7 @@ export class TenderDetailPage {
     this.pdfBusy.set(true); this.pdfError.set(''); this.pdfScanned.set(false);
     this.suggestions.set(null); this.checklist.set(null); this.checklistSaved.set(false);
     this.keyClauses.set(null); this.estimateVat.set(null); this.checklistFromClause21Used.set(false);
+    this.checklistTablePage.set(null); this.checklistTableConfidence.set(0);
     this.rawPdfText.set(''); this.showRawText.set(false);
     this.lastPdfFile = file; this.hasPdfFile.set(true);
     this.experimentalResult.set(null); this.experimentalTried.set(false); this.experimentalError.set('');
@@ -440,7 +451,27 @@ export class TenderDetailPage {
       this.suggestions.set(fields);
       const own = checklistFromClause21(text);
       this.checklistFromClause21Used.set(!!own);
-      this.checklist.set(own ?? findDocumentChecklist(text));
+      // Many PPMO e-submission documents list the required documents as a TABLE inside ITB 21.1(b)
+      // instead of (a)/(b) items, so the text parser above finds Clause 21 but no item list. Only
+      // then, read that table with the coordinate-based engine; accepted only if it has a named
+      // "Document" column and >= 80% confidence (see checklistFromDocumentTable). Otherwise fall
+      // through to the generic keyword list exactly as before.
+      let fromTable: ChecklistItem[] | null = null;
+      if (!own) {
+        try {
+          const tr = await findAnchorTableInPdf(file, 80);
+          fromTable = checklistFromDocumentTable(tr);
+          if (fromTable && tr) {
+            this.checklistTablePage.set(tr.pageNumber);
+            this.checklistTableConfidence.set(tr.table.confidence);
+            this.experimentalResult.set(tr);
+            this.experimentalTried.set(true);
+          }
+        } catch {
+          fromTable = null; // table reading is best-effort; the generic list below still works
+        }
+      }
+      this.checklist.set(own ?? fromTable ?? findDocumentChecklist(text));
       this.keyClauses.set(findKeyClauses(text));
       if (fields['boqAmount']) this.estimateVat.set(estimateExcludingVat(fields['boqAmount'].value, fields['boqAmount'].line));
     } catch (e: any) {

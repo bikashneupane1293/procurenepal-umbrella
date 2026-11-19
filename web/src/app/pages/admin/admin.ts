@@ -2,7 +2,7 @@
 // signed-in person's own one), lets Super Admin record a plan / payment manually, pause a
 // workspace, and shows honest platform-wide numbers. Billing is a labelled placeholder until
 // eSewa / Khalti merchant credentials exist. © Cuidado Technology Pvt. Ltd.
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
@@ -74,13 +74,17 @@ import { UI_STYLES } from '../../core/ui-styles';
           </div>
           <div>
             <label>Starting plan</label>
-            <select [(ngModel)]="createForm.plan">
-              <option value="FREE">FREE</option>
-              <option value="STARTER">STARTER</option>
-              <option value="PROFESSIONAL">PROFESSIONAL</option>
-              <option value="ENTERPRISE">ENTERPRISE</option>
+            <select [ngModel]="createForm.plan" (ngModelChange)="createForm.plan = $event; createMods = presetMap($event)">
+              @for (p of planNames; track p) { <option [value]="p">{{ p }}</option> }
             </select>
           </div>
+        </div>
+        <label style="margin-top:12px">Modules this organization gets</label>
+        <p class="help" style="margin-top:2px">Ticked from the plan's defaults — change any of them for this organization. Companies is always on.</p>
+        <div class="mods">
+          @for (m of grantable(); track m.key) {
+            <label class="mod" [class.off]="!createMods[m.key]"><input type="checkbox" [checked]="createMods[m.key]" (change)="createMods[m.key] = !createMods[m.key]" /> {{ m.name }}</label>
+          }
         </div>
         @if (createError()) { <div class="msg error">{{ createError() }}</div> }
         <div class="actions">
@@ -141,6 +145,24 @@ import { UI_STYLES } from '../../core/ui-styles';
             </table>
           </div>
 
+          <h3 style="margin-top:18px">Modules for this workspace</h3>
+          <p class="help">
+            @if (d.modules?.custom) { <strong>Chosen by Super Admin</strong> (overrides the {{ d.modules?.plan ?? 'plan' }} defaults). }
+            @else if (d.modules?.plan) { Using the <strong>{{ d.modules.plan }}</strong> plan's default modules. }
+            @else { No plan recorded yet — <strong>every module is open</strong>, as before plans existed. }
+            The workspace Owner can switch these off for their team, but can never switch on a module that isn't ticked here.
+          </p>
+          <div class="mods">
+            @for (m of grantable(); track m.key) {
+              <label class="mod" [class.off]="!wsMods[m.key]"><input type="checkbox" [checked]="wsMods[m.key]" (change)="wsMods[m.key] = !wsMods[m.key]" /> {{ m.name }}</label>
+            }
+          </div>
+          <div class="actions">
+            <button class="btn gold" (click)="saveModules(d.tenant.id)" [disabled]="savingMods()">{{ savingMods() ? 'Saving…' : 'Save modules for this workspace' }}</button>
+            <button class="btn light" (click)="resetModules(d.tenant.id)" [disabled]="savingMods() || !d.modules?.custom">Reset to plan default</button>
+          </div>
+          @if (modsMsg()) { <div class="msg info" style="margin-top:8px">{{ modsMsg() }}</div> }
+
           <h3 style="margin-top:18px">Plan history</h3>
           <div class="table-wrap">
             <table>
@@ -154,21 +176,18 @@ import { UI_STYLES } from '../../core/ui-styles';
                     <td class="num">{{ s.amountNPR ?? '—' }}</td>
                   </tr>
                 }
-                @if (!d.subscriptions.length) { <tr><td colspan="6" class="empty">No plan recorded yet — defaults to FREE.</td></tr> }
+                @if (!d.subscriptions.length) { <tr><td colspan="6" class="empty">No plan recorded yet — every module is open until you set one.</td></tr> }
               </tbody>
             </table>
           </div>
 
           <h3 style="margin-top:18px">Set plan</h3>
-          <p class="help">This only labels the workspace — it does not switch any module on or off by itself, and no payment is collected here. Record it after you've agreed a plan (and, if applicable, confirmed a manual payment) with the customer.</p>
+          <p class="help">Records the plan (and, if applicable, a manually confirmed payment — nothing is collected here). Choosing a plan ticks its default modules below; adjust them if this customer's deal is different.</p>
           <div class="grid">
             <div>
               <label>Plan</label>
-              <select [(ngModel)]="planForm.plan">
-                <option value="FREE">FREE</option>
-                <option value="STARTER">STARTER</option>
-                <option value="PROFESSIONAL">PROFESSIONAL</option>
-                <option value="ENTERPRISE">ENTERPRISE</option>
+              <select [ngModel]="planForm.plan" (ngModelChange)="planForm.plan = $event; planMods = presetMap($event)">
+                @for (p of planNames; track p) { <option [value]="p">{{ p }}</option> }
               </select>
             </div>
             <div>
@@ -198,9 +217,20 @@ import { UI_STYLES } from '../../core/ui-styles';
               <input [(ngModel)]="planForm.paymentRef" placeholder="e.g. transaction / cheque no." />
             </div>
           </div>
+          <label style="margin-top:12px" class="inline"><input type="checkbox" [(ngModel)]="planApplyMods" /> Also set this workspace's modules to:</label>
+          @if (planApplyMods) {
+            <div class="mods">
+              @for (m of grantable(); track m.key) {
+                <label class="mod" [class.off]="!planMods[m.key]"><input type="checkbox" [checked]="planMods[m.key]" (change)="planMods[m.key] = !planMods[m.key]" /> {{ m.name }}</label>
+              }
+            </div>
+          } @else {
+            <p class="help">Modules stay as they are now (see "Modules for this workspace" above).</p>
+          }
           <div class="actions">
-            <button class="btn gold" (click)="savePlan(d.tenant.id)">Save plan</button>
+            <button class="btn gold" (click)="savePlan(d.tenant.id)" [disabled]="savingPlan()">{{ savingPlan() ? 'Saving…' : 'Save plan' }}</button>
           </div>
+          @if (planMsg()) { <div class="msg info" style="margin-top:8px">{{ planMsg() }}</div> }
         </div>
       }
     }
@@ -218,6 +248,12 @@ import { UI_STYLES } from '../../core/ui-styles';
     .link-panel { border-left: 4px solid #d4a017; }
     .linkbox { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border-radius: 8px; padding: 10px 14px; flex-wrap: wrap; }
     .linkbox code { word-break: break-all; font-size: 13px; }
+    .mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 8px 0; }
+    .mod { display: flex; gap: 8px; align-items: center; border: 1px solid #e1e3e6; border-radius: 8px; padding: 10px 12px; font-weight: 600; color: #0a1f3d; margin: 0; cursor: pointer; }
+    .mod input { width: auto; }
+    .mod.off { background: #f9fafb; color: #9ca3af; }
+    label.inline { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
+    label.inline input { width: auto; }
   `],
 })
 export class AdminPage {
@@ -240,6 +276,29 @@ export class AdminPage {
   copied = signal(false);
   createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
 
+  // ---- module choice (Super Admin picks the exact modules per workspace) ----
+  readonly planNames = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
+  /** { modules: [{key,name,core}], presets: { FREE: [...], ... } } from GET /admin/plans */
+  planInfo = signal<{ modules: { key: string; name: string; core: boolean }[]; presets: Record<string, string[]> } | null>(null);
+  grantable = computed(() => (this.planInfo()?.modules ?? []).filter((m) => !m.core));
+  createMods: Record<string, boolean> = {};
+  wsMods: Record<string, boolean> = {};
+  planMods: Record<string, boolean> = {};
+  planApplyMods = true;
+  savingMods = signal(false);
+  savingPlan = signal(false);
+  modsMsg = signal('');
+  planMsg = signal('');
+
+  /** { bolpatra: true, fleet: false, … } with a plan's default modules ticked. */
+  presetMap(plan: string): Record<string, boolean> {
+    const preset = this.planInfo()?.presets?.[plan] ?? [];
+    return Object.fromEntries(this.grantable().map((m) => [m.key, preset.includes(m.key)]));
+  }
+  private ticked(map: Record<string, boolean>): string[] {
+    return this.grantable().filter((m) => map[m.key]).map((m) => m.key);
+  }
+
   planKeys(m: Record<string, number>): string[] { return Object.keys(m ?? {}); }
 
   constructor() {
@@ -249,10 +308,15 @@ export class AdminPage {
 
   async refresh() {
     try {
-      const [tenants, stats, billing] = await Promise.all([this.data.adminTenants(), this.data.adminStats(), this.data.adminBilling()]);
+      const [tenants, stats, billing, plans] = await Promise.all([
+        this.data.adminTenants(), this.data.adminStats(), this.data.adminBilling(), this.data.adminPlans(),
+      ]);
       this.tenants.set(tenants);
       this.stats.set(stats);
       this.billing.set(billing);
+      const first = !this.planInfo();
+      this.planInfo.set(plans);
+      if (first) this.createMods = this.presetMap(this.createForm.plan);
     } catch (e: any) {
       this.error.set('Could not load the admin panel: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
     }
@@ -270,7 +334,12 @@ export class AdminPage {
     try {
       const d = await this.data.adminTenant(id);
       this.selected.set(d);
-      this.planForm = { plan: 'FREE', status: 'ACTIVE', expiresAt: '', amountNPR: null, paymentMethod: '', paymentRef: '' };
+      const current = d.modules?.plan ?? 'FREE';
+      this.planForm = { plan: current, status: 'ACTIVE', expiresAt: '', amountNPR: null, paymentMethod: '', paymentRef: '' };
+      const unlocked: string[] | null = d.modules?.unlockedModules ?? null; // null = no plan yet, everything open
+      this.wsMods = Object.fromEntries(this.grantable().map((m) => [m.key, unlocked === null || unlocked.includes(m.key)]));
+      this.planMods = this.presetMap(current);
+      this.planApplyMods = true;
     } catch (e: any) {
       this.error.set('Could not open this workspace: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
     }
@@ -287,10 +356,12 @@ export class AdminPage {
     try {
       const body: any = { tenantName: f.tenantName.trim(), ownerName: f.ownerName.trim(), ownerEmail: f.ownerEmail.trim(), plan: f.plan };
       if (f.ownerPhone.trim()) body.ownerPhone = f.ownerPhone.trim();
+      if (this.grantable().length) body.modules = this.ticked(this.createMods);
       const res = await this.data.adminCreateTenant(body);
       this.createdLink.set(res.ownerActivationLink);
       this.createdTenantName.set(res.tenant?.name ?? f.tenantName);
       this.createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
+      this.createMods = this.presetMap('FREE');
       await this.refresh();
     } catch (e: any) {
       this.createError.set('Could not create the organization: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
@@ -315,8 +386,41 @@ export class AdminPage {
     if (body.amountNPR === null || body.amountNPR === '') delete body.amountNPR;
     if (!body.paymentMethod) delete body.paymentMethod;
     if (!body.paymentRef) delete body.paymentRef;
-    await this.data.adminSetPlan(tenantId, body);
-    await this.refresh();
-    await this.loadTenant(tenantId);
+    if (this.planApplyMods && this.grantable().length) body.modules = this.ticked(this.planMods);
+    this.savingPlan.set(true); this.planMsg.set(''); this.error.set('');
+    try {
+      await this.data.adminSetPlan(tenantId, body);
+      await this.refresh();
+      await this.loadTenant(tenantId);
+      this.planMsg.set(`✅ Plan ${body.plan} saved${body.modules ? ' with the ticked modules' : ''}.`);
+    } catch (e: any) {
+      this.error.set('Could not save the plan: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
+    }
+    this.savingPlan.set(false);
+  }
+
+  /** Super Admin's exact module choice for one workspace (overrides its plan's defaults). */
+  async saveModules(tenantId: string) {
+    this.savingMods.set(true); this.modsMsg.set(''); this.error.set('');
+    try {
+      await this.data.adminSetModules(tenantId, { modules: this.ticked(this.wsMods) });
+      await this.loadTenant(tenantId);
+      this.modsMsg.set("✅ Saved. The workspace's users see the change after they refresh the page (no sign-out needed).");
+    } catch (e: any) {
+      this.error.set('Could not save modules: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
+    }
+    this.savingMods.set(false);
+  }
+
+  async resetModules(tenantId: string) {
+    this.savingMods.set(true); this.modsMsg.set(''); this.error.set('');
+    try {
+      await this.data.adminSetModules(tenantId, { usePlanDefault: true });
+      await this.loadTenant(tenantId);
+      this.modsMsg.set("✅ Back to the plan's default modules.");
+    } catch (e: any) {
+      this.error.set('Could not reset modules: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
+    }
+    this.savingMods.set(false);
   }
 }

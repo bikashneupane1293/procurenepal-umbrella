@@ -427,3 +427,35 @@ export async function findAnchorTableInPdf(
   await task.destroy();
   return null;
 }
+
+/** Same shape as pdf-parse's ChecklistItem, declared here so this module stays import-free of it. */
+export interface TableChecklistItem { key: string; label: string; found: boolean; line: string; }
+
+/**
+ * Turns a reconstructed "No. / Document / Requirement / Remarks" table (the required-documents
+ * table PPMO e-submission SBDs put inside ITB 21.1(b)) into readiness-checklist rows.
+ *
+ * Deliberately strict — returns null rather than guessing unless:
+ *  - the header row was split cleanly into named columns (`headers` is set), and one of them is a
+ *    "Document" column (so a random numbered table can't be mistaken for the document list), and
+ *  - the whole table's confidence is at least `minConfidence` (default 0.8).
+ * Rows under 0.7 confidence are kept but flagged in their `line` text, never silently trusted.
+ */
+export function checklistFromDocumentTable(res: DocumentTableResult | null, minConfidence = 0.8): TableChecklistItem[] | null {
+  if (!res || !res.table.headers || res.table.confidence < minConfidence) return null;
+  const h = res.table.headers.map((x) => x.toLowerCase());
+  const docCol = h.findIndex((x) => /document/.test(x));
+  if (docCol < 0) return null;
+  const reqCol = h.findIndex((x, i) => i !== docCol && /requirement|mandatory|required/.test(x));
+  const remCol = h.findIndex((x, i) => i !== docCol && /remark|format|note/.test(x));
+  const cell = (row: TableRow, i: number) => (i < 0 ? '' : (row.cells.find((c) => c.columnIndex === i)?.text ?? '').replace(/\s+/g, ' ').trim());
+  const out: TableChecklistItem[] = [];
+  for (const row of res.table.rows) {
+    const label = cell(row, docCol);
+    if (!label) continue;
+    let line = [cell(row, reqCol), cell(row, remCol)].filter(Boolean).join(' — ') || 'Listed in the document table';
+    if (row.confidence < 0.7) line += ' ⚠️ low read confidence — verify this row against the document';
+    out.push({ key: 'doctable-' + row.rowIndex, label, found: true, line });
+  }
+  return out.length ? out : null;
+}

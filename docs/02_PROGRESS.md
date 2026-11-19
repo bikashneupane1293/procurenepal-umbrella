@@ -195,6 +195,39 @@ No automated test covers the new `createTenant`/plan-gating logic yet — `api/s
 - Not yet run on the real Mac: `ng build`, `ng test`, and a real create-organization + plan-upgrade/downgrade click-through.
 - The `PLAN_MODULES` tiers above are a reasonable starting guess, not Bikash's actual pricing — revisit before telling any real customer what their plan includes.
 
+## Task 8 — correction (written 2026-11-20)
+Last round's summary said several Task 8 files were finalised on the Mac. Three were not: the file-copy tool used to write them sent a **stale cached copy** when the same path had been written earlier in the session. Found this round by checksumming every file after writing it. What was actually missing, and is now fixed:
+- `api/src/access/access.service.ts` still used `findFirst(..., orderBy)` for the current plan. Correct on the real database (Prisma honours `orderBy`), but the e2e tests' in-memory database ignores `orderBy`, so the plan-upgrade test would have failed. Now picks the latest row in code — correct on both.
+- `web/src/app/core/access.service.ts` lacked the `| null` types for `plan`/`planModules` (no runtime effect).
+- This file and `verify-task8.sh` were the older versions. `verify-task9.sh` below replaces `verify-task8.sh`.
+- **No-plan-recorded = unrestricted** (the backward-compatibility fix) *was* on the Mac and is in commit 15b3c04: every workspace without a recorded plan keeps every module, exactly as before Task 8.
+
+From now on, files are written directly on the Mac and verified by checksum.
+
+## Task 9 — Super Admin chooses modules per workspace + PDF reader checklist fix (2026-11-20)
+
+### (a) Super Admin picks the exact modules
+Before: Super Admin could only pick a plan label; the plan's fixed module list (`PLAN_MODULES`) decided everything.
+Now, without any database migration:
+- Per-workspace choice stored as `entitle:<module>` rows in the existing `TenantFeatureFlag` table. Precedence: **Super Admin's explicit choice → plan default → no plan recorded = everything open**.
+- API: `GET /admin/plans` (module list + each plan's defaults), `PUT /admin/tenants/:id/modules` (`{ modules: [...] }` or `{ usePlanDefault: true }`), optional `modules` on `POST /admin/tenants` and `POST /admin/tenants/:id/plan`. Core modules (Companies) can't be granted or withheld; unknown keys → 400. `GET /admin/tenants/:id` and `/access/me` report `custom` / `planCustom`.
+- Admin Panel: module checkboxes on **Create organization**, on **Set plan** ("Also set this workspace's modules to…"), and a new **Modules for this workspace** section with **Reset to plan default**. Picking a plan pre-ticks its defaults; any box can then be changed.
+- The workspace Owner can still switch granted modules off for their team but can never switch on one Super Admin didn't grant (enforced server-side).
+- **Not done (needs a DB change, so stopped for approval):** editing the *platform-wide* plan presets from the UI. They're still the `PLAN_MODULES` arrays in `api/src/access/module-registry.ts`. Making them editable needs a new settings table (`prisma db push`).
+
+### (b) PDF reader — the readiness checklist was wrong on PPMO e-submission documents
+Reproduced with a real production build in Chromium and the real 137-page tender PDF:
+- The reader itself loaded and ran (≈1.4 s, worker OK). But the checklist said **"Clause 21 was not found, so this is a generic checklist"** and showed keyword hits from the Table of Contents (`........ 14 12. Letter of Bid`).
+- Cause: in this SBD format, ITB 21's (a)/(b) are envelope/e-GP procedures; the actual document list is a **table** ("No. / Document / Requirement / Remarks") inside 21.1(b). The text parser found Clause 21, found no item list, and fell back to generic keywords.
+- Fix (`tender-detail.ts` + new `checklistFromDocumentTable` in `pdf-table-reconstruct.ts`): if Clause 21's text has no item list, the Task 6 table engine reads that table; it's used only if its headers include a "Document" column and confidence ≥ 80%. Rows under 70% are flagged. Otherwise the generic list is used exactly as before. The note above the checklist says which source was used, with page and confidence.
+- Result on the real PDF: 10 correct items from page 20 at 95% (e.g. "Joint venture agreement — Mandatory in case of JV Bids Only — PDF").
+- Also fixed: the experimental table showed "Column 1…4" instead of the real headers. The template change for that was reported done in Task 6 but **had never landed** in `tender-detail.ts`; it's in now.
+
+### Verification (actually executed this time, on a Linux copy of the exact Mac files)
+- API e2e: 8 suites / **75 passed** (incl. 3 new Super-Admin-module tests, plan gating, create-organization). API unit: 21 suites / **81 passed**. Needed Node 24 (the Mac has 24.21).
+- Web: 13/14 passed — the 1 failure is the old `app.spec.ts` scaffold test (unrelated, pre-existing). 2 new tests for the table→checklist conversion; the first real run of one caught a column-index bug, fixed.
+- Production `ng build` OK. Browser checks (Chromium, mocked API): PDF checklist as above; Admin Panel module checkboxes, save, reset and set-plan send exactly the expected requests; no page errors.
+
 ## Next (in order)
 
 1. **First, on your Mac:** run `npm test`, `npm run test:e2e`, and `ng build` (this session still can't run them — see the verification notes above) before anything is pushed or deployed.

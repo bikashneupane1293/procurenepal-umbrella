@@ -19,6 +19,7 @@ import {
   flagKeyOf,
   itemFlagKeyOf,
   modulesUnlockedByPlan,
+  ENTITLE_PREFIX,
 } from './module-registry';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
@@ -44,8 +45,12 @@ export class AccessService {
    * moment this code ships just because nobody has set a plan for them yet.
    */
   async currentPlan(tenantId: string): Promise<string | null> {
-    const sub = await this.prisma.subscription.findFirst({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
-    return sub?.plan ?? null;
+    // Latest row by createdAt, picked in code (not via orderBy) so it behaves identically on the
+    // real database and on the e2e tests' in-memory Prisma double, which ignores orderBy.
+    const subs = await this.prisma.subscription.findMany({ where: { tenantId } });
+    if (!subs.length) return null;
+    const latest = subs.reduce((a: any, b: any) => (new Date(b.createdAt) > new Date(a.createdAt) ? b : a));
+    return latest.plan ?? null;
   }
 
   /**
@@ -54,9 +59,19 @@ export class AccessService {
    * workspace's behavior before Task 8. Gating only starts once Super Admin actually records a
    * plan for a workspace (Admin Panel "Set plan"), even if that plan is FREE.
    */
-  async planModulesFor(tenantId: string): Promise<{ plan: string | null; unlockedModules: string[] | null }> {
+  async planModulesFor(tenantId: string): Promise<{ plan: string | null; unlockedModules: string[] | null; custom: boolean }> {
     const plan = await this.currentPlan(tenantId);
-    return { plan, unlockedModules: plan ? modulesUnlockedByPlan(plan) : null };
+    // Super Admin's explicit per-workspace module choice (entitle:<key> rows) wins over the plan
+    // preset. Only rows for known, non-core modules count.
+    const ent = await this.prisma.tenantFeatureFlag.findMany({ where: { tenantId, flagKey: { startsWith: ENTITLE_PREFIX } } });
+    if (ent.length) {
+      const unlocked = ent
+        .filter((f: any) => f.enabled)
+        .map((f: any) => String(f.flagKey).slice(ENTITLE_PREFIX.length))
+        .filter((k: string) => MODULES.some((m) => m.key === k && !m.core));
+      return { plan, unlockedModules: MODULE_KEYS.filter((k) => unlocked.includes(k)), custom: true };
+    }
+    return { plan, unlockedModules: plan ? modulesUnlockedByPlan(plan) : null, custom: false };
   }
 
   /**
@@ -91,7 +106,7 @@ export class AccessService {
       if (def.core && !enabled) throw new BadRequestException(`${def.name} is a core module and cannot be switched off`);
       if (typeof enabled !== 'boolean') throw new BadRequestException(`Value for "${key}" must be true or false`);
       if (enabled && !def.core && unlockedModules !== null && !unlockedModules.includes(key)) {
-        throw new BadRequestException(`${def.name} is not included in the ${plan} plan. Ask your ProcureNepal platform administrator to upgrade the workspace's plan to turn this on.`);
+        throw new BadRequestException(`${def.name} is not included in your workspace's ${plan ? plan + ' ' : ''}plan. Ask your ProcureNepal platform administrator to add it.`);
       }
     }
     for (const [key, enabled] of Object.entries(changes)) {
@@ -154,7 +169,7 @@ export class AccessService {
   }
 
   async me(tenantId: string, userId: string, role: string) {
-    const { plan, unlockedModules } = await this.planModulesFor(tenantId);
+    const { plan, unlockedModules, custom } = await this.planModulesFor(tenantId);
     return {
       role,
       canManage: ADMIN_ROLES.includes(role),
@@ -165,6 +180,7 @@ export class AccessService {
       registry: MODULES,
       plan,
       planModules: unlockedModules,
+      planCustom: custom,
     };
   }
 

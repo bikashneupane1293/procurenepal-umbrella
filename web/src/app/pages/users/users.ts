@@ -60,7 +60,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
               <input type="checkbox" [checked]="ws[m.key]" [disabled]="m.core || lockedByPlan(m.key)" (change)="ws[m.key] = !ws[m.key]" />
               <span>{{ m.icon }} {{ m.label }}</span>
               @if (lockedByPlan(m.key)) {
-                <small>🔒 Not included in the {{ plan() }} plan — ask your ProcureNepal administrator to upgrade</small>
+                <small>🔒 Not included for your workspace — ask your ProcureNepal administrator to add it</small>
               } @else {
                 <small>{{ builtCount(m.key) }} of {{ m.items.length }} screens ready</small>
               }

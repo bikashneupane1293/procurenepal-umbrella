@@ -145,7 +145,7 @@ describe('Access: modules + User Setup (e2e)', () => {
     // Trying to switch on a module the plan doesn't include is rejected before it ever reaches
     // the database, with a message telling the Owner to ask for an upgrade.
     const res = await http().put('/access/workspace-modules').set(as('ownerC')).send({ modules: { fleet: true } }).expect(400);
-    expect(res.body.message).toMatch(/not included in the STARTER plan/);
+    expect(res.body.message).toMatch(/not included in your workspace's STARTER plan/);
 
     // A later (higher) plan immediately unlocks more modules — no flag needs to change.
     db.db.subscription.push({ id: 'sub-c-2', tenantId: 'C', plan: 'ENTERPRISE', status: 'ACTIVE', createdAt: new Date(Date.now() + 1000) });
