@@ -54,6 +54,7 @@ export const ModelName = {
   Tenant: 'Tenant',
   User: 'User',
   Subscription: 'Subscription',
+  PlatformSetting: 'PlatformSetting',
   TenantFeatureFlag: 'TenantFeatureFlag',
   Company: 'Company',
   Certificate: 'Certificate',
@@ -136,10 +137,24 @@ export const SubscriptionScalarFieldEnum = {
   paymentMethod: 'paymentMethod',
   paymentRef: 'paymentRef',
   amountNPR: 'amountNPR',
+  billingPeriod: 'billingPeriod',
+  listPriceNPR: 'listPriceNPR',
+  discountNPR: 'discountNPR',
+  promoCode: 'promoCode',
   createdAt: 'createdAt'
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const PlatformSettingScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt',
+  updatedBy: 'updatedBy'
+} as const
+
+export type PlatformSettingScalarFieldEnum = (typeof PlatformSettingScalarFieldEnum)[keyof typeof PlatformSettingScalarFieldEnum]
 
 
 export const TenantFeatureFlagScalarFieldEnum = {
@@ -499,19 +514,19 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
-
-
-export const JsonNullValueInput = {
-  JsonNull: JsonNull
-} as const
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

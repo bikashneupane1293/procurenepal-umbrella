@@ -22,6 +22,11 @@ export class DataService {
   adminTenant(id: string): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/tenants/${id}`)); }
   adminCreateTenant(body: any): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/tenants`, body)); }
   adminPlans(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/plans`)); }
+  // ---------- Pricing & promotions (Task 10) ----------
+  adminPricing(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/pricing`)); }
+  adminSavePricing(catalog: any): Promise<any> { return firstValueFrom(this.http.put<any>(`${API_URL}/admin/pricing`, { catalog })); }
+  adminQuote(body: { plan: string; period: string; code?: string }): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/pricing/quote`, body)); }
+  publicPricing(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/pricing`)); }
   adminSetModules(id: string, body: { modules?: string[]; usePlanDefault?: boolean }): Promise<any> { return firstValueFrom(this.http.put<any>(`${API_URL}/admin/tenants/${id}/modules`, body)); }
   adminSetPlan(id: string, body: any): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/tenants/${id}/plan`, body)); }
   adminToggleActive(id: string, isActive: boolean): Promise<any> { return firstValueFrom(this.http.patch<any>(`${API_URL}/admin/tenants/${id}/active`, { isActive })); }

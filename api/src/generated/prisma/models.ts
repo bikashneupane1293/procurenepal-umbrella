@@ -11,6 +11,7 @@
 export type * from './models/Tenant.js'
 export type * from './models/User.js'
 export type * from './models/Subscription.js'
+export type * from './models/PlatformSetting.js'
 export type * from './models/TenantFeatureFlag.js'
 export type * from './models/Company.js'
 export type * from './models/Certificate.js'

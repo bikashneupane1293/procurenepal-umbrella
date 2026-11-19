@@ -3,16 +3,17 @@
 // workspace, and shows honest platform-wide numbers. Billing is a labelled placeholder until
 // eSewa / Khalti merchant credentials exist. © Cuidado Technology Pvt. Ltd.
 import { Component, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { DataService } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
+import { PricingAdmin } from './pricing-admin';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, LowerCasePipe, PricingAdmin],
   template: `
     <h1>🛡️ Admin Panel</h1>
     <p class="sub">Platform-wide — every workspace on ProcureNepal, not just your own.</p>
@@ -92,6 +93,8 @@ import { UI_STYLES } from '../../core/ui-styles';
         </div>
       </div>
 
+      <app-pricing-admin (saved)="refresh()" />
+
       <div class="panel">
         <h2>Billing</h2>
         @if (billing(); as b) {
@@ -166,17 +169,19 @@ import { UI_STYLES } from '../../core/ui-styles';
           <h3 style="margin-top:18px">Plan history</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Plan</th><th>Status</th><th>Since</th><th>Expires</th><th>Payment</th><th>Amount (NPR)</th></tr></thead>
+              <thead><tr><th>Plan</th><th>Status</th><th>Since</th><th>Expires</th><th>Billing</th><th>Promo</th><th>Payment</th><th class="num">Amount (NPR)</th></tr></thead>
               <tbody>
                 @for (s of d.subscriptions; track s.id) {
                   <tr>
                     <td>{{ s.plan }}</td><td>{{ s.status }}</td><td>{{ s.createdAt | date: 'yyyy-MM-dd' }}</td>
                     <td>{{ s.expiresAt ? (s.expiresAt | date: 'yyyy-MM-dd') : '—' }}</td>
+                    <td>{{ s.billingPeriod ? (s.billingPeriod | lowercase) : '—' }}</td>
+                    <td>@if (s.promoCode) { <span class="tag gold">{{ s.promoCode }}</span> <span class="muted">−{{ +s.discountNPR | number: '1.0-0' }} of {{ +s.listPriceNPR | number: '1.0-0' }}</span> } @else { — }</td>
                     <td>{{ s.paymentMethod ?? '—' }} <span class="muted">{{ s.paymentRef }}</span></td>
-                    <td class="num">{{ s.amountNPR ?? '—' }}</td>
+                    <td class="num">{{ s.amountNPR != null ? (+s.amountNPR | number: '1.0-0') : '—' }}</td>
                   </tr>
                 }
-                @if (!d.subscriptions.length) { <tr><td colspan="6" class="empty">No plan recorded yet — every module is open until you set one.</td></tr> }
+                @if (!d.subscriptions.length) { <tr><td colspan="8" class="empty">No plan recorded yet — every module is open until you set one.</td></tr> }
               </tbody>
             </table>
           </div>
@@ -205,8 +210,23 @@ import { UI_STYLES } from '../../core/ui-styles';
               <input type="date" [(ngModel)]="planForm.expiresAt" />
             </div>
             <div>
+              <label>Billing period</label>
+              <select [(ngModel)]="planForm.billingPeriod" (ngModelChange)="quote.set(null)">
+                <option value="">— don't price automatically —</option>
+                <option value="MONTHLY">Monthly</option>
+                <option value="YEARLY">Yearly</option>
+              </select>
+            </div>
+            <div>
+              <label>Promo code (optional)</label>
+              <input [(ngModel)]="planForm.promoCode" (ngModelChange)="quote.set(null)" placeholder="e.g. FESTIVAL20" style="text-transform:uppercase" />
+            </div>
+            <div>
               <label>Amount paid (NPR)</label>
-              <input type="number" [(ngModel)]="planForm.amountNPR" />
+              <div style="display:flex;gap:6px">
+                <input type="number" [(ngModel)]="planForm.amountNPR" />
+                <button class="btn light small" (click)="calcPrice()" [disabled]="!planForm.billingPeriod">Calculate</button>
+              </div>
             </div>
             <div>
               <label>Payment method</label>
@@ -230,6 +250,14 @@ import { UI_STYLES } from '../../core/ui-styles';
           <div class="actions">
             <button class="btn gold" (click)="savePlan(d.tenant.id)" [disabled]="savingPlan()">{{ savingPlan() ? 'Saving…' : 'Save plan' }}</button>
           </div>
+          @if (quote(); as q) {
+            <div class="msg" [class.error]="q.promoError" [class.info]="!q.promoError" style="margin-top:8px">
+              List NPR {{ lakh(q.listPriceNPR) }}
+              @if (q.promo) { − {{ q.promo.code }} ({{ q.promo.label }}) NPR {{ lakh(q.discountNPR) }} }
+              = <strong>NPR {{ lakh(q.finalNPR) }}</strong>
+              @if (q.promoError) { — {{ q.promoError }} }
+            </div>
+          }
           @if (planMsg()) { <div class="msg info" style="margin-top:8px">{{ planMsg() }}</div> }
         </div>
       }
@@ -267,7 +295,9 @@ export class AdminPage {
   billing = signal<any | null>(null);
   selectedId = signal<string | null>(null);
   selected = signal<any | null>(null);
-  planForm = { plan: 'FREE', status: 'ACTIVE', expiresAt: '', amountNPR: null as number | null, paymentMethod: '', paymentRef: '' };
+  planForm = { plan: 'FREE', status: 'ACTIVE', expiresAt: '', amountNPR: null as number | null, paymentMethod: '', paymentRef: '', billingPeriod: '', promoCode: '' };
+  quote = signal<any | null>(null);
+  lakh(n: number) { return Number(n ?? 0).toLocaleString('en-IN'); }
 
   creating = signal(false);
   createError = signal('');
@@ -335,7 +365,8 @@ export class AdminPage {
       const d = await this.data.adminTenant(id);
       this.selected.set(d);
       const current = d.modules?.plan ?? 'FREE';
-      this.planForm = { plan: current, status: 'ACTIVE', expiresAt: '', amountNPR: null, paymentMethod: '', paymentRef: '' };
+      this.planForm = { plan: current, status: 'ACTIVE', expiresAt: '', amountNPR: null, paymentMethod: '', paymentRef: '', billingPeriod: '', promoCode: '' };
+      this.quote.set(null);
       const unlocked: string[] | null = d.modules?.unlockedModules ?? null; // null = no plan yet, everything open
       this.wsMods = Object.fromEntries(this.grantable().map((m) => [m.key, unlocked === null || unlocked.includes(m.key)]));
       this.planMods = this.presetMap(current);
@@ -386,6 +417,9 @@ export class AdminPage {
     if (body.amountNPR === null || body.amountNPR === '') delete body.amountNPR;
     if (!body.paymentMethod) delete body.paymentMethod;
     if (!body.paymentRef) delete body.paymentRef;
+    if (!body.billingPeriod) delete body.billingPeriod;
+    body.promoCode = (body.promoCode || '').trim().toUpperCase();
+    if (!body.promoCode) delete body.promoCode;
     if (this.planApplyMods && this.grantable().length) body.modules = this.ticked(this.planMods);
     this.savingPlan.set(true); this.planMsg.set(''); this.error.set('');
     try {
@@ -397,6 +431,19 @@ export class AdminPage {
       this.error.set('Could not save the plan: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
     }
     this.savingPlan.set(false);
+  }
+
+  /** Price for the chosen plan + period (+ promo) from the pricing catalog; fills "Amount paid". */
+  async calcPrice() {
+    const f = this.planForm;
+    if (!f.billingPeriod) return;
+    try {
+      const q = await this.data.adminQuote({ plan: f.plan, period: f.billingPeriod, code: (f.promoCode || '').trim() || undefined });
+      this.quote.set(q);
+      if (!q.promoError) f.amountNPR = q.finalNPR;
+    } catch (e: any) {
+      this.error.set('Could not calculate the price: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
+    }
   }
 
   /** Super Admin's exact module choice for one workspace (overrides its plan's defaults). */

@@ -60,7 +60,8 @@ const DEFAULTS: Record<string, () => Row> = {
   tenantFeatureFlag: () => ({ enabled: false, createdAt: new Date() }),
   bid: () => ({ bidderType: 'SINGLE', decision: 'UNDECIDED', status: 'PREPARING', createdAt: new Date(), updatedAt: new Date() }),
   tenant: () => ({ isActive: true, createdAt: new Date() }),
-  subscription: () => ({ plan: 'FREE', status: 'ACTIVE', startsAt: new Date(), createdAt: new Date() }),
+  subscription: () => ({ plan: 'FREE', status: 'ACTIVE', startsAt: new Date(), createdAt: new Date(), promoCode: null }),
+  platformSetting: () => ({ updatedAt: new Date() }),
   bank: () => ({ isActive: true, createdAt: new Date(), updatedAt: new Date() }),
   project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
   boqItem: () => ({ isHeading: false, createdAt: new Date() }),
@@ -73,7 +74,7 @@ export class FakePrisma {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
     bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
-    loginSession: [], externalRef: [], subscription: [],
+    loginSession: [], externalRef: [], subscription: [], platformSetting: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -208,6 +209,7 @@ export class FakePrisma {
   loginSession = this.model('loginSession');
   externalRef = this.model('externalRef');
   subscription = this.model('subscription');
+  platformSetting = this.model('platformSetting');
 
   /**
    * Supports both forms real Prisma does: the batch form (an array of pending ops, run

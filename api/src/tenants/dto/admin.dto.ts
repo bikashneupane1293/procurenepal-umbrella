@@ -25,6 +25,14 @@ export class SetPlanDto {
   /** Optional: the exact modules Super Admin chose for this workspace (replaces the plan's default list). */
   @IsOptional() @IsArray() @IsString({ each: true })
   modules?: string[];
+
+  /** Task 10: MONTHLY | YEARLY — when given, the price is looked up from the pricing catalog. */
+  @IsOptional() @IsIn(['MONTHLY', 'YEARLY'])
+  billingPeriod?: string;
+
+  /** Task 10: promotion code to apply; rejected with the reason if it can't be used. */
+  @IsOptional() @IsString()
+  promoCode?: string;
 }
 
 export class ToggleTenantDto {

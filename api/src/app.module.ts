@@ -20,6 +20,7 @@ import { BankModule } from './bank/bank.module';
 import { ProjectModule } from './project/project.module';
 import { ErpModule } from './erp/erp.module';
 import { ReferencesModule } from './references/references.module';
+import { PricingModule } from './pricing/pricing.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ReferencesModule } from './references/references.module';
     QualificationModule,
     TenderModule,
     AccessModule,
+    PricingModule,
     BidModule,
     BankModule,
     ProjectModule,

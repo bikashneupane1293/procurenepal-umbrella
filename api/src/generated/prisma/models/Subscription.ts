@@ -28,10 +28,14 @@ export type AggregateSubscription = {
 
 export type SubscriptionAvgAggregateOutputType = {
   amountNPR: runtime.Decimal | null
+  listPriceNPR: runtime.Decimal | null
+  discountNPR: runtime.Decimal | null
 }
 
 export type SubscriptionSumAggregateOutputType = {
   amountNPR: runtime.Decimal | null
+  listPriceNPR: runtime.Decimal | null
+  discountNPR: runtime.Decimal | null
 }
 
 export type SubscriptionMinAggregateOutputType = {
@@ -44,6 +48,10 @@ export type SubscriptionMinAggregateOutputType = {
   paymentMethod: string | null
   paymentRef: string | null
   amountNPR: runtime.Decimal | null
+  billingPeriod: string | null
+  listPriceNPR: runtime.Decimal | null
+  discountNPR: runtime.Decimal | null
+  promoCode: string | null
   createdAt: Date | null
 }
 
@@ -57,6 +65,10 @@ export type SubscriptionMaxAggregateOutputType = {
   paymentMethod: string | null
   paymentRef: string | null
   amountNPR: runtime.Decimal | null
+  billingPeriod: string | null
+  listPriceNPR: runtime.Decimal | null
+  discountNPR: runtime.Decimal | null
+  promoCode: string | null
   createdAt: Date | null
 }
 
@@ -70,6 +82,10 @@ export type SubscriptionCountAggregateOutputType = {
   paymentMethod: number
   paymentRef: number
   amountNPR: number
+  billingPeriod: number
+  listPriceNPR: number
+  discountNPR: number
+  promoCode: number
   createdAt: number
   _all: number
 }
@@ -77,10 +93,14 @@ export type SubscriptionCountAggregateOutputType = {
 
 export type SubscriptionAvgAggregateInputType = {
   amountNPR?: true
+  listPriceNPR?: true
+  discountNPR?: true
 }
 
 export type SubscriptionSumAggregateInputType = {
   amountNPR?: true
+  listPriceNPR?: true
+  discountNPR?: true
 }
 
 export type SubscriptionMinAggregateInputType = {
@@ -93,6 +113,10 @@ export type SubscriptionMinAggregateInputType = {
   paymentMethod?: true
   paymentRef?: true
   amountNPR?: true
+  billingPeriod?: true
+  listPriceNPR?: true
+  discountNPR?: true
+  promoCode?: true
   createdAt?: true
 }
 
@@ -106,6 +130,10 @@ export type SubscriptionMaxAggregateInputType = {
   paymentMethod?: true
   paymentRef?: true
   amountNPR?: true
+  billingPeriod?: true
+  listPriceNPR?: true
+  discountNPR?: true
+  promoCode?: true
   createdAt?: true
 }
 
@@ -119,6 +147,10 @@ export type SubscriptionCountAggregateInputType = {
   paymentMethod?: true
   paymentRef?: true
   amountNPR?: true
+  billingPeriod?: true
+  listPriceNPR?: true
+  discountNPR?: true
+  promoCode?: true
   createdAt?: true
   _all?: true
 }
@@ -219,6 +251,10 @@ export type SubscriptionGroupByOutputType = {
   paymentMethod: string | null
   paymentRef: string | null
   amountNPR: runtime.Decimal | null
+  billingPeriod: string | null
+  listPriceNPR: runtime.Decimal | null
+  discountNPR: runtime.Decimal | null
+  promoCode: string | null
   createdAt: Date
   _count: SubscriptionCountAggregateOutputType | null
   _avg: SubscriptionAvgAggregateOutputType | null
@@ -255,6 +291,10 @@ export type SubscriptionWhereInput = {
   paymentMethod?: Prisma.StringNullableFilter<"Subscription"> | string | null
   paymentRef?: Prisma.StringNullableFilter<"Subscription"> | string | null
   amountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.StringNullableFilter<"Subscription"> | string | null
+  listPriceNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.StringNullableFilter<"Subscription"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
 }
@@ -269,6 +309,10 @@ export type SubscriptionOrderByWithRelationInput = {
   paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentRef?: Prisma.SortOrderInput | Prisma.SortOrder
   amountNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  billingPeriod?: Prisma.SortOrderInput | Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  discountNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  promoCode?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   tenant?: Prisma.TenantOrderByWithRelationInput
 }
@@ -286,6 +330,10 @@ export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
   paymentMethod?: Prisma.StringNullableFilter<"Subscription"> | string | null
   paymentRef?: Prisma.StringNullableFilter<"Subscription"> | string | null
   amountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.StringNullableFilter<"Subscription"> | string | null
+  listPriceNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.StringNullableFilter<"Subscription"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
 }, "id">
@@ -300,6 +348,10 @@ export type SubscriptionOrderByWithAggregationInput = {
   paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentRef?: Prisma.SortOrderInput | Prisma.SortOrder
   amountNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  billingPeriod?: Prisma.SortOrderInput | Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  discountNPR?: Prisma.SortOrderInput | Prisma.SortOrder
+  promoCode?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.SubscriptionCountOrderByAggregateInput
   _avg?: Prisma.SubscriptionAvgOrderByAggregateInput
@@ -321,6 +373,10 @@ export type SubscriptionScalarWhereWithAggregatesInput = {
   paymentMethod?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
   paymentRef?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
   amountNPR?: Prisma.DecimalNullableWithAggregatesFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
+  listPriceNPR?: Prisma.DecimalNullableWithAggregatesFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.DecimalNullableWithAggregatesFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Subscription"> | Date | string
 }
 
@@ -333,6 +389,10 @@ export type SubscriptionCreateInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
   tenant: Prisma.TenantCreateNestedOneWithoutSubscriptionsInput
 }
@@ -347,6 +407,10 @@ export type SubscriptionUncheckedCreateInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
 }
 
@@ -359,6 +423,10 @@ export type SubscriptionUpdateInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tenant?: Prisma.TenantUpdateOneRequiredWithoutSubscriptionsNestedInput
 }
@@ -373,6 +441,10 @@ export type SubscriptionUncheckedUpdateInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -386,6 +458,10 @@ export type SubscriptionCreateManyInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
 }
 
@@ -398,6 +474,10 @@ export type SubscriptionUpdateManyMutationInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -411,6 +491,10 @@ export type SubscriptionUncheckedUpdateManyInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -434,11 +518,17 @@ export type SubscriptionCountOrderByAggregateInput = {
   paymentMethod?: Prisma.SortOrder
   paymentRef?: Prisma.SortOrder
   amountNPR?: Prisma.SortOrder
+  billingPeriod?: Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrder
+  discountNPR?: Prisma.SortOrder
+  promoCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type SubscriptionAvgOrderByAggregateInput = {
   amountNPR?: Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrder
+  discountNPR?: Prisma.SortOrder
 }
 
 export type SubscriptionMaxOrderByAggregateInput = {
@@ -451,6 +541,10 @@ export type SubscriptionMaxOrderByAggregateInput = {
   paymentMethod?: Prisma.SortOrder
   paymentRef?: Prisma.SortOrder
   amountNPR?: Prisma.SortOrder
+  billingPeriod?: Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrder
+  discountNPR?: Prisma.SortOrder
+  promoCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -464,11 +558,17 @@ export type SubscriptionMinOrderByAggregateInput = {
   paymentMethod?: Prisma.SortOrder
   paymentRef?: Prisma.SortOrder
   amountNPR?: Prisma.SortOrder
+  billingPeriod?: Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrder
+  discountNPR?: Prisma.SortOrder
+  promoCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type SubscriptionSumOrderByAggregateInput = {
   amountNPR?: Prisma.SortOrder
+  listPriceNPR?: Prisma.SortOrder
+  discountNPR?: Prisma.SortOrder
 }
 
 export type SubscriptionCreateNestedManyWithoutTenantInput = {
@@ -538,6 +638,10 @@ export type SubscriptionCreateWithoutTenantInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
 }
 
@@ -550,6 +654,10 @@ export type SubscriptionUncheckedCreateWithoutTenantInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
 }
 
@@ -592,6 +700,10 @@ export type SubscriptionScalarWhereInput = {
   paymentMethod?: Prisma.StringNullableFilter<"Subscription"> | string | null
   paymentRef?: Prisma.StringNullableFilter<"Subscription"> | string | null
   amountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.StringNullableFilter<"Subscription"> | string | null
+  listPriceNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.DecimalNullableFilter<"Subscription"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.StringNullableFilter<"Subscription"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Subscription"> | Date | string
 }
 
@@ -604,6 +716,10 @@ export type SubscriptionCreateManyTenantInput = {
   paymentMethod?: string | null
   paymentRef?: string | null
   amountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: string | null
+  listPriceNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: string | null
   createdAt?: Date | string
 }
 
@@ -616,6 +732,10 @@ export type SubscriptionUpdateWithoutTenantInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -628,6 +748,10 @@ export type SubscriptionUncheckedUpdateWithoutTenantInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -640,6 +764,10 @@ export type SubscriptionUncheckedUpdateManyWithoutTenantInput = {
   paymentMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  billingPeriod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listPriceNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  discountNPR?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  promoCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -655,6 +783,10 @@ export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   paymentMethod?: boolean
   paymentRef?: boolean
   amountNPR?: boolean
+  billingPeriod?: boolean
+  listPriceNPR?: boolean
+  discountNPR?: boolean
+  promoCode?: boolean
   createdAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
@@ -669,6 +801,10 @@ export type SubscriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   paymentMethod?: boolean
   paymentRef?: boolean
   amountNPR?: boolean
+  billingPeriod?: boolean
+  listPriceNPR?: boolean
+  discountNPR?: boolean
+  promoCode?: boolean
   createdAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
@@ -683,6 +819,10 @@ export type SubscriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   paymentMethod?: boolean
   paymentRef?: boolean
   amountNPR?: boolean
+  billingPeriod?: boolean
+  listPriceNPR?: boolean
+  discountNPR?: boolean
+  promoCode?: boolean
   createdAt?: boolean
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
@@ -697,10 +837,14 @@ export type SubscriptionSelectScalar = {
   paymentMethod?: boolean
   paymentRef?: boolean
   amountNPR?: boolean
+  billingPeriod?: boolean
+  listPriceNPR?: boolean
+  discountNPR?: boolean
+  promoCode?: boolean
   createdAt?: boolean
 }
 
-export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "plan" | "status" | "startsAt" | "expiresAt" | "paymentMethod" | "paymentRef" | "amountNPR" | "createdAt", ExtArgs["result"]["subscription"]>
+export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "plan" | "status" | "startsAt" | "expiresAt" | "paymentMethod" | "paymentRef" | "amountNPR" | "billingPeriod" | "listPriceNPR" | "discountNPR" | "promoCode" | "createdAt", ExtArgs["result"]["subscription"]>
 export type SubscriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }
@@ -726,6 +870,10 @@ export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     paymentMethod: string | null
     paymentRef: string | null
     amountNPR: runtime.Decimal | null
+    billingPeriod: string | null
+    listPriceNPR: runtime.Decimal | null
+    discountNPR: runtime.Decimal | null
+    promoCode: string | null
     createdAt: Date
   }, ExtArgs["result"]["subscription"]>
   composites: {}
@@ -1160,6 +1308,10 @@ export interface SubscriptionFieldRefs {
   readonly paymentMethod: Prisma.FieldRef<"Subscription", 'String'>
   readonly paymentRef: Prisma.FieldRef<"Subscription", 'String'>
   readonly amountNPR: Prisma.FieldRef<"Subscription", 'Decimal'>
+  readonly billingPeriod: Prisma.FieldRef<"Subscription", 'String'>
+  readonly listPriceNPR: Prisma.FieldRef<"Subscription", 'Decimal'>
+  readonly discountNPR: Prisma.FieldRef<"Subscription", 'Decimal'>
+  readonly promoCode: Prisma.FieldRef<"Subscription", 'String'>
   readonly createdAt: Prisma.FieldRef<"Subscription", 'DateTime'>
 }
     

@@ -228,6 +228,32 @@ Reproduced with a real production build in Chromium and the real 137-page tender
 - Web: 13/14 passed — the 1 failure is the old `app.spec.ts` scaffold test (unrelated, pre-existing). 2 new tests for the table→checklist conversion; the first real run of one caught a column-index bug, fixed.
 - Production `ng build` OK. Browser checks (Chromium, mocked API): PDF checklist as above; Admin Panel module checkboxes, save, reset and set-plan send exactly the expected requests; no page errors.
 
+## Task 10 — Pricing & promotions (2026-11-20)
+Super Admin can now set prices and run promotions from the Admin Panel, with no code change or redeploy.
+
+**Database (additive only — STOPPED before `db push`, per the working agreement):**
+- New table `PlatformSetting` (`key` PK, `value` JSON, `updatedAt`, `updatedBy`). One row, `pricing`, holds the whole catalog.
+- `Subscription` gets 4 optional columns: `billingPeriod`, `listPriceNPR`, `discountNPR`, `promoCode` (+ index on `promoCode`). Existing rows untouched.
+- Generated Prisma client regenerated and committed alongside (same as every earlier schema change).
+- Deploy order matters: **`db push` first, then `git push`.** The old live API ignores the new columns, so `db push` is safe while it's running. The new API before `db push` would fail on screens that read whole Subscription rows. The core plan lookup now selects only `plan`/`createdAt`, so normal pages keep working even if the order slips.
+
+**API (`api/src/pricing/`, global module):**
+- `PricingService`: catalog = 4 plans × {name, tagline, monthly, yearly, default modules, on/off public list} + promotions {code, description, % or NPR off, plans, monthly/yearly, start/end date, max uses, on/off}. Validated on save with plain-English errors. Built-in defaults (all prices 0, plan modules = old `PLAN_MODULES`) until first save, or if the table doesn't exist yet. 30-second cache, cleared on save.
+- `GET /pricing` (public, no sign-in): active plans + prices; promo codes are never listed. `GET /pricing/quote?plan&period&code` (public price check).
+- `GET/PUT /admin/pricing`, `POST /admin/pricing/quote` (Super Admin only). Usage count per promo code comes from recorded subscriptions.
+- Plan default modules now come from the catalog (`AccessService` → `PricingService.planModules`), so "edit plan defaults in the UI" (pending since Task 9) is done too.
+- `POST /admin/tenants/:id/plan` takes optional `billingPeriod` + `promoCode`: the price comes from the catalog, the promo is checked against every rule (invalid → 400 with the reason), and list/discount/code/period are recorded. A typed amount still wins (negotiated deals). Old-style Set plan with neither is unchanged.
+
+**Admin Panel:**
+- **💰 Pricing & promotions** (`pricing-admin.ts`): price table with "yearly = 10× / 12× monthly" helpers and yearly-saving %, a plans × modules grid for defaults, and one-click promotion templates (Festival 20% for 30 days, Yearly 2 months free, NPR 5,000 off, one-customer 50%). Each promotion card shows a Live / Scheduled / Expired / Used up / Off badge and its usage. Price checker included.
+- **Set plan**: Billing period + Promo code + **Calculate** (fills "Amount paid"); plan history shows billing, promo and discount.
+
+**Verified (actually executed, on a byte-identical Linux copy of the Mac files):**
+- API e2e **82/82** (9 suites; 7 new pricing tests), API unit **81/81**, web 13/14 (1 = old scaffold test), production build OK.
+- Browser click-through with the **real NestJS API** (in-memory DB) behind the real production build. Set prices → yearly helper → removed HR from STARTER defaults (the STARTER owner immediately lost HR) → a 150% promo rejected with the message shown → festival + single-use codes saved and "Live" → checker 2,500 − 500 = 2,000 → Set plan with VIP50 = 1,250 recorded in history → second VIP50 use refused "used up (1 of 1)" → public `/pricing` shows the new prices. No page errors.
+
+**Not done / next:** marketing page doesn't read `/pricing` yet; customers can't enter a promo code themselves (no self-service checkout until eSewa/Khalti); promotions aren't time-zone aware (dates compare in UTC — a code ending "2026-12-31" stops at 05:45 NPT on Jan 1).
+
 ## Next (in order)
 
 1. **First, on your Mac:** run `npm test`, `npm run test:e2e`, and `ng build` (this session still can't run them — see the verification notes above) before anything is pushed or deployed.

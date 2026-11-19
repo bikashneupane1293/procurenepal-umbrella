@@ -55,6 +55,11 @@ export type User = Prisma.UserModel
  */
 export type Subscription = Prisma.SubscriptionModel
 /**
+ * Model PlatformSetting
+ * 
+ */
+export type PlatformSetting = Prisma.PlatformSettingModel
+/**
  * Model TenantFeatureFlag
  * 
  */

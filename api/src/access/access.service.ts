@@ -8,6 +8,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { PricingService } from '../pricing/pricing.service';
 import {
   ADMIN_ROLES,
   ALL_ACCESS_ROLES,
@@ -33,7 +34,7 @@ const ITEM_KEY = /^[a-z0-9.\-]{1,60}$/i;
 
 @Injectable()
 export class AccessService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private pricing: PricingService) {}
 
   // ------------------------------------------------------- workspace modules
 
@@ -47,7 +48,8 @@ export class AccessService {
   async currentPlan(tenantId: string): Promise<string | null> {
     // Latest row by createdAt, picked in code (not via orderBy) so it behaves identically on the
     // real database and on the e2e tests' in-memory Prisma double, which ignores orderBy.
-    const subs = await this.prisma.subscription.findMany({ where: { tenantId } });
+    // select only what's needed: keeps this working even if newer optional columns aren't in the DB yet
+    const subs = await this.prisma.subscription.findMany({ where: { tenantId }, select: { plan: true, createdAt: true } });
     if (!subs.length) return null;
     const latest = subs.reduce((a: any, b: any) => (new Date(b.createdAt) > new Date(a.createdAt) ? b : a));
     return latest.plan ?? null;
@@ -71,7 +73,9 @@ export class AccessService {
         .filter((k: string) => MODULES.some((m) => m.key === k && !m.core));
       return { plan, unlockedModules: MODULE_KEYS.filter((k) => unlocked.includes(k)), custom: true };
     }
-    return { plan, unlockedModules: plan ? modulesUnlockedByPlan(plan) : null, custom: false };
+    // Plan defaults come from the editable pricing catalog (Admin Panel → Pricing & promotions),
+    // which falls back to PLAN_MODULES in code until Super Admin saves it.
+    return { plan, unlockedModules: plan ? await this.pricing.planModules(plan) : null, custom: false };
   }
 
   /**

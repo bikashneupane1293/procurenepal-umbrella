@@ -7,7 +7,8 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
-import { ENTITLE_PREFIX, GRANTABLE_MODULE_KEYS, MODULES, PLAN_MODULES, entitleFlagKeyOf } from '../access/module-registry';
+import { PricingService } from '../pricing/pricing.service';
+import { ENTITLE_PREFIX, GRANTABLE_MODULE_KEYS, MODULES, entitleFlagKeyOf } from '../access/module-registry';
 import { CreateTenantDto, SetModulesDto, SetPlanDto } from './dto/admin.dto';
 
 const PLATFORM_ROLE = 'SUPER_ADMIN';
@@ -15,7 +16,7 @@ const ACTIVATION_DAYS = 7;
 
 @Injectable()
 export class TenantsService {
-  constructor(private prisma: PrismaService, private access: AccessService) {}
+  constructor(private prisma: PrismaService, private access: AccessService, private pricing: PricingService) {}
 
   /** Rejects unknown or core module keys (core modules are always on and never "granted"). */
   private checkGrantable(modules: string[]) {
@@ -36,11 +37,14 @@ export class TenantsService {
   }
 
   /** Every grantable module (name + key) and each plan's default list, for the Admin Panel UI. */
-  plans(role: string) {
+  async plans(role: string) {
     this.requirePlatform(role);
+    const { catalog } = await this.pricing.getCatalog();
     return {
       modules: MODULES.map((m) => ({ key: m.key, name: m.name, core: !!m.core })),
-      presets: PLAN_MODULES,
+      // editable in Admin Panel → Pricing & promotions (falls back to PLAN_MODULES until saved)
+      presets: Object.fromEntries(Object.entries(catalog.plans).map(([k, p]) => [k, p.modules])),
+      prices: Object.fromEntries(Object.entries(catalog.plans).map(([k, p]) => [k, { monthlyNPR: p.monthlyNPR, yearlyNPR: p.yearlyNPR }])),
     };
   }
 
@@ -112,6 +116,13 @@ export class TenantsService {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException('Workspace not found');
     if (dto.modules) this.checkGrantable(dto.modules);
+    // Task 10: price from the catalog (+ promo). A typed-in amount still wins, e.g. a negotiated deal.
+    let priced: any = {};
+    if (dto.billingPeriod || dto.promoCode) {
+      const q = await this.pricing.quote(dto.plan, dto.billingPeriod ?? 'MONTHLY', dto.promoCode);
+      if (q.promoError) throw new BadRequestException(q.promoError);
+      priced = { billingPeriod: q.period, listPriceNPR: q.listPriceNPR, discountNPR: q.discountNPR, promoCode: q.promo?.code ?? null, amountNPR: q.finalNPR };
+    }
     const sub = await this.prisma.subscription.create({
       data: {
         tenantId,
@@ -120,7 +131,8 @@ export class TenantsService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         paymentMethod: dto.paymentMethod ?? 'MANUAL',
         paymentRef: dto.paymentRef ?? null,
-        amountNPR: dto.amountNPR ?? null,
+        amountNPR: dto.amountNPR ?? priced.amountNPR ?? null,
+        ...(priced.billingPeriod ? { billingPeriod: priced.billingPeriod, listPriceNPR: priced.listPriceNPR, discountNPR: priced.discountNPR, promoCode: priced.promoCode } : {}),
       },
     });
     if (dto.modules) await this.writeEntitlement(this.prisma, tenantId, dto.modules);

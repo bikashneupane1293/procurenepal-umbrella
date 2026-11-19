@@ -83,9 +83,15 @@ model Subscription {
   paymentMethod   String?
   paymentRef      String?
   amountNPR       Decimal?  @db.Decimal(12, 2)
+  // Task 10 (pricing & promotions) — all optional, so existing rows are untouched
+  billingPeriod   String?   // MONTHLY | YEARLY
+  listPriceNPR    Decimal?  @db.Decimal(12, 2)
+  discountNPR     Decimal?  @db.Decimal(12, 2)
+  promoCode       String?
   createdAt       DateTime  @default(now())
 
   @@index([tenantId])
+  @@index([promoCode])
 }
 
 enum Plan {
@@ -101,6 +107,15 @@ enum SubStatus {
   CANCELED
   EXPIRED
   TRIALING
+}
+
+// Platform-wide settings edited by Super Admin in the Admin Panel (Task 10). One row per key;
+// "pricing" holds plan prices, each plan's default modules and promotion codes as JSON.
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
 }
 
 model TenantFeatureFlag {
