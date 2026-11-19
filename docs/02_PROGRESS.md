@@ -125,15 +125,85 @@ See `docs/PHASE_6.4_QUALIFICATION_ENGINE.md` → "Final verification" for comman
 - **One-time setup needed on your side:** nobody has the `SUPER_ADMIN` role yet (new users always register as `OWNER` of their own workspace) — see the reply for the one SQL command to promote `admin@griha.com`, run once only.
 - **Schema changes this task: none.**
 - **Verification:** `nest build` (API) clean; `npx tsc --noEmit` (web) clean; the Angular template parser check (used because `ng build` itself can't run in this sandbox) reports zero errors on every template touched, including the one that had the real bug.
+- **Second real bug, same cause (Nov 14→15): `admin.ts` used the `date` pipe three times without importing `DatePipe` from `@angular/common` into the component's `imports` array (`NG8004`).** This class of error — a missing pipe/directive import — is invisible to both `tsc --noEmit` and the plain `@angular/compiler` `parseTemplate()` check used above, because it needs full Ivy template type-checking against the component's actual `imports` array, not just syntax parsing. **Found a sandbox tool that does catch it:** `node_modules/.bin/ngc -p tsconfig.app.json --noEmit` runs Angular's real compiler (ivy template type-checking included) through plain `tsc`, with no esbuild/bundling step — so it works in this Linux-ARM64 sandbox where `ng build` itself cannot run, and it reproduced this exact `NG8004` error when the bug was deliberately reintroduced to confirm it. **This replaces the ad-hoc template-parser check from Task 5d** as the sandbox's build-equivalent gate going forward — run `ngc -p tsconfig.app.json --noEmit` on every web change from now on, in addition to `tsc --noEmit`. Fixed by importing `DatePipe` and adding it to `admin.ts`'s `imports` array.
+- The `zip error: Nothing to do!` you saw was a direct side-effect of that failed `ng build` (it had cleared `dist/web/browser` before failing, so there was nothing left to zip) — not a separate problem. It will zip normally once `ng build` succeeds.
+
+## Task 6 — Phase 1A/1B: Dynamic Table Reconstruction Engine (ITB 21 document checklist)
+
+**The wall this solves:** the ITB 21 "No. | Document | Requirement | Remarks" e-submission checklist table (and similar N-column tables) scrambled under the existing flat extraction — a numbered list's hanging indent can produce a smaller horizontal gap than a real column gutter, so no single fixed threshold could tell them apart (e.g. it had produced "Bid Guarantee Security / Bank" instead of "Bid Security / Bank Guarantee").
+
+### Phase 1A — the engine (isolated module, additive only)
+- **New files, none of them touching the existing reader:** `web/src/app/core/pdf-table-reconstruct.ts` (the engine), `pdf-table-reconstruct.spec.ts` (Vitest tests — this project's test runner, confirmed via `tsconfig.spec.json`/`angular.json`, not Jasmine/Karma), `itb21-page20.fixture.ts` (a **real** regression fixture — raw pdf.js items captured verbatim from page 20 of the actual `Merged_Bidding_Document.pdf`, not synthesized; regenerate it by loading that PDF with `pdfjs-dist`, calling `page.getTextContent()` on its ITB 21 page, and serializing `{str, transform, width}` for each item).
+- **Core signal: union-coverage ("river") boundary detection.** Merge every item's `[x, x+width]` span across every row in the table region into one coverage map; any x-gap that survives — never touched by any row's content — is a real column gutter. This replaced two approaches that were tried and failed: splitting at the single widest gap (the original wall), and a per-line gap/font-size ratio check (abandoned because this document's own intra-cell word spacing, e.g. "and"–"PAN" at ~23pt, is routinely wider than the real column gutters, ~7–11pt — no fixed ratio can tell them apart on one line). Pooled across all rows, a genuine gutter stays empty everywhere; a numbered list's hanging indent gets filled back in by other rows' wrapped continuation text, so it's structurally blind to that case too.
+- **Two real bugs found and fixed during development (only in this new module — never present in the deployed `pdf-reader.ts`):** pdf.js emits whitespace-only text items whose own x/width swallow the real gap between tokens (silently zeroed every gap measurement until dropped); an off-by-one in the table-region crop excluded the table's own last wrapped row instead of just the end-of-table sentinel below it.
+- **On code review, a further real flaw was found and fixed:** the cross-row "support" gate required each row's own content to end *close to* the exact gutter edge, which rejected valid columns whenever row content width varied (a short cell like "Beta" not reaching as far as a longer sibling like "Foxtrot"). Loosened to "does this row have any content in the left zone / right zone", which is what the signal actually needs.
+- **Verified against the real document:** scanning all 137 pages of the actual tender PDF, whole-page, with zero manual cropping — **zero false positives**, and the one real target table (page 20) reconstructs with all 10 rows, correct columns, correct word order (including the exact "Bid Security / Bank Guarantee" case that broke the old approach).
+- **Never silently returns a bad reconstruction:** returns `{table: null, warnings: [...]}` below a confidence floor or when structural checks fail — verified on 136/137 real pages plus synthetic negative cases (plain hanging-indent list, plain prose, a stray single-row column) in the spec. A missing/empty cell is now distinguished (confidence 0.8, explicit warning) from a populated one, rather than silently scored the same.
+- **Known limitation, honestly flagged, not fixed:** if every row in a table happened to share an unusually wide intra-cell word gap at exactly the same x position, it could theoretically be mistaken for a column gutter — not observed in the one real document tested, but only one document has been tested; see "Outstanding issues" below.
+- **Sandbox checks actually run this round:** `tsc --noEmit -p tsconfig.app.json`, `tsc --noEmit -p tsconfig.spec.json`, and `ngc -p tsconfig.app.json --noEmit` all clean (0 errors). The spec's new assertions were verified logically correct by running the equivalent compiled JS directly against the real fixture (all passed) — that is **not** a substitute for the real `ng test` run, which this sandbox cannot execute (esbuild platform mismatch, documented below). The earlier 4-test version of this suite *was* confirmed passing on the Mac in this same task; the 6 new edge-case tests added on review have not yet been run there — that's the next step on your side (command below).
+
+### Phase 1B — controlled UI integration
+- **Integration point:** `web/src/app/pages/tenders/tender-detail.ts` only. `pdf-reader.ts` and `pdf-parse.ts` are untouched this round (confirmed by `git diff --stat` showing no new changes beyond Task 5d).
+- **Feature toggle:** a plain local signal, `experimentalTableReader`, default `false`, flipped by a checkbox in the Bid Document Reader panel. No backend, no database, no dependency on the `api/src/feature-flag` stub (confirmed again this round: still an empty Nest scaffold — zero methods, guard always returns `true`, nothing in the frontend consumes it; building it out would be backend infrastructure, out of scope). Not persisted across reloads — intentionally simple, easy to remove later.
+- **Not hardcoded to page 20:** `findAnchorTableInPdf()` scans the chosen PDF page by page (same `maxPages` cap as the existing flat reader) and stops at the first page where a genuine multi-column anchor table is found, so a different tender's ITB 21 (or an equivalent table) in a different position is still found.
+- **Display, separate from everything else:** when enabled and a PDF has been chosen, a "🧪 Experimental: reconstructed table" panel shows the detected header text, page number, confidence, any warnings, and the table itself (rows below 0.7 confidence highlighted) — clearly labeled experimental, with its own "Scan this PDF for a table" button the user must click.
+- **Procurement safety (verified, not just asserted):** `experimentalResult` is a signal that nothing else reads. It is never passed to `checklist`, `suggestions`, `saveChecklist()`, or `readinessChecklist` — the existing qualification/checklist logic and everything it feeds is completely unchanged and unaware this signal exists.
+- **Verified disabled-by-default behavior:** the new template block is gated entirely behind `experimentalTableReader() && hasPdfFile()`; with the toggle off (its default), nothing renders and the only change to `onPdfChosen` is additive bookkeeping (retaining the file, resetting two new signals) — confirmed via `git diff --stat` showing 81 insertions, 0 deletions in `tender-detail.ts`.
+- **Mac test commands to run (frontend, from `web/`):**
+  ```
+  npx ng test --watch=false --include='**/pdf-table-reconstruct.spec.ts'
+  npx ng test --watch=false
+  npx tsc --noEmit -p tsconfig.app.json
+  npx tsc --noEmit -p tsconfig.spec.json
+  ```
+
+### Outstanding issues
+- `web/src/app/app.spec.ts`'s `should render title` test is a **pre-existing, unrelated failure** — not caused by this task. `app.ts`'s template is `<router-outlet />` (replaced during earlier routing work, per `git log`); the test still checks for an `<h1>` containing "Hello, web" from the original Angular CLI scaffold, which no longer exists anywhere in the app. `querySelector('h1')` returns `null`, so `null?.textContent` is `undefined`, and the assertion fails on `undefined` rather than a string — exactly the reported error. Left untouched per instruction (not modifying an assertion just to make it pass); it should be deleted or rewritten to check the real root template whenever that page is next touched.
+- The engine has been validated against **one real tender PDF only**. Needed before calling it production-ready for Nepali tenders generally: a handful of real tender PDFs from different procuring entities/PDF generators (font, margins, and column-spacing choices vary), at least one 5+-column qualification matrix, and ideally one scanned (image-only) PDF to confirm the existing `scanned` flag path still short-circuits before this module is ever reached. OCR and a multi-page-table case are explicitly out of scope for this phase.
+- The experimental panel shows generic "Column 1/2/3…" headers rather than the real header words ("Document", "Requirement", "Remarks") split per column — `findAnchorTableOnPage` now captures the raw header line text (`headerText`) and shows it as a single detected-section label, but doesn't yet split it through the same column boundaries. Noted as a nice-to-have, not attempted this round to keep the isolated module's scope tight.
+
+## Task 8 — Admin Panel: plan → module mapping + organization-setup (new-org) flow
+
+**The wall:** two items had been sitting in "Next works" as business decisions nobody had made yet: (a) a workspace's plan was a label only — STARTER vs ENTERPRISE didn't change what the Owner could switch on — and (b) the only way to get a new organization onto the platform was for them to self-register; Super Admin couldn't set one up directly.
+
+### (a) Plan → module mapping
+- New single source: `PLAN_MODULES` in `api/src/access/module-registry.ts` — a plain `Record<Plan, string[]>` of which of the 6 non-core modules (`bolpatra`, `procurement`, `fleet`, `hr`, `project`, `bank`) each plan unlocks. **This is a first proposed mapping** (FREE → Bolpatra only; STARTER → + Procurement, HR; PROFESSIONAL → + Fleet, Project; ENTERPRISE → + Bank), not a confirmed pricing decision — edit the arrays in that one file to match the real tiers whenever Bikash decides them; nothing else needs to change. `companies` stays core (always on) for every plan, same as before.
+- Enforced server-side in `AccessService` (`api/src/access/access.service.ts`), not just shown in the UI:
+  - `tenantModules()` now ANDs the plan's unlocked set with the Owner's saved on/off flag — a module the current plan doesn't include reads as OFF even if it was switched on under an earlier, higher plan.
+  - `setTenantModules()` rejects turning on a module the plan doesn't include, with a clear "ask your administrator to upgrade" message, before it ever reaches the database.
+  - `GET /access/me` now also returns `plan` and `planModules` (the unlocked set) so the frontend can show the lock without a second round trip.
+  - This closes the gap automatically everywhere `effectiveModules()`/`ErpService.menu()` already gated per-item access — no change needed there.
+- Frontend: `web/src/app/pages/users/users.ts` (Workspace modules panel) now shows the workspace's plan, disables the checkbox for a module the plan doesn't include, and shows "🔒 Not included in the `<plan>` plan" instead of the screen count.
+
+### (b) New-organization onboarding from the Admin Panel
+- `POST /admin/tenants` (`TenantsService.createTenant`, Super Admin only): creates the Tenant, an OWNER user (PENDING, 7-day activation link — same no-email-yet pattern as `AccessService.createUser` for inviting a teammate) and an initial Subscription row, all in one transaction so a failure can't leave a half-created workspace. The slug is generated from the organization name and de-duplicated automatically (`acme-builders`, `acme-builders-2`, …) — Super Admin never has to think about it.
+- Admin Panel (`web/src/app/pages/admin/admin.ts`): new "Create a new organization" panel — organization name, owner name/email/phone, starting plan — and on success shows the owner's activation link to copy and send, exactly like the existing per-workspace "invite a teammate" flow.
+- Deliberately NOT built: sending the activation link by email (same platform-wide limitation as every other invite flow — needs SMTP/Brevo/SendGrid credentials, already item 4 below), and a "convert a self-registered workspace's owner" path (self-registration already works and wasn't touched).
+
+### Verification this round (sandbox)
+All four of this session's build-equivalent gates ran clean on the device (no Mac `ng build`/`ng test` yet — same sandbox limitation as every other round):
+```
+cd api && npx tsc --noEmit -p tsconfig.build.json   # clean
+cd web && npx tsc --noEmit -p tsconfig.app.json      # clean
+cd web && npx tsc --noEmit -p tsconfig.spec.json     # clean
+cd web && npx ngc -p tsconfig.app.json --noEmit      # clean
+```
+No automated test covers the new `createTenant`/plan-gating logic yet — `api/src/tenants/tenants.service.spec.ts` and `access.service` have no spec file. Added to "Next" below rather than skipped silently.
+
+### Outstanding issues
+- No unit tests yet for `createTenant` (slug de-duplication, transaction rollback on a duplicate owner email) or for the new plan-gating branches in `tenantModules`/`setTenantModules`.
+- Not yet run on the real Mac: `ng build`, `ng test`, and a real create-organization + plan-upgrade/downgrade click-through.
+- The `PLAN_MODULES` tiers above are a reasonable starting guess, not Bikash's actual pricing — revisit before telling any real customer what their plan includes.
 
 ## Next (in order)
 
-1. **First, on your Mac:** run `npm test`, `npm run test:e2e`, and `ng build` for Task 5d (this session could not run them — see the verification note above) before anything is pushed or deployed. Full step-by-step commands in the reply.
-2. **One-time:** promote `admin@griha.com` to `SUPER_ADMIN` (SQL command in the reply) so the new Admin Panel is reachable.
+1. **First, on your Mac:** run `npm test`, `npm run test:e2e`, and `ng build` (this session still can't run them — see the verification notes above) before anything is pushed or deployed.
+2. **One-time:** promote `admin@griha.com` to `SUPER_ADMIN` (SQL command given directly) so the Admin Panel is reachable.
 3. Deploy the marketing page to `procurenepal.com` (root domain, separate from `app.procurenepal.com`) — cPanel steps in the reply.
-4. Wire real email sending (needs an SMTP / Brevo / SendGrid account from you) so new-user activation links and RFQ vendor emails go out automatically; then decide a schedule for External References "Check now" (a free GitHub Action cron hitting a new API endpoint, or Render's paid Cron Jobs).
+4. Wire real email sending (needs an SMTP / Brevo / SendGrid account from you) so activation links (new teammates AND, since Task 8, new organizations) and RFQ vendor emails go out automatically; then decide a schedule for External References "Check now".
 5. Feedback from real use of the Task 4 ERP engine pages — cheap to change in `erp.registry.ts`.
 6. Send a bid document that read badly so the PDF extraction fix can be checked against it directly, and extend the Nepali/English toggle once you've reviewed the first-pass wording in `web/src/app/core/i18n.service.ts`.
 7. Storing PDFs and documents online (needs storage credentials from you — e.g. Cloudflare R2).
-8. Decide which modules each plan (FREE/STARTER/PROFESSIONAL/ENTERPRISE) actually unlocks, then wire that into the Admin Panel; connect eSewa/Khalti (needs merchant credentials), WhatsApp OTP, WordPress — each still needs its own account/credentials from you.
-9. After everything is deployed: rotate the admin and Supabase database passwords; consider Render Starter to remove the slow first sign-in.
+8. ~~Decide which modules each plan (FREE/STARTER/PROFESSIONAL/ENTERPRISE) actually unlocks, then wire that into the Admin Panel~~ **Done (2026-11-19, Task 8)** — see above; revisit the actual tier contents, then connect eSewa/Khalti (needs merchant credentials), WhatsApp OTP, WordPress — each still needs its own account/credentials from you.
+9. Write unit tests for `TenantsService.createTenant` and the plan-gating branches in `AccessService` (Task 8), then run a real create-organization + plan-change click-through on the Mac.
+10. After everything is deployed: rotate the admin and Supabase database passwords; consider Render Starter to remove the slow first sign-in.

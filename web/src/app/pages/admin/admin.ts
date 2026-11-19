@@ -41,6 +41,53 @@ import { UI_STYLES } from '../../core/ui-styles';
         }
       </div>
 
+      @if (createdLink()) {
+        <div class="panel link-panel">
+          <h2>🔗 New organization created — {{ createdTenantName() }}</h2>
+          <p class="help">There is still no email service connected, so send this link to the new owner yourself (WhatsApp, SMS, email) so they can set their own password. The link works for 7 days.</p>
+          <div class="linkbox">
+            <code>{{ fullLink(createdLink()!) }}</code>
+            <button class="btn light small" (click)="copyLink(createdLink()!)">{{ copied() ? '✅ Copied' : '📋 Copy' }}</button>
+          </div>
+        </div>
+      }
+
+      <div class="panel">
+        <h2>Create a new organization</h2>
+        <p class="help">Set up a brand-new workspace directly, with its owner and starting plan — instead of waiting for them to self-register. The owner is created pending activation, same as inviting a teammate inside a workspace.</p>
+        <div class="grid">
+          <div>
+            <label>Organization / company name</label>
+            <input [(ngModel)]="createForm.tenantName" placeholder="e.g. Himalaya Builders Pvt. Ltd." />
+          </div>
+          <div>
+            <label>Owner's full name</label>
+            <input [(ngModel)]="createForm.ownerName" placeholder="e.g. Bikash Shrestha" />
+          </div>
+          <div>
+            <label>Owner's email</label>
+            <input type="email" [(ngModel)]="createForm.ownerEmail" placeholder="owner@example.com" />
+          </div>
+          <div>
+            <label>Owner's phone (optional)</label>
+            <input [(ngModel)]="createForm.ownerPhone" placeholder="98XXXXXXXX" />
+          </div>
+          <div>
+            <label>Starting plan</label>
+            <select [(ngModel)]="createForm.plan">
+              <option value="FREE">FREE</option>
+              <option value="STARTER">STARTER</option>
+              <option value="PROFESSIONAL">PROFESSIONAL</option>
+              <option value="ENTERPRISE">ENTERPRISE</option>
+            </select>
+          </div>
+        </div>
+        @if (createError()) { <div class="msg error">{{ createError() }}</div> }
+        <div class="actions">
+          <button class="btn gold" (click)="createOrg()" [disabled]="creating()">{{ creating() ? 'Creating…' : 'Create organization' }}</button>
+        </div>
+      </div>
+
       <div class="panel">
         <h2>Billing</h2>
         @if (billing(); as b) {
@@ -168,6 +215,9 @@ import { UI_STYLES } from '../../core/ui-styles';
     .tag.red { background: #fee2e2; color: #b91c1c; }
     .btn.small { padding: 6px 12px; font-size: 13px; }
     .row-actions { white-space: nowrap; }
+    .link-panel { border-left: 4px solid #d4a017; }
+    .linkbox { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border-radius: 8px; padding: 10px 14px; flex-wrap: wrap; }
+    .linkbox code { word-break: break-all; font-size: 13px; }
   `],
 })
 export class AdminPage {
@@ -182,6 +232,13 @@ export class AdminPage {
   selectedId = signal<string | null>(null);
   selected = signal<any | null>(null);
   planForm = { plan: 'FREE', status: 'ACTIVE', expiresAt: '', amountNPR: null as number | null, paymentMethod: '', paymentRef: '' };
+
+  creating = signal(false);
+  createError = signal('');
+  createdLink = signal<string | null>(null);
+  createdTenantName = signal('');
+  copied = signal(false);
+  createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
 
   planKeys(m: Record<string, number>): string[] { return Object.keys(m ?? {}); }
 
@@ -217,6 +274,33 @@ export class AdminPage {
     } catch (e: any) {
       this.error.set('Could not open this workspace: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
     }
+  }
+
+  async createOrg() {
+    this.createError.set('');
+    const f = this.createForm;
+    if (!f.tenantName.trim() || !f.ownerName.trim() || !f.ownerEmail.trim()) {
+      this.createError.set('Organization name, owner name and owner email are all required.');
+      return;
+    }
+    this.creating.set(true);
+    try {
+      const body: any = { tenantName: f.tenantName.trim(), ownerName: f.ownerName.trim(), ownerEmail: f.ownerEmail.trim(), plan: f.plan };
+      if (f.ownerPhone.trim()) body.ownerPhone = f.ownerPhone.trim();
+      const res = await this.data.adminCreateTenant(body);
+      this.createdLink.set(res.ownerActivationLink);
+      this.createdTenantName.set(res.tenant?.name ?? f.tenantName);
+      this.createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
+      await this.refresh();
+    } catch (e: any) {
+      this.createError.set('Could not create the organization: ' + (e?.error?.message ?? e?.message ?? 'unknown error'));
+    }
+    this.creating.set(false);
+  }
+
+  fullLink(path: string) { return `${location.origin}${path}`; }
+  async copyLink(path: string) {
+    try { await navigator.clipboard.writeText(this.fullLink(path)); this.copied.set(true); setTimeout(() => this.copied.set(false), 2500); } catch { /* clipboard blocked */ }
   }
 
   async toggleActive(tenant: any) {

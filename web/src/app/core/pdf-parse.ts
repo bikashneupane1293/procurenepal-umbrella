@@ -25,7 +25,7 @@ export function parseAmount(s: string): number | null {
 function moneyIn(text: string): number | null {
   const m =
     text.match(/(?:N\s?Rs\.?|NPR)\s*:?\s*([\d][\d,]*(?:\.\d+)?\s*(?:crore|cr\.?|lakhs?|lacs?|million)?)/i) ??
-    text.match(/([\d][\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?))\b/i);
+    text.match(/([\d][\d,]*(?:\.\d+)?\s*(?:crore|lakhs?|lacs?|million))\b/i);
   return m ? parseAmount(m[1]) : null;
 }
 
@@ -124,7 +124,7 @@ export function parseTenderText(text: string): { fields: Suggestions; activities
   const bc = find(lines, /\bbid(ding)? capacity\b/i);
   if (bc) put('reqBidCapacity', moneyIn(bc.rest), bc.line);
   // Similar contract: look in the similar-contract line and the next 2 lines
-  const si = lines.findIndex((l) => /\bsimilar (contract|nature|work)/i.test(l));
+  const si = lines.findIndex((l) => /\bsimilar\b.{0,25}?\b(contract|nature|work)s?\b/i.test(l));
   if (si >= 0) {
     const block = lines.slice(si, si + 3).join(' ');
     put('reqSimilarValue', moneyIn(block.replace(/one\s*\(\s*1\s*\)/i, '')), lines[si]);
@@ -134,7 +134,7 @@ export function parseTenderText(text: string): { fields: Suggestions; activities
   }
   const bs = find(lines, /\b(Bid Security|Bid Bond|Earnest Money)\b/i);
   if (bs) put('bidSecurityAmount', moneyIn(bs.rest), bs.line);
-  const bv = find(lines, /\bBid Validity\b|\bbids? (shall )?(be |remain )?valid\b/i);
+  const bv = find(lines, /\bBid Validity\b|\bbids?\b.{0,20}\bvalid\b/i);
   if (bv) {
     const m = bv.rest.match(/(\d+)\s*days/i) ?? bv.line.match(/(\d+)\s*days/i);
     if (m) put('bidValidityDays', Number(m[1]), bv.line);
@@ -282,9 +282,20 @@ export function findKeyClauses(text: string): ClauseFind[] {
 
 /** The real checklist — straight from this document's own Clause 21 "Sealing and Marking of Bids", not a guess. */
 export function checklistFromClause21(text: string): ChecklistItem[] | null {
-  const m = text.match(/\b(ITB\s*)?21\s*[.:]?\s*Sealing (and|&) Marking of Bid/i);
-  if (!m || m.index == null) return null;
-  let block = text.slice(m.index, m.index + 5000);
+  // Scan all matches and skip the Table of Contents entry (dot leaders + page number right
+  // after the heading) — the real clause is further down, where "Bids" is followed by the
+  // clause body rather than "........... 19".
+  const re = /\b(ITB\s*)?21\s*[.:]?\s*Sealing (and|&) Marking of Bid/gi;
+  let hit: RegExpExecArray | null = null;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const after = text.slice(m.index + m[0].length, m.index + m[0].length + 40);
+    if (/^s?\s*\.{4,}/.test(after)) continue;
+    hit = m;
+    break;
+  }
+  if (!hit || hit.index == null) return null;
+  let block = text.slice(hit.index, hit.index + 5000);
   const nextClause = block.slice(20).search(/\n\s*22\s*[.:]\s*[A-Z]/);
   if (nextClause >= 0) block = block.slice(0, nextClause + 20);
 

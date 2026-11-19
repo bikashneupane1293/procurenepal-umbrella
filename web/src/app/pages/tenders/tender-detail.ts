@@ -11,6 +11,10 @@ import { STATUS_LABEL } from '../../core/bid-labels';
 import { readPdfText } from '../../core/pdf-reader';
 import { parseTenderText, findDocumentChecklist, checklistFromClause21, findKeyClauses, estimateExcludingVat, ChecklistItem, ClauseFind, Suggestions } from '../../core/pdf-parse';
 import { tablesToExcel } from '../../core/erp-sheets';
+// Phase 1B: experimental table reconstruction — additive only. Never imported by, or imported
+// into, pdf-reader.ts/pdf-parse.ts; the flat extraction above is untouched and remains the
+// default. This is called only when the local, disabled-by-default toggle below is turned on.
+import { findAnchorTableInPdf, DocumentTableResult } from '../../core/pdf-table-reconstruct';
 
 const loadReport = () => import('../../core/report');
 
@@ -122,6 +126,47 @@ interface JvRow { companyId: string; share: number | null; }
             @if (showRawText()) {
               <p class="help" style="margin-top:6px">This is exactly what was read from the PDF, before any field matching. If a value above looks wrong or missing, search for it here — if it's garbled or missing here too, that's a reading problem to report; if it reads fine here but wasn't picked up above, that's a matching-rule problem.</p>
               <textarea readonly rows="14" style="width:100%;font-family:monospace;font-size:12px;white-space:pre-wrap">{{ rawPdfText() }}</textarea>
+            }
+          </div>
+        }
+
+        <div class="exp-toggle">
+          <label><input type="checkbox" [checked]="experimentalTableReader()" (change)="experimentalTableReader.set($any($event.target).checked)" /> 🧪 Enable experimental table reader</label>
+          <span class="muted">Scans the PDF for tables like the ITB 21 document checklist and shows them separately. Off by default; does not change anything above.</span>
+        </div>
+
+        @if (experimentalTableReader() && hasPdfFile()) {
+          <div class="panel exp-panel" style="margin-top:12px">
+            <h3>🧪 Experimental: reconstructed table</h3>
+            <p class="help">Reading aid only — not verified, and not used for any readiness checklist, qualification, or eligibility decision. Compare it against "Show extracted text" above before relying on it.</p>
+            <button class="btn light" (click)="tryExperimentalTableReader()" [disabled]="experimentalBusy()">{{ experimentalBusy() ? 'Scanning pages…' : (experimentalTried() ? 'Scan again' : 'Scan this PDF for a table') }}</button>
+
+            @if (experimentalError()) { <div class="msg error" style="margin-top:8px">{{ experimentalError() }}</div> }
+
+            @if (experimentalTried() && !experimentalBusy() && !experimentalError()) {
+              @if (experimentalResult(); as er) {
+                <div class="msg info" style="margin-top:10px">
+                  Found on page {{ er.pageNumber }} — detected section: <em>{{ er.table.headerText || '(header text not captured)' }}</em> — confidence {{ (er.table.confidence * 100) | number: '1.0-0' }}%
+                </div>
+                @if (er.table.warnings.length) {
+                  <div class="msg info" style="margin-top:6px">⚠️ {{ er.table.warnings.join('; ') }}</div>
+                }
+                <table class="tbl" style="margin-top:10px">
+                  <thead><tr>
+                    @for (col of er.table.columns; track col.index) { <th>Column {{ col.index + 1 }}</th> }
+                  </tr></thead>
+                  <tbody>
+                    @for (row of er.table.rows; track row.rowIndex) {
+                      <tr [class.bad]="row.confidence < 0.7">
+                        @for (c of row.cells; track c.columnIndex) { <td class="muted">{{ c.text || '—' }}</td> }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                <p class="help" style="margin-top:6px">Rows highlighted are below 0.7 confidence — a wrapped line landed close to a row boundary; verify those against "Show extracted text" above.</p>
+              } @else {
+                <div class="msg info" style="margin-top:10px">No table matching this pattern was found on any scanned page. The original extracted text above is unaffected — this experimental reader found nothing to add.</div>
+              }
             }
           </div>
         }
@@ -287,6 +332,9 @@ interface JvRow { companyId: string; share: number | null; }
     }
   `,
   styles: [UI_STYLES, `
+    .exp-toggle { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+    .exp-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+    .exp-panel { border: 1px dashed #c7a600; background: #fffdf5; }
     .tools { display: flex; gap: 8px; flex-wrap: wrap; }
     .tools .btn { text-decoration: none; }
     .bar.tight { margin-bottom: 8px; align-items: center; }
@@ -362,6 +410,19 @@ export class TenderDetailPage {
   checklistSaved = signal(false);
   suggestionKeys = computed(() => Object.keys(this.suggestions() ?? {}));
 
+  // ---------- Experimental table reconstruction (Phase 1B) ----------
+  // Local, frontend-only feature toggle. Default disabled. No backend, no database, no
+  // dependency on the (currently unimplemented) api/feature-flag stub — just a signal. Flipping
+  // it off at any point leaves the reader behaving exactly as before; it gates ONLY the block
+  // below, never anything in onPdfChosen's existing, previously-validated extraction path.
+  experimentalTableReader = signal(false);
+  private lastPdfFile: File | null = null;
+  hasPdfFile = signal(false);
+  experimentalBusy = signal(false);
+  experimentalError = signal('');
+  experimentalResult = signal<DocumentTableResult | null>(null);
+  experimentalTried = signal(false);
+
   async onPdfChosen(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -369,6 +430,8 @@ export class TenderDetailPage {
     this.suggestions.set(null); this.checklist.set(null); this.checklistSaved.set(false);
     this.keyClauses.set(null); this.estimateVat.set(null); this.checklistFromClause21Used.set(false);
     this.rawPdfText.set(''); this.showRawText.set(false);
+    this.lastPdfFile = file; this.hasPdfFile.set(true);
+    this.experimentalResult.set(null); this.experimentalTried.set(false); this.experimentalError.set('');
     try {
       const { text, scanned } = await readPdfText(file, 80);
       this.rawPdfText.set(text);
@@ -385,6 +448,24 @@ export class TenderDetailPage {
     } finally {
       this.pdfBusy.set(false);
       (ev.target as HTMLInputElement).value = '';
+    }
+  }
+
+  /**
+   * Opt-in only (the toggle + this explicit button click). Scans the same PDF, page by page, for
+   * a genuine multi-column anchor table (not hardcoded to page 20 — whichever page actually has
+   * one). Purely a reading aid: never writes to `checklist`, `suggestions`, or anything saved to
+   * the tender — see the "Procurement safety" note in the template for why.
+   */
+  async tryExperimentalTableReader() {
+    if (!this.lastPdfFile) return;
+    this.experimentalBusy.set(true); this.experimentalError.set(''); this.experimentalTried.set(true);
+    try {
+      this.experimentalResult.set(await findAnchorTableInPdf(this.lastPdfFile, 80));
+    } catch (e: any) {
+      this.experimentalError.set('Could not run the experimental table reader: ' + (e?.message ?? 'unknown error'));
+    } finally {
+      this.experimentalBusy.set(false);
     }
   }
 

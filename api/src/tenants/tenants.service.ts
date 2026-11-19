@@ -2,11 +2,14 @@
 // instead of being scoped to the signed-in user's own one. Every method checks role === SUPER_ADMIN
 // itself (same pattern as the ADMIN_ROLES checks elsewhere) because this must never leak into the
 // ordinary per-tenant endpoints. © Cuidado Technology Pvt. Ltd.
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { SetPlanDto } from './dto/admin.dto';
+import { CreateTenantDto, SetPlanDto } from './dto/admin.dto';
 
 const PLATFORM_ROLE = 'SUPER_ADMIN';
+const ACTIVATION_DAYS = 7;
 
 @Injectable()
 export class TenantsService {
@@ -54,10 +57,10 @@ export class TenantsService {
   }
 
   /**
-   * Records a plan for a workspace. This only LABELS the workspace — it does not yet gate any
-   * module or feature by plan (that mapping hasn't been decided), and no payment is collected or
-   * verified here. Use it to record a plan you've agreed with the customer and (if applicable) a
-   * manually-confirmed payment reference, until a real payment gateway is connected.
+   * Records a plan for a workspace. This plan now also decides which ERP modules the workspace's
+   * Owner can switch on (see PLAN_MODULES in access/module-registry.ts) — but no payment is
+   * collected or verified here. Use it to record a plan you've agreed with the customer and (if
+   * applicable) a manually-confirmed payment reference, until a real payment gateway is connected.
    */
   async setPlan(role: string, tenantId: string, dto: SetPlanDto) {
     this.requirePlatform(role);
@@ -74,6 +77,70 @@ export class TenantsService {
         amountNPR: dto.amountNPR ?? null,
       },
     });
+  }
+
+  /**
+   * Super Admin sets up a brand-new organization directly (Task 8) — instead of waiting for the
+   * organization to self-register. Creates the Tenant, an OWNER user (PENDING, with a 7-day
+   * activation link — same no-email-yet pattern as AccessService.createUser) and, if a plan was
+   * given, an initial Subscription row. Everything happens in one transaction so a failure never
+   * leaves a half-created workspace behind.
+   */
+  async createTenant(role: string, dto: CreateTenantDto) {
+    this.requirePlatform(role);
+    const ownerEmail = dto.ownerEmail.trim().toLowerCase();
+    const existingUser = await this.prisma.user.findUnique({ where: { email: ownerEmail } });
+    if (existingUser) throw new ConflictException('A user with this email already exists — pick a different owner email or add them to their existing workspace instead.');
+
+    const slug = await this.uniqueSlug(dto.tenantName);
+    const activationToken = randomBytes(32).toString('hex');
+    const placeholder = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: { name: dto.tenantName.trim(), slug, contactEmail: ownerEmail, contactPhone: dto.ownerPhone?.trim() || null },
+      });
+      const owner = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: ownerEmail,
+          fullName: dto.ownerName.trim(),
+          phone: dto.ownerPhone?.trim() || null,
+          role: 'OWNER',
+          passwordHash: placeholder,
+          isActive: true,
+          isVerified: false,
+          status: 'PENDING',
+          activationToken,
+          activationExpires: new Date(Date.now() + ACTIVATION_DAYS * 86400000),
+        },
+      });
+      const subscription = await tx.subscription.create({
+        data: { tenantId: tenant.id, plan: (dto.plan ?? 'FREE') as any, status: 'ACTIVE', paymentMethod: 'MANUAL' },
+      });
+      return { tenant, owner, subscription };
+    });
+
+    return {
+      tenant: result.tenant,
+      owner: { id: result.owner.id, email: result.owner.email, fullName: result.owner.fullName },
+      subscription: result.subscription,
+      // No email service yet (same limitation as inviting a teammate) — Super Admin copies this
+      // and sends it to the new owner themselves.
+      ownerActivationLink: `/activate?token=${activationToken}`,
+    };
+  }
+
+  /** "Acme Builders Pvt Ltd" → "acme-builders-pvt-ltd", "acme-builders-pvt-ltd-2" if taken, … */
+  private async uniqueSlug(name: string): Promise<string> {
+    const base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'workspace';
+    let slug = base;
+    let n = 1;
+    while (await this.prisma.tenant.findUnique({ where: { slug } })) {
+      n += 1;
+      slug = `${base}-${n}`;
+    }
+    return slug;
   }
 
   async toggleTenantActive(role: string, tenantId: string, isActive: boolean) {

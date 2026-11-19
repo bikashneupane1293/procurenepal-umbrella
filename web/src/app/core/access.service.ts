@@ -11,6 +11,9 @@ export interface AccessInfo {
   modules: string[];
   workspaceModules: Record<string, boolean>;
   itemFlags?: Record<string, boolean>;
+  /** The workspace's current plan and the module keys that plan unlocks (Task 7). */
+  plan?: string;
+  planModules?: string[];
 }
 
 /** Which ERP modules the signed-in user may open (loaded once per session). */

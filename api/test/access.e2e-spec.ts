@@ -116,4 +116,41 @@ describe('Access: modules + User Setup (e2e)', () => {
     await http().patch('/users/directorA').set(as('ownerA')).send({ role: 'OWNER' }).expect(200);
     await http().patch('/users/ownerA').set(as('ownerA')).send({ role: 'DIRECTOR' }).expect(200);
   });
+
+  it('plan → module gating (Task 8): no plan recorded = unrestricted, same as before; a recorded plan gates modules', async () => {
+    // A brand-new workspace with no Subscription row at all — same state as every tenant that
+    // existed before Task 8, and every self-registered tenant (registration creates no
+    // Subscription row either).
+    db.db.tenant.push({ id: 'C', name: 'C' });
+    db.db.user.push({ id: 'ownerC', email: 'owner@c.com', fullName: 'Owner C', role: 'OWNER', tenantId: 'C', isActive: true, modules: [], passwordHash: 'x' });
+    tok.ownerC = sign('ownerC');
+
+    let me = (await http().get('/access/me').set(as('ownerC')).expect(200)).body;
+    expect(me.plan).toBeNull();
+    expect(me.planModules).toBeNull();
+    expect(me.modules).toEqual(['companies', 'bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank']);
+    // Unrestricted means the Owner can still freely switch any module while no plan is recorded.
+    await http().put('/access/workspace-modules').set(as('ownerC')).send({ modules: { bank: true } }).expect(200);
+
+    // Super Admin records STARTER for this workspace (bolpatra, procurement, hr only per the
+    // first-proposal PLAN_MODULES mapping — see module-registry.ts).
+    db.db.subscription.push({ id: 'sub-c-1', tenantId: 'C', plan: 'STARTER', status: 'ACTIVE', createdAt: new Date() });
+
+    me = (await http().get('/access/me').set(as('ownerC')).expect(200)).body;
+    expect(me.plan).toBe('STARTER');
+    expect(me.planModules).toEqual(['bolpatra', 'procurement', 'hr']);
+    // fleet/project/bank are now OFF, even though no saved flag ever changed.
+    expect(me.modules).toEqual(['companies', 'bolpatra', 'procurement', 'hr']);
+
+    // Trying to switch on a module the plan doesn't include is rejected before it ever reaches
+    // the database, with a message telling the Owner to ask for an upgrade.
+    const res = await http().put('/access/workspace-modules').set(as('ownerC')).send({ modules: { fleet: true } }).expect(400);
+    expect(res.body.message).toMatch(/not included in the STARTER plan/);
+
+    // A later (higher) plan immediately unlocks more modules — no flag needs to change.
+    db.db.subscription.push({ id: 'sub-c-2', tenantId: 'C', plan: 'ENTERPRISE', status: 'ACTIVE', createdAt: new Date(Date.now() + 1000) });
+    me = (await http().get('/access/me').set(as('ownerC')).expect(200)).body;
+    expect(me.plan).toBe('ENTERPRISE');
+    expect(me.modules).toEqual(['companies', 'bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank']);
+  });
 });

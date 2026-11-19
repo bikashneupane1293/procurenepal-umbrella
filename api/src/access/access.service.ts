@@ -18,6 +18,7 @@ import {
   USER_VIEW_ROLES,
   flagKeyOf,
   itemFlagKeyOf,
+  modulesUnlockedByPlan,
 } from './module-registry';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
@@ -35,26 +36,63 @@ export class AccessService {
 
   // ------------------------------------------------------- workspace modules
 
-  /** { companies: true, bolpatra: true, … } — a module with no saved setting is ON. */
+  /**
+   * The workspace's current plan — the latest Subscription row, or `null` if Super Admin has
+   * never recorded one for this workspace (true for every tenant created before Task 8, and
+   * for every self-registered tenant, since registration doesn't create a Subscription row).
+   * Deliberately NOT defaulted to 'FREE' here: a tenant's module access must not change the
+   * moment this code ships just because nobody has set a plan for them yet.
+   */
+  async currentPlan(tenantId: string): Promise<string | null> {
+    const sub = await this.prisma.subscription.findFirst({ where: { tenantId }, orderBy: { createdAt: 'desc' } });
+    return sub?.plan ?? null;
+  }
+
+  /**
+   * The workspace's plan plus the modules that plan unlocks (Task 8: plan → module mapping).
+   * `unlockedModules: null` means "no plan ever recorded — unrestricted," the same as every
+   * workspace's behavior before Task 8. Gating only starts once Super Admin actually records a
+   * plan for a workspace (Admin Panel "Set plan"), even if that plan is FREE.
+   */
+  async planModulesFor(tenantId: string): Promise<{ plan: string | null; unlockedModules: string[] | null }> {
+    const plan = await this.currentPlan(tenantId);
+    return { plan, unlockedModules: plan ? modulesUnlockedByPlan(plan) : null };
+  }
+
+  /**
+   * { companies: true, bolpatra: true, … } — once a plan has been recorded for this workspace,
+   * a module is ON only if BOTH the plan includes it AND the Owner hasn't switched it off; a
+   * module the plan doesn't include is OFF even if it was switched on under an earlier plan.
+   * Before any plan is recorded, this behaves exactly as before Task 8 (every non-core module
+   * ON unless the Owner switched it off).
+   */
   async tenantModules(tenantId: string): Promise<Record<string, boolean>> {
+    const { unlockedModules } = await this.planModulesFor(tenantId);
     const flags = await this.prisma.tenantFeatureFlag.findMany({
       where: { tenantId, flagKey: { in: MODULE_KEYS.map(flagKeyOf) } },
     });
     const out: Record<string, boolean> = {};
     for (const m of MODULES) {
+      if (m.core) { out[m.key] = true; continue; }
       const f = flags.find((x) => x.flagKey === flagKeyOf(m.key));
-      out[m.key] = m.core ? true : f ? f.enabled : true;
+      const ownerWants = f ? f.enabled : true;
+      const planAllows = unlockedModules === null || unlockedModules.includes(m.key);
+      out[m.key] = planAllows && ownerWants;
     }
     return out;
   }
 
   async setTenantModules(tenantId: string, role: string, changes: Record<string, boolean>) {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can switch modules on or off');
+    const { plan, unlockedModules } = await this.planModulesFor(tenantId);
     for (const [key, enabled] of Object.entries(changes)) {
       const def = MODULES.find((m) => m.key === key);
       if (!def) throw new BadRequestException(`Unknown module "${key}"`);
       if (def.core && !enabled) throw new BadRequestException(`${def.name} is a core module and cannot be switched off`);
       if (typeof enabled !== 'boolean') throw new BadRequestException(`Value for "${key}" must be true or false`);
+      if (enabled && !def.core && unlockedModules !== null && !unlockedModules.includes(key)) {
+        throw new BadRequestException(`${def.name} is not included in the ${plan} plan. Ask your ProcureNepal platform administrator to upgrade the workspace's plan to turn this on.`);
+      }
     }
     for (const [key, enabled] of Object.entries(changes)) {
       await this.prisma.tenantFeatureFlag.upsert({
@@ -116,6 +154,7 @@ export class AccessService {
   }
 
   async me(tenantId: string, userId: string, role: string) {
+    const { plan, unlockedModules } = await this.planModulesFor(tenantId);
     return {
       role,
       canManage: ADMIN_ROLES.includes(role),
@@ -124,6 +163,8 @@ export class AccessService {
       workspaceModules: await this.tenantModules(tenantId),
       itemFlags: await this.tenantItems(tenantId),
       registry: MODULES,
+      plan,
+      planModules: unlockedModules,
     };
   }
 

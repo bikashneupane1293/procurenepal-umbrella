@@ -207,10 +207,19 @@ export class FakePrisma {
   erpRecord = this.model('erpRecord');
   loginSession = this.model('loginSession');
   externalRef = this.model('externalRef');
+  subscription = this.model('subscription');
 
-  async $transaction(ops: Promise<any>[]) {
+  /**
+   * Supports both forms real Prisma does: the batch form (an array of pending ops, run
+   * sequentially) and the interactive callback form `$transaction(async (tx) => { ... })`,
+   * used by AuthService.register and TenantsService.createTenant. The callback gets `this`
+   * (FakePrisma) as `tx` — there's nothing to roll back here since every op is already
+   * synchronous-in-effect against the in-memory store.
+   */
+  async $transaction(opsOrFn: Promise<any>[] | ((tx: any) => Promise<any>)) {
+    if (typeof opsOrFn === 'function') return opsOrFn(this);
     const out: any[] = [];
-    for (const op of ops) out.push(await op); // sequential, like Prisma's batch
+    for (const op of opsOrFn) out.push(await op); // sequential, like Prisma's batch
     return out;
   }
   async $connect() {}

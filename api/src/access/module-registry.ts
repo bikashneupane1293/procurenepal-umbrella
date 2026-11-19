@@ -30,6 +30,23 @@ export const MODULES: ModuleDef[] = [
 export const MODULE_KEYS = MODULES.map((m) => m.key);
 export const flagKeyOf = (moduleKey: string) => `module:${moduleKey}`;
 
+// =====================================================================
+// Plan → module mapping (Task 7). Previously the Admin Panel's "plan" was a label
+// only — setting STARTER vs ENTERPRISE didn't change what the Owner could switch on.
+// This is the first real mapping. It is a business decision, not a technical one —
+// edit the arrays below at any time to match the actual pricing tiers; nothing else
+// needs to change. `companies` is core and always on for every plan, so it is left
+// out of every list here. A plan not listed falls back to FREE's set.
+// =====================================================================
+export const PLAN_MODULES: Record<string, string[]> = {
+  FREE: ['bolpatra'],
+  STARTER: ['bolpatra', 'procurement', 'hr'],
+  PROFESSIONAL: ['bolpatra', 'procurement', 'fleet', 'hr', 'project'],
+  ENTERPRISE: ['bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank'],
+};
+/** Modules a given plan unlocks (core modules are always included on top of this). */
+export const modulesUnlockedByPlan = (plan: string): string[] => PLAN_MODULES[plan] ?? PLAN_MODULES['FREE'];
+
 /** Roles that always see every module that is active in the workspace */
 export const ALL_ACCESS_ROLES = ['OWNER', 'SUPER_ADMIN'];
 /** Roles that may manage users and module activation */

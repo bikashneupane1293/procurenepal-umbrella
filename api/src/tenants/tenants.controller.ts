@@ -4,7 +4,7 @@ import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/co
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { TenantsService } from './tenants.service';
-import { SetPlanDto, ToggleTenantDto } from './dto/admin.dto';
+import { CreateTenantDto, SetPlanDto, ToggleTenantDto } from './dto/admin.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -19,6 +19,11 @@ export class TenantsController {
   @Get('tenants/:id')
   detail(@CurrentUser() user: any, @Param('id') id: string) {
     return this.tenants.getTenant(user.role, id);
+  }
+
+  @Post('tenants')
+  create(@CurrentUser() user: any, @Body() dto: CreateTenantDto) {
+    return this.tenants.createTenant(user.role, dto);
   }
 
   @Post('tenants/:id/plan')

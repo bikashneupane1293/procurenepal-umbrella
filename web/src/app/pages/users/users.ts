@@ -51,13 +51,19 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     @if (canManage()) {
       <div class="panel">
         <h2>Workspace modules (activation)</h2>
-        <p class="help">Switch a whole module on or off for everyone in your workspace. A switched-off module disappears from every menu and its data cannot be opened. Companies is always on.</p>
+        <p class="help">Switch a whole module on or off for everyone in your workspace. A switched-off module disappears from every menu and its data cannot be opened. Companies is always on.
+          @if (plan()) { Your workspace is on the <strong>{{ plan() }}</strong> plan. }
+        </p>
         <div class="mods">
           @for (m of menu; track m.key) {
-            <label class="mod" [class.off]="!ws[m.key]">
-              <input type="checkbox" [checked]="ws[m.key]" [disabled]="m.core" (change)="ws[m.key] = !ws[m.key]" />
+            <label class="mod" [class.off]="!ws[m.key]" [class.locked]="lockedByPlan(m.key)">
+              <input type="checkbox" [checked]="ws[m.key]" [disabled]="m.core || lockedByPlan(m.key)" (change)="ws[m.key] = !ws[m.key]" />
               <span>{{ m.icon }} {{ m.label }}</span>
-              <small>{{ builtCount(m.key) }} of {{ m.items.length }} screens ready</small>
+              @if (lockedByPlan(m.key)) {
+                <small>🔒 Not included in the {{ plan() }} plan — ask your ProcureNepal administrator to upgrade</small>
+              } @else {
+                <small>{{ builtCount(m.key) }} of {{ m.items.length }} screens ready</small>
+              }
             </label>
           }
         </div>
@@ -196,6 +202,8 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     .mod input { width: auto; }
     .mod small { width: 100%; font-weight: 400; color: #9ca3af; font-size: 11px; padding-left: 24px; }
     .mod.off { background: #f9fafb; color: #9ca3af; }
+    .mod.locked { background: #fff7e6; border-color: #e6c870; cursor: not-allowed; }
+    .mod.locked small { color: #a16a00; }
     label.inline { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
     label.inline input { width: auto; }
     .all { margin-bottom: 6px; }
@@ -234,6 +242,13 @@ export class UsersPage {
   canManage = computed(() => !!this.access.info()?.canManage);
   canView = computed(() => ['OWNER', 'SUPER_ADMIN', 'DIRECTOR', 'HR_MANAGER'].includes(this.access.info()?.role ?? this.me?.role));
   canViewLogins = computed(() => !!this.access.info()?.canViewLogins);
+  plan = computed(() => this.access.info()?.plan ?? '');
+  planModules = computed(() => this.access.info()?.planModules ?? null);
+  /** true only once we actually know the plan's module list — avoids locking everything while loading */
+  lockedByPlan(key: string): boolean {
+    const allowed = this.planModules();
+    return !!allowed && !MENU.find((m) => m.key === key)?.core && !allowed.includes(key);
+  }
   ws: Record<string, boolean> = Object.fromEntries(MENU.map((m) => [m.key, true]));
   wsItems: Record<string, boolean> = {};
   f = this.empty();
