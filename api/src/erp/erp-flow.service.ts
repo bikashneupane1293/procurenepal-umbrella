@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { daysTo, ErpService, ErpUser, num, r2 } from './erp.service';
+import { daysTo, ErpService, ErpUser, fuelFill, fuelVehicle, num, r2 } from './erp.service';
+import { checkFills, consumptionUnit, isHours } from './fuel-check';
 import { ENTITIES, entityDef, MENUS, moduleOf } from './erp.registry';
 import { AccessService } from '../access/access.service';
 import { nptToday } from '../common/nepal-time';
@@ -173,6 +174,7 @@ export class ErpFlowService {
       case 'fleet-expiry': return this.fleetExpiry(user);
       case 'fleet-where': return this.fleetWhere(user);
       case 'fleet-earnings': return this.fleetEarnings(user, q.from, q.to);
+      case 'fleet-fuel': return this.fleetFuel(user, q.from, q.to);
       case 'material-plan': return this.materialPlan(user, need('project', 'project'));
       case 'progress': return this.progress(user, need('project', 'project'));
       case 'scurve': return this.scurve(user, need('project', 'project'));
@@ -343,15 +345,15 @@ export class ErpFlowService {
     const t = user.tenantId;
     const inR = (d: any) => (!from || (d && d >= from)) && (!to || (d && d <= to));
     const vs = await this.erp.raw(t, 'fleet.vehicle');
-    const [logs, trips, txn, maint, tax, allow] = await Promise.all(['fleet.log', 'fleet.trip', 'fleet.txn', 'fleet.maintenance', 'fleet.tax', 'fleet.allowance'].map((e) => this.erp.raw(t, e)));
+    const [logs, trips, txn, maint, tax, allow, fuelLog] = await Promise.all(['fleet.log', 'fleet.trip', 'fleet.txn', 'fleet.maintenance', 'fleet.tax', 'fleet.allowance', 'fleet.fuel'].map((e) => this.erp.raw(t, e)));
     const sum = (l: any[], v: string, k: string, dk = 'date') => l.filter((x) => x.data.vehicle === v && inR(x.data[dk])).reduce((s, x) => s + num(x.data[k]), 0);
     const rows = vs.map((v) => {
       const id = v.id;
       const income = sum(logs, id, 'earning') + sum(trips, id, 'income') + txn.filter((x) => x.data.vehicle === id && x.data.kind === 'INCOME' && inR(x.data.date)).reduce((s, x) => s + num(x.data.amount), 0);
-      const fuel = sum(logs, id, 'fuelCost') + sum(trips, id, 'fuelCost');
+      const fuel = sum(logs, id, 'fuelCost') + sum(trips, id, 'fuelCost') + sum(fuelLog, id, 'amount');
       const other = sum(trips, id, 'otherCost') + txn.filter((x) => x.data.vehicle === id && x.data.kind === 'EXPENSE' && inR(x.data.date)).reduce((s, x) => s + num(x.data.amount), 0);
       const expense = fuel + sum(maint, id, 'cost') + sum(tax, id, 'amount', 'from') + sum(allow, id, 'amount') + other;
-      const km = sum(logs, id, 'km') + sum(trips, id, 'km'), litres = sum(logs, id, 'fuelLitres');
+      const km = sum(logs, id, 'km') + sum(trips, id, 'km'), litres = sum(logs, id, 'fuelLitres') + sum(fuelLog, id, 'litres');
       return { vehicle: v.data.name, regNo: v.data.regNo, hours: sum(logs, id, 'hours'), km, litres, kmpl: litres ? r2(sum(logs, id, 'km') / litres) : '', income: r2(income), fuel: r2(fuel), maintenance: r2(sum(maint, id, 'cost')),
         tax: r2(sum(tax, id, 'amount', 'from')), allowance: r2(sum(allow, id, 'amount')), other: r2(other), expense: r2(expense), net: r2(income - expense), _tone: income - expense < 0 ? 'bad' : '' };
     });
@@ -359,6 +361,51 @@ export class ErpFlowService {
     return { title: 'Vehicle-wise earning and expense', cards: [{ label: 'Income', value: money(ti) }, { label: 'Expense', value: money(te) }, { label: 'Net', value: money(ti - te), tone: ti - te < 0 ? 'bad' : 'good' }],
       tables: [{ title: `Per vehicle${from || to ? ` (${from ?? '…'} to ${to ?? '…'})` : ' (all dates)'}`, columns: [c('vehicle', 'Vehicle'), c('regNo', 'Reg. no.'), c('hours', 'Hours', true), c('km', 'Km', true), c('litres', 'Fuel (l)', true), c('kmpl', 'Km / litre', true), c('income', 'Income', true), c('fuel', 'Fuel', true), c('maintenance', 'Maintenance', true), c('tax', 'Tax + insurance', true), c('allowance', 'Allowances', true), c('other', 'Other', true), c('expense', 'Total expense', true), c('net', 'Net', true)], rows,
         note: 'Income = work-log earnings + trip income + other income. Tax and insurance are counted by their "valid from" date. Depreciation and loan interest are not included.' }] };
+  }
+
+  private async fleetFuel(user: ErpUser, from?: string, to?: string): Promise<Report> {
+    const t = user.tenantId;
+    const inR = (d: any) => (!from || (d && d >= from)) && (!to || (d && d <= to));
+    const vs = await this.erp.raw(t, 'fleet.vehicle');
+    const all = await this.erp.raw(t, 'fleet.fuel');
+    const rows: Row[] = [];
+    const flagged: Row[] = [];
+    let litresAll = 0, costAll = 0, fillsAll = 0;
+    for (const v of vs) {
+      const mine = all.filter((x) => x.data.vehicle === v.id);
+      if (!mine.length) continue;
+      const fv = fuelVehicle(v.data);
+      // checks run on the whole history (the fill before the range still matters), results shown for the range
+      const res = checkFills(fv, mine.map(fuelFill));
+      const inRange = mine.filter((x) => inR(x.data.date));
+      if (!inRange.length) continue;
+      const litres = inRange.reduce((s, x) => s + num(x.data.litres), 0);
+      const cost = inRange.reduce((s, x) => s + num(x.data.amount ?? num(x.data.litres) * num(x.data.rate)), 0);
+      const segs = inRange.map((x) => res.get(x.id)!).filter((r) => r.used && r.litres);
+      const used = segs.reduce((s, r) => s + (r.used ?? 0), 0), segL = segs.reduce((s, r) => s + (r.litres ?? 0), 0);
+      const hours = isHours(fv);
+      const actual = used && segL ? r2(hours ? segL / used : used / segL) : null;
+      const expected = num(fv.expected) || null;
+      const variance = actual != null && expected ? Math.round((100 * (hours ? actual - expected : expected - actual)) / expected) : null; // + = worse than expected
+      const bad = inRange.filter((x) => res.get(x.id)!.tone === 'bad').length, warn = inRange.filter((x) => res.get(x.id)!.tone === 'warn').length;
+      litresAll += litres; costAll += cost; fillsAll += inRange.length;
+      rows.push({ vehicle: v.data.name, regNo: v.data.regNo, fills: inRange.length, litres: r2(litres), cost: r2(cost), used: r2(used), unit: consumptionUnit(fv), actual: actual ?? '', expected: expected ?? '',
+        variance: variance == null ? '' : `${variance > 0 ? '+' : ''}${variance}%`, flagged: bad + warn,
+        _tone: bad || (variance != null && variance > (num(fv.tolerancePct) || 15)) ? 'bad' : warn ? 'warn' : '' });
+      for (const x of inRange) {
+        const r = res.get(x.id)!;
+        if (r.flags.length) flagged.push({ date: x.data.date, vehicle: v.data.name, meter: x.data.meter ?? '', litres: num(x.data.litres), billNo: x.data.billNo ?? '', check: r.flags.join(' · '), _tone: r.tone });
+      }
+    }
+    flagged.sort((a, b) => String(b.date).localeCompare(a.date));
+    return { title: 'Fuel discrepancy check',
+      cards: [{ label: 'Fuel filled', value: `${r2(litresAll).toLocaleString('en-IN')} l`, hint: `${fillsAll} fill(s)` }, { label: 'Fuel cost', value: money(costAll) },
+        { label: 'Fills to check', value: flagged.length, tone: flagged.some((f) => f._tone === 'bad') ? 'bad' : flagged.length ? 'warn' : 'good' }],
+      tables: [
+        { title: `Per vehicle${from || to ? ` (${from ?? '…'} to ${to ?? '…'})` : ' (all dates)'}`, columns: [c('vehicle', 'Vehicle'), c('regNo', 'Reg. no.'), c('fills', 'Fills', true), c('litres', 'Litres', true), c('cost', 'Cost (NPR)', true), c('used', 'Km / hours measured', true), c('actual', 'Actual use', true), c('expected', 'Expected', true), c('unit', 'Unit'), c('variance', 'Worse than expected'), c('flagged', 'Fills flagged', true)], rows,
+          note: 'Fuel use is measured full tank to full tank. Set "Expected fuel use", tank capacity and the allowed difference in Vehicle Information Setup.' },
+        { title: 'Fills to check', columns: [c('date', 'Date'), c('vehicle', 'Vehicle'), c('meter', 'Meter', true), c('litres', 'Litres', true), c('billNo', 'Bill no.'), c('check', 'Why')], rows: flagged },
+      ] };
   }
 
   private async issuedToProject(t: string, projectId: string) {

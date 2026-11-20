@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
 import { CAN_DELETE_ERP, ENTITIES, EntityDef, entityDef, FieldDef, MENUS, menuDef, moduleOf, REPORT_MODULE, STOCK_ENTITIES } from './erp.registry';
 import { nptDate, nptDaysBetween, nptToday } from '../common/nepal-time';
+import { checkFills, consumptionUnit, FuelFill } from './fuel-check';
 
 export interface ErpUser { tenantId: string; userId: string; role: string }
 export const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -10,6 +11,9 @@ export const num = (v: any) => (v === null || v === undefined || v === '' ? 0 : 
 const DAY = 86_400_000;
 /** Nepal calendar days from today to `d` (0 = today, negative = past) — not hours ÷ 24 from now. */
 export const daysTo = (d: any) => nptDaysBetween(nptToday(), nptDate(d));
+/** ErpRecord of fleet.fuel → the shape the fuel checks use */
+export const fuelFill = (r: any): FuelFill => ({ id: r.id, date: String(r.data.date ?? ''), meter: r.data.meter == null || r.data.meter === '' ? null : Number(r.data.meter), litres: num(r.data.litres), rate: r.data.rate == null || r.data.rate === '' ? null : Number(r.data.rate), fullTank: r.data.fullTank !== false });
+export const fuelVehicle = (v: any) => ({ meterType: v?.meterType, tankCapacity: v?.tankCapacity, expected: v?.expectedFuel, tolerancePct: v?.fuelTolerancePct });
 const isDate = (v: any) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) && !isNaN(new Date(v.slice(0, 10)).getTime());
 
 /**
@@ -32,20 +36,28 @@ export class ErpService {
     const mine = await this.access.effectiveModules(user.tenantId, user.userId, user.role);
     if (![...modules].some((m) => mine.includes(m))) throw new ForbiddenException(`${what} is in a module that is not active for your account. Ask the workspace Owner (Companies → User Setup).`);
   }
+  /** Page limit (a person allowed only some pages, e.g. a driver who only enters fuel). */
+  private async needPage(user: ErpUser, ok: (menuIds: string[]) => boolean, what: string) {
+    const items = await this.access.userItems(user.tenantId, user.userId, user.role);
+    if (items && !ok(items)) throw new ForbiddenException(`${what} is not one of the pages you are allowed to use. Ask the workspace Owner (Companies → User Setup).`);
+  }
   async def(user: ErpUser, key: string): Promise<EntityDef> {
     const d = entityDef(key);
     if (!d) throw new NotFoundException(`Unknown register "${key}"`);
     await this.need(user, this.modulesForEntity(key), d.title);
+    await this.needPage(user, (ids) => MENUS.some((m) => ids.includes(m.id) && m.tabs.some((t) => t.entity === key)), d.title);
     return d;
   }
   async needReport(user: ErpUser, name: string) {
     if (!REPORT_MODULE[name]) throw new NotFoundException(`Unknown report "${name}"`);
     await this.need(user, this.modulesForReport(name), 'This report');
+    await this.needPage(user, (ids) => MENUS.some((m) => ids.includes(m.id) && m.tabs.some((t) => t.report === name)), 'This report');
   }
   async menu(user: ErpUser, id: string) {
     const m = menuDef(id);
     if (!m) throw new NotFoundException('Unknown menu item');
     await this.need(user, new Set([moduleOf(id)!]), m.title);
+    await this.needPage(user, (ids) => ids.includes(id), m.title);
     // Task 5 follow-up: the sidebar hides a switched-off item, and this closes the same
     // gap on a direct link / API call — not just a UI-only check any more.
     if (!(await this.access.itemEnabled(user.tenantId, id))) {
@@ -327,6 +339,17 @@ export class ErpService {
       if (d.earning == null) { const v = ex('fleet.vehicle', d.vehicle) ?? {}; const e = r2(num(d.hours) * num(v.hourlyRate) + num(d.km) * num(v.kmRate)); if (e) d.earning = e; }
     }
     if (key === 'fleet.allowance' && d.amount == null) d.amount = r2(num(d.qty) * num(d.rate));
+    if (key === 'fleet.fuel') {
+      if (!(num(d.litres) > 0)) throw new BadRequestException('Litres must be more than 0');
+      if (d.amount == null && d.rate != null) d.amount = r2(num(d.litres) * num(d.rate));
+      if (d.fullTank == null) d.fullTank = true;
+      const v = ex('fleet.vehicle', d.vehicle) ?? {};
+      const others: FuelFill[] = (await this.raw(tenantId, 'fleet.fuel')).filter((r) => r.data.vehicle === d.vehicle && r.id !== cur?.id).map(fuelFill);
+      const me = '__this__';
+      const res = checkFills(fuelVehicle(v), [...others, fuelFill({ id: me, data: d })]).get(me)!;
+      d.check = res.flags.length ? res.flags.join(' · ') : 'OK';
+      d.consumption = res.consumption != null ? `${res.consumption} ${consumptionUnit(fuelVehicle(v))}` : '';
+    }
     if (key === 'project.dailyReport' && d.totalManpower == null) {
       d.totalManpower = num(d.mason) + num(d.labour) + num(d.welder) + num(d.driver) + num(d.supervisor);
     }

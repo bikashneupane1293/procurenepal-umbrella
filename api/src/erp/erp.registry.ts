@@ -115,7 +115,12 @@ export const ENTITIES: EntityDef[] = [
     f('company', 'Owner company', 'ref', { ref: 'company' }), f('make', 'Make'), f('model', 'Model'), f('year', 'Year', 'number'), f('capacity', 'Capacity', 'text', L),
     f('ownership', 'Ownership', 'select', { options: ['OWNED', 'HIRED'], def: 'OWNED' }), f('purchaseDate', 'Purchase date', 'date'), f('purchaseCost', 'Purchase cost (NPR)', 'money'),
     f('hourlyRate', 'Earning rate per hour (NPR)', 'money', { help: 'Used by the daily work log when no earning is typed' }), f('kmRate', 'Earning rate per km (NPR)', 'money'),
-    f('operator', 'Usual operator / driver', 'ref', { ref: 'hr.employee', list: true }), notes] },
+    f('operator', 'Usual operator / driver', 'ref', { ref: 'hr.employee', list: true }),
+    f('fuelType', 'Fuel', 'select', { options: ['DIESEL', 'PETROL', 'ELECTRIC', 'OTHER'], def: 'DIESEL' }),
+    f('meterType', 'Meter counts', 'select', { options: ['KM', 'HOURS'], def: 'KM', help: 'KM for trucks and cars; HOURS for excavators, loaders, rollers' }),
+    f('tankCapacity', 'Tank capacity (litres)', 'number', { help: 'A fill above this is flagged in the Daily Fuel Log' }),
+    f('expectedFuel', 'Expected fuel use', 'number', { help: 'km per litre (KM meter) or litres per hour (HOURS meter) — used for the discrepancy check' }),
+    f('fuelTolerancePct', 'Allowed difference (%)', 'number', { def: 15, help: 'Fuel use worse than expected by more than this is flagged' }), notes] },
   { key: 'fleet.maintenance', title: 'Maintenance and servicing', one: 'maintenance record', labelField: 'description', fields: [
     f('vehicle', 'Vehicle', 'ref', { ref: 'fleet.vehicle', req: true, list: true }), date,
     f('type', 'Type', 'select', { options: ['SERVICE', 'REPAIR', 'TYRE', 'BATTERY', 'OTHER'], list: true, def: 'SERVICE' }), f('meter', 'Meter reading (km / hours)', 'number'),
@@ -132,8 +137,20 @@ export const ENTITIES: EntityDef[] = [
   { key: 'fleet.log', title: 'Daily work log', one: 'work log', labelField: 'workDone', fields: [
     date, f('vehicle', 'Vehicle', 'ref', { ref: 'fleet.vehicle', req: true, list: true }), f('project', 'Project', 'ref', { ref: 'project', list: true }),
     f('operator', 'Operator / driver', 'ref', { ref: 'hr.employee' }), f('startMeter', 'Start meter', 'number'), f('endMeter', 'End meter', 'number'),
-    f('hours', 'Hours worked', 'number', L), f('km', 'Km run', 'number', { list: true, help: 'Blank = end meter − start meter' }), f('fuelLitres', 'Fuel (litres)', 'number', L),
-    f('fuelCost', 'Fuel cost (NPR)', 'money'), f('workDone', 'Work done', 'text'), f('earning', 'Earning (NPR)', 'money', { list: true, help: 'Blank = hours × hourly rate + km × km rate' }), notes] },
+    f('hours', 'Hours worked', 'number', L), f('km', 'Km run', 'number', { list: true, help: 'Blank = end meter − start meter' }), f('fuelLitres', 'Fuel (litres)', 'number', { list: true, help: 'Leave blank if fuel is entered in the Daily Fuel Log' }),
+    f('fuelCost', 'Fuel cost (NPR)', 'money', { help: 'Leave blank if fuel is entered in the Daily Fuel Log' }), f('workDone', 'Work done', 'text'), f('earning', 'Earning (NPR)', 'money', { list: true, help: 'Blank = hours × hourly rate + km × km rate' }), notes] },
+  { key: 'fleet.fuel', title: 'Fuel log', one: 'fuel entry', labelField: 'billNo',
+    help: 'Enter every fill with the meter reading. Tick "Full tank" when filled to full — fuel use is measured full tank to full tank and checked against the vehicle\'s expected fuel use.',
+    fields: [
+      date, f('vehicle', 'Vehicle', 'ref', { ref: 'fleet.vehicle', req: true, list: true }),
+      f('meter', 'Meter reading at fill (km or hours)', 'number', { req: true, list: true }),
+      f('litres', 'Litres', 'number', R), f('rate', 'Rate per litre (NPR)', 'money'),
+      f('amount', 'Amount (NPR)', 'money', { list: true, help: 'Blank = litres × rate' }),
+      f('fullTank', 'Full tank', 'bool', { def: true, list: true }),
+      f('station', 'Fuel station / supplier', 'text'), f('billNo', 'Bill / coupon no.', 'text', L),
+      f('driver', 'Driver / operator', 'ref', { ref: 'hr.employee' }), f('project', 'Project', 'ref', { ref: 'project' }),
+      f('consumption', 'Fuel use since last full tank', 'text', { calc: true, list: true }),
+      f('check', 'Check', 'text', { calc: true, list: true }), notes] },
   { key: 'fleet.trip', title: 'Trips', one: 'trip', series: 'TRP', labelField: 'material', fields: [
     date, f('vehicle', 'Vehicle', 'ref', { ref: 'fleet.vehicle', req: true, list: true }), f('driver', 'Driver', 'ref', { ref: 'hr.employee' }), f('from', 'From', 'text', L), f('to', 'To', 'text', L),
     f('km', 'Km', 'number'), f('material', 'Material carried', 'text', L), f('qty', 'Quantity', 'number'), f('unit', 'Unit'), f('project', 'Project', 'ref', { ref: 'project' }),
@@ -283,6 +300,7 @@ export const MENUS: MenuDef[] = [
   { id: 'fleet.maintenance', title: 'Maintenance and Servicing', about: 'Services, repairs and when the next one is due.', tabs: [E('fleet.maintenance')] },
   { id: 'fleet.tax', title: 'Vehicle Tax and Insurance', about: 'Tax, insurance and blue-book renewals with expiry alerts.', tabs: [E('fleet.tax'), P('fleet-expiry', 'Expiring and due')] },
   { id: 'fleet.movement', title: 'Vehicle Movement and Fleet', about: 'Which project or place each vehicle is assigned to.', tabs: [E('fleet.movement'), P('fleet-where', 'Where is each vehicle')] },
+  { id: 'fleet.fuel', title: 'Daily Fuel Log', about: 'Every fill with meter reading, litres and bill — checked automatically for over-tank fills, meter going backwards, repeated fills, rate jumps and fuel use worse than expected.', tabs: [E('fleet.fuel'), P('fleet-fuel', 'Fuel discrepancy check', range)] },
   { id: 'fleet.logs', title: 'Daily Vehicle Work Log', about: 'Daily hours / km, fuel and operator.', tabs: [E('fleet.log')] },
   { id: 'fleet.trips', title: 'Vehicle Trip Management', about: 'Trips for material delivery and dispatch.', tabs: [E('fleet.trip')] },
   { id: 'fleet.earnings', title: 'Vehicle-wise Earning and Expense', about: 'Income and cost per vehicle from logs, trips, maintenance, renewals and allowances.', tabs: [P('fleet-earnings', 'Earning and expense', range), E('fleet.txn')] },
@@ -318,7 +336,7 @@ export const moduleOf = (key: string) => PREFIX_MODULE[key.split('.')[0]] ?? nul
 /** which module a report belongs to */
 export const REPORT_MODULE: Record<string, string> = {
   stock: 'procurement', compare: 'procurement', payables: 'procurement',
-  'fleet-expiry': 'fleet', 'fleet-where': 'fleet', 'fleet-earnings': 'fleet',
+  'fleet-expiry': 'fleet', 'fleet-where': 'fleet', 'fleet-earnings': 'fleet', 'fleet-fuel': 'fleet',
   'material-plan': 'project', scurve: 'project', progress: 'project', portfolio: 'project', 'petty-materials': 'project', 'doc-expiry': 'project',
   amortization: 'bank', finance: 'bank', 'bank-loan': 'bank',
   'bidder-profile': 'bolpatra',

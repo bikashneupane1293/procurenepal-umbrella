@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { API_URL } from './config';
+import { API_URL, HOME_URL } from './config';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -37,11 +37,14 @@ export class AuthService {
     }
   }
 
-  logout(): void {
+  /** toHome = the person pressed Logout: go back to the ProcureNepal home page (procurenepal.com).
+   *  An expired session (401) still goes to the sign-in page. */
+  logout(toHome = false): void {
     // best-effort: close the sign-in session on the server (Task 5 login history)
     this.http.post(`${API_URL}/auth/logout`, {}).subscribe({ next: () => {}, error: () => {} });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    if (toHome && location.hostname.endsWith('procurenepal.com')) { location.href = HOME_URL; return; }
     this.router.navigate(['/login']);
   }
 }

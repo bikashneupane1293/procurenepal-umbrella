@@ -27,7 +27,7 @@ describe('ERP registry', () => {
     }
     expect(new Set(ENTITIES.map((e) => e.key)).size).toBe(ENTITIES.length);
     // 41 at Task 4; +1 project.daily-report (Task 5); +2 bolpatra.litigation / bolpatra.bidder-profile (Task 5c).
-    expect(MENUS).toHaveLength(44);
+    expect(MENUS).toHaveLength(45); // +1 fleet.fuel (Daily Fuel Log)
   });
 });
 

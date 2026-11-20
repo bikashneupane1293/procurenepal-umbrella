@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from './config';
-import { MENU } from './modules';
+import { MENU, itemById } from './modules';
 
 export interface AccessInfo {
   role: string;
@@ -11,6 +11,8 @@ export interface AccessInfo {
   modules: string[];
   workspaceModules: Record<string, boolean>;
   itemFlags?: Record<string, boolean>;
+  /** Only these pages for this person (e.g. ['fleet.fuel'] = fuel entry only); null = no page limit */
+  userItems?: string[] | null;
   /** The workspace's plan and the module keys it may use (Task 8/9). Both are null when no plan
    *  has ever been recorded — meaning unrestricted, not "no modules". planCustom = true when
    *  Super Admin chose this workspace's modules explicitly (overriding the plan's defaults). */
@@ -48,8 +50,16 @@ export class AccessService {
 
   /** A single sidebar item switched off for the workspace (default: on). */
   canItem(itemId: string): boolean {
-    const f = this.info()?.itemFlags;
-    return f?.[itemId] !== false;
+    const i = this.info();
+    if (i?.userItems && !i.userItems.includes(itemId)) return false;
+    return i?.itemFlags?.[itemId] !== false;
+  }
+
+  /** For a person limited to some pages: the routes they may open (else null). */
+  limitedRoutes(): string[] | null {
+    const u = this.info()?.userItems;
+    if (!u) return null;
+    return u.map((id) => itemById(id)?.route).filter((r): r is string => !!r);
   }
 
   clear() { this.info.set(null); }

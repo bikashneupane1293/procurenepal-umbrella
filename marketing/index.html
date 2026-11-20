@@ -40,6 +40,12 @@
   .brand .gold { color: var(--gold); }
   nav.top a { color: #e8eef6; margin-left: 22px; font-size: 14px; font-weight: 600; }
   nav.top a:hover { color: var(--gold-2); }
+  form.quick { display: flex; align-items: center; gap: 8px; margin-left: 22px; position: relative; }
+  form.quick input { width: 170px; padding: 9px 11px; border-radius: 8px; border: 1px solid #2c4a73; background: #10294d; color: #fff; font-size: 13px; }
+  form.quick input::placeholder { color: #8fa3bd; }
+  form.quick input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+  .qmsg { position: absolute; top: 100%; right: 0; margin-top: 6px; max-width: 360px; font-size: 12px; line-height: 1.4; padding: 0; color: #fde68a; text-align: right; }
+  .qmsg.bad { color: #fecaca; }
   .btn {
     display: inline-block;
     padding: 10px 22px;
@@ -114,6 +120,8 @@
   footer.site a { color: #cdd8e6; }
   footer.site a:hover { color: var(--gold-2); }
 
+  @media (max-width: 1100px) { form.quick input { width: 130px; } }
+  @media (max-width: 980px) { form.quick input { display: none; } }
   @media (max-width: 860px) {
     .grid { grid-template-columns: 1fr 1fr; }
     .why-grid { grid-template-columns: 1fr; }
@@ -130,13 +138,19 @@
 
 <header class="site">
   <div class="wrap">
-    <div class="brand"><span class="gold">Procure</span>Nepal</div>
+    <a class="brand" href="https://procurenepal.com/"><span class="gold">Procure</span>Nepal</a>
     <nav class="top">
       <a href="#features">Features</a>
       <a href="#why">Why ProcureNepal</a>
       <a href="#pricing">Pricing</a>
-      <a href="https://app.procurenepal.com" class="btn gold" style="margin-left:22px">Open the app</a>
     </nav>
+    <!-- Quick sign-in: email + password here opens the dashboard straight away; empty opens the app's sign-in page -->
+    <form class="quick" id="quick" novalidate>
+      <input id="qe" type="email" placeholder="Email" autocomplete="username" aria-label="Email" />
+      <input id="qp" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password" />
+      <button class="btn gold" id="qb" type="submit">Open the app</button>
+      <div class="qmsg" id="qm" role="status"></div>
+    </form>
   </div>
 </header>
 
@@ -248,6 +262,40 @@
 </footer>
 
 <script>
+// Quick sign-in from the home page. Email + password → sign in here, then hand the session to the
+// app through the URL fragment (#…, never sent to any server; the app removes it at once).
+// Both empty → the app's own sign-in page. While the free server wakes up, it quietly retries.
+(function () {
+  var API = 'https://procurenepal-api.onrender.com', APP = 'https://app.procurenepal.com';
+  var f = document.getElementById('quick'), e = document.getElementById('qe'), p = document.getElementById('qp'),
+      b = document.getElementById('qb'), m = document.getElementById('qm');
+  var say = function (t, bad) { m.textContent = t || ''; m.className = 'qmsg' + (bad ? ' bad' : ''); };
+  function attempt(email, pw, left) {
+    return fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pw }) })
+      .then(function (r) {
+        if ((r.status === 502 || r.status === 503 || r.status === 504) && left > 0) return wait().then(function () { return attempt(email, pw, left - 1); });
+        return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, body: j }; });
+      }, function () { return left > 0 ? wait().then(function () { return attempt(email, pw, left - 1); }) : { ok: false, body: { message: 'Could not reach the server. Check your internet connection and try again.' } }; });
+  }
+  function wait() { return new Promise(function (res) { setTimeout(res, 3000); }); }
+  f.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var email = e.value.trim(), pw = p.value;
+    if (!email && !pw) { location.href = APP + '/login'; return; }
+    if (!email || !pw) { say('Enter both email and password — or leave both empty to open the sign-in page.', true); return; }
+    b.disabled = true; b.textContent = 'Signing in…'; say('');
+    attempt(email, pw, 30).then(function (r) {
+      if (r.ok && r.body.access_token) {
+        location.href = APP + '/handoff#t=' + encodeURIComponent(r.body.access_token) + '&u=' + encodeURIComponent(JSON.stringify(r.body.user || {}));
+        return;
+      }
+      var msg = r.body && r.body.message; if (Array.isArray(msg)) msg = msg.join(' ');
+      say(msg || 'Sign-in failed.', true);
+      b.disabled = false; b.textContent = 'Open the app';
+    });
+  });
+})();
+
 // Footer year in Nepal Time (UTC+05:45).
 document.getElementById('y').textContent = new Date(Date.now() + 345 * 60000).getUTCFullYear();
 

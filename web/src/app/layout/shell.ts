@@ -7,6 +7,7 @@ import { I18nService } from '../core/i18n.service';
 import { MENU, MenuModule, moduleOfRoute } from '../core/modules';
 import { DataService } from '../core/data.service';
 import { nptToday } from '../core/nepal-time';
+import { HOME_URL } from '../core/config';
 
 const OPEN_KEY = 'pn.menu.open';
 
@@ -17,9 +18,12 @@ const OPEN_KEY = 'pn.menu.open';
   template: `
     <div class="shell">
       <aside class="sidebar">
-        <div class="brand"><span class="gold">Procure</span>Nepal</div>
+        <a class="brand" [href]="home" title="ProcureNepal home page"><span class="gold">Procure</span>Nepal</a>
         <nav>
-          <a class="item top" routerLink="/dashboard" routerLinkActive="active">🏠 {{ i18n.t('dashboard') }}</a>
+          <a class="item top" [href]="home">🌐 Home page</a>
+          @if (!limited()) {
+            <a class="item top" routerLink="/dashboard" routerLinkActive="active">🏠 {{ i18n.t('dashboard') }}</a>
+          }
           @if (user?.role === 'SUPER_ADMIN') {
             <a class="item top" routerLink="/admin" routerLinkActive="active">🛡️ Admin Panel</a>
           }
@@ -31,7 +35,7 @@ const OPEN_KEY = 'pn.menu.open';
               </button>
               @if (isOpen(m.key)) {
                 <div class="gitems">
-                  @if (m.route) {
+                  @if (m.route && !limited()) {
                     <a class="item sub" [routerLink]="m.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Overview & templates</a>
                   }
                   @for (i of m.items; track i.id) {
@@ -70,7 +74,8 @@ const OPEN_KEY = 'pn.menu.open';
     :host { display: block; min-height: 100vh; background: #f8f9fa; color: #1f2937; }
     .shell { display: flex; min-height: 100vh; }
     .sidebar { width: 270px; background: #0a1f3d; color: #fff; padding: 24px 14px; flex-shrink: 0; overflow-y: auto; max-height: 100vh; position: sticky; top: 0; }
-    .brand { font-size: 22px; font-weight: 800; margin: 0 8px 24px; }
+    .brand { display: block; font-size: 22px; font-weight: 800; margin: 0 8px 24px; color: #fff; text-decoration: none; }
+    .brand:hover { opacity: .9; }
     .gold { color: #d4a017; }
     nav { display: flex; flex-direction: column; gap: 2px; }
     .item { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; color: #e8eef6; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; font-size: 14px; }
@@ -138,8 +143,12 @@ export class ShellLayout {
   private open = signal<Set<string>>(this.readOpen());
   visible = computed<MenuModule[]>(() => {
     this.access.info(); // re-run when access info arrives
-    return MENU.filter((m) => this.access.can(m.key));
+    const lim = this.access.info()?.userItems;
+    return MENU.filter((m) => this.access.can(m.key) && (!lim || m.items.some((i) => lim.includes(i.id) && this.access.canItem(i.id))));
   });
+  /** limited to some pages (e.g. fuel entry only): no Dashboard / module overviews */
+  limited = computed(() => !!this.access.info()?.userItems);
+  home = HOME_URL;
 
   constructor() {
     this.access.load(true);
@@ -178,6 +187,6 @@ export class ShellLayout {
 
   logout() {
     this.access.clear();
-    this.auth.logout();
+    this.auth.logout(true);
   }
 }

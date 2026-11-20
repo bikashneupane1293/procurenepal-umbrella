@@ -4,7 +4,7 @@ import { AccessService } from '../../core/access.service';
 import { AuthService } from '../../core/auth.service';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
-import { MENU } from '../../core/modules';
+import { MENU, itemById } from '../../core/modules';
 import { showBoth } from '../../core/nepali-date';
 
 const ROLES: { value: string; label: string }[] = [
@@ -167,8 +167,22 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
           }
         </div>
         <h3>Modules this user can open</h3>
+        <label class="inline all"><input type="checkbox" name="pagesOnly" [(ngModel)]="f.pagesOnly" /> Only specific pages (for example a driver who may only enter fuel in the Daily Fuel Log)</label>
+        @if (f.pagesOnly) {
+          <div class="help">This person sees only the pages ticked below — no Dashboard, no other pages. Drop-down lists they need (vehicles, employees, projects) still work.</div>
+          <div class="pages">
+            @for (m of pageMenu; track m.key) {
+              <div class="pgroup"><strong>{{ m.icon }} {{ m.label }}</strong>
+                @for (i of m.items; track i.id) {
+                  <label class="inline"><input type="checkbox" [checked]="f.items.includes(i.id)" (change)="toggleItem(i.id)" /> {{ i.label }}</label>
+                }
+              </div>
+            }
+          </div>
+        } @else {
         <label class="inline all"><input type="checkbox" name="allMods" [(ngModel)]="f.allModules" /> All modules active in the workspace (recommended for Owners and Directors)</label>
-        @if (!f.allModules) {
+        }
+        @if (!f.allModules && !f.pagesOnly) {
           <div class="mods">
             @for (m of menu; track m.key) {
               <label class="mod" [class.off]="!ws[m.key]">
@@ -244,6 +258,9 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     }
   `,
   styles: [UI_STYLES, `
+    .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 20px; margin: 8px 0 12px; }
+    .pgroup { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .pgroup strong { color: #0a1f3d; margin-bottom: 2px; }
     h3 { font-size: 14px; color: #b8860b; text-transform: uppercase; letter-spacing: .04em; margin: 20px 0 10px; }
     .mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin: 8px 0; }
     .mod { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border: 1px solid #e1e3e6; border-radius: 8px; padding: 10px 12px; font-weight: 600; color: #0a1f3d; margin: 0; cursor: pointer; }
@@ -388,13 +405,20 @@ export class UsersPage {
   }
 
   empty() {
-    return { email: '', fullName: '', phone: '', role: 'VIEWER', password: '', customTitle: '', isActive: true, allModules: true, modules: [] as string[] };
+    return { email: '', fullName: '', phone: '', role: 'VIEWER', password: '', customTitle: '', isActive: true, allModules: true, modules: [] as string[], pagesOnly: false, items: [] as string[] };
   }
   both(d: any) { return showBoth(String(d)); }
   builtCount(key: string) { return MENU.find((m) => m.key === key)!.items.filter((i) => i.status === 'built').length; }
   modLabel(u: any) {
     if (['OWNER', 'SUPER_ADMIN'].includes(u.role) || !u.modules?.length) return 'All active modules';
+    const items = u.modules.filter((k: string) => k.startsWith('item:'));
+    if (items.length) return 'Only: ' + items.map((k: string) => itemById(k.slice(5))?.label ?? k.slice(5)).join(', ');
     return ['companies', ...u.modules].map((k: string) => MENU.find((m) => m.key === k)?.label ?? k).join(', ');
+  }
+  /** pages that can be given on their own (built, outside the Companies module) */
+  pageMenu = MENU.filter((m) => !m.core).map((m) => ({ ...m, items: m.items.filter((i) => i.status === 'built') })).filter((m) => m.items.length);
+  toggleItem(id: string) {
+    this.f.items = this.f.items.includes(id) ? this.f.items.filter((k) => k !== id) : [...this.f.items, id];
   }
   toggleMod(key: string) {
     this.f.modules = this.f.modules.includes(key) ? this.f.modules.filter((k) => k !== key) : [...this.f.modules, key];
@@ -416,7 +440,10 @@ export class UsersPage {
     this.editId.set(u.id);
     this.f = {
       email: u.email, fullName: u.fullName ?? '', phone: u.phone ?? '', role: u.role, password: '',
-      customTitle: u.customTitle ?? '', isActive: u.isActive, allModules: !u.modules?.length, modules: [...(u.modules ?? [])],
+      customTitle: u.customTitle ?? '', isActive: u.isActive, allModules: !u.modules?.length,
+      modules: (u.modules ?? []).filter((k: string) => !k.startsWith('item:')),
+      pagesOnly: (u.modules ?? []).some((k: string) => k.startsWith('item:')),
+      items: (u.modules ?? []).filter((k: string) => k.startsWith('item:')).map((k: string) => k.slice(5)),
     };
     this.formError.set('');
     this.okMsg.set('');
@@ -431,8 +458,12 @@ export class UsersPage {
     if (!editing && !/^\S+@\S+\.\S+$/.test(f.email.trim())) { this.formError.set('Please enter a valid email.'); return; }
     if (!f.fullName.trim()) { this.formError.set('Please enter the full name.'); return; }
     if (f.password && !PASSWORD.test(f.password)) { this.formError.set('Password must be at least 8 characters with a letter and a number.'); return; }
-    const modules = f.allModules ? [] : f.modules.filter((k) => k !== 'companies');
-    if (!f.allModules && !modules.length) { this.formError.set('Tick at least one module, or choose "All modules".'); return; }
+    let modules = f.allModules ? [] : f.modules.filter((k) => k !== 'companies');
+    if (f.pagesOnly) {
+      if (!f.items.length) { this.formError.set('Tick at least one page, or untick "Only specific pages".'); return; }
+      if (['OWNER', 'SUPER_ADMIN'].includes(f.role)) { this.formError.set('Owners always see everything — page limits are for other roles.'); return; }
+      modules = f.items.map((id) => 'item:' + id);
+    } else if (!f.allModules && !modules.length) { this.formError.set('Tick at least one module, or choose "All modules".'); return; }
     const body: any = { fullName: f.fullName.trim(), phone: f.phone.trim(), role: f.role, modules, customTitle: f.customTitle.trim() };
     if (f.password) body.password = f.password;
     if (editing) body.isActive = f.isActive; else body.email = f.email.trim();

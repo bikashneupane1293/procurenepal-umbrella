@@ -72,6 +72,7 @@ export const MENU: MenuModule[] = [
       erp('fleet.maintenance', 'Maintenance and Servicing', 'Service schedules, repairs and parts used.', ['fleet.vehicles', 'proc.site-warehouse']),
       erp('fleet.tax', 'Vehicle Tax and Insurance', 'Tax, insurance and blue-book renewals with expiry alerts.', ['fleet.vehicles']),
       erp('fleet.movement', 'Vehicle Movement and Fleet', 'Where each vehicle is and which project uses it.', ['project.info', 'fleet.trips']),
+      erp('fleet.fuel', 'Daily Fuel Log', 'Every fill with meter reading and bill — automatic checks for over-tank fills, meter going backwards, repeated fills, rate jumps and fuel use worse than expected.', ['fleet.vehicles', 'fleet.earnings']),
       erp('fleet.logs', 'Daily Vehicle Work Log', 'Daily hours / km, fuel and operator.', ['fleet.earnings', 'project.progress']),
       erp('fleet.trips', 'Vehicle Trip Management', 'Trips for material delivery and dispatch.', ['proc.dispatch', 'fleet.logs']),
       erp('fleet.earnings', 'Vehicle-wise Earning and Expense', 'Income and cost per vehicle.', ['fleet.logs', 'bank.finance']),

@@ -43,7 +43,7 @@ export class CreateUserDto {
 
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(80)
   @IsOptional()
   modules?: string[];
 
@@ -77,7 +77,7 @@ export class UpdateUserDto {
 
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(80)
   @IsOptional()
   modules?: string[];
 

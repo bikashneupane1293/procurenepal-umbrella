@@ -50,6 +50,10 @@ const PUBLIC_USER = {
 
 const ACTIVATION_DAYS = 7;
 const ITEM_KEY = /^[a-z0-9.\-]{1,60}$/i;
+/** A user's `modules` list may also hold "item:<menu id>" entries (e.g. "item:fleet.fuel"):
+ *  then that person sees ONLY those pages — e.g. a driver who may only enter fuel. */
+export const ITEM_PREFIX = 'item:';
+export const moduleOfItem = (id: string) => { const p = id.split('.')[0]; return p === 'proc' ? 'procurement' : p; };
 
 @Injectable()
 export class AccessService {
@@ -213,9 +217,18 @@ export class AccessService {
     const active = MODULE_KEYS.filter((k) => tm[k]);
     if (ALL_ACCESS_ROLES.includes(role)) return active;
     const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId }, select: { modules: true } });
-    const own: string[] = user?.modules ?? [];
-    if (!own.length) return active; // no limit set → every active module
-    return active.filter((k) => MODULES.find((m) => m.key === k)?.core || own.includes(k));
+    const list: string[] = user?.modules ?? [];
+    if (!list.length) return active; // no limit set → every active module
+    const own = new Set(list.map((k) => (k.startsWith(ITEM_PREFIX) ? moduleOfItem(k.slice(ITEM_PREFIX.length)) : k)));
+    return active.filter((k) => MODULES.find((m) => m.key === k)?.core || own.has(k));
+  }
+
+  /** The only pages this person may open, or null = no page limit (only module limits apply). */
+  async userItems(tenantId: string, userId: string, role: string): Promise<string[] | null> {
+    if (ALL_ACCESS_ROLES.includes(role)) return null;
+    const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId }, select: { modules: true } });
+    const items = (user?.modules ?? []).filter((k) => k.startsWith(ITEM_PREFIX)).map((k) => k.slice(ITEM_PREFIX.length));
+    return items.length ? items : null;
   }
 
   async me(tenantId: string, userId: string, role: string) {
@@ -228,6 +241,7 @@ export class AccessService {
       modules: await this.effectiveModules(tenantId, userId, role),
       workspaceModules: await this.tenantModules(tenantId),
       itemFlags: await this.tenantItems(tenantId),
+      userItems: await this.userItems(tenantId, userId, role),
       registry: MODULES,
       plan,
       planModules: unlockedModules,
@@ -244,7 +258,9 @@ export class AccessService {
   }
 
   private checkModules(mods?: string[]) {
-    const bad = (mods ?? []).filter((m) => !MODULE_KEYS.includes(m));
+    const bad = (mods ?? []).filter((m) => m.startsWith(ITEM_PREFIX)
+      ? !(ITEM_KEY.test(m.slice(ITEM_PREFIX.length)) && m.includes('.') && MODULE_KEYS.includes(moduleOfItem(m.slice(ITEM_PREFIX.length))))
+      : !MODULE_KEYS.includes(m));
     if (bad.length) throw new BadRequestException(`Unknown module(s): ${bad.join(', ')}`);
   }
 

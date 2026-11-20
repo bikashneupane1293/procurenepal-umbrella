@@ -10,15 +10,16 @@ export const routes: Routes = [
   { path: 'login', component: LoginPage },
   { path: 'activate', loadComponent: () => import('./pages/activate/activate').then((m) => m.ActivatePage) },
   // Task 12 — join a company with its Org ID, or create a free account (public)
+  { path: 'handoff', loadComponent: () => import('./pages/handoff/handoff').then((m) => m.HandoffPage) },
   { path: 'join', loadComponent: () => import('./pages/join/join').then((m) => m.JoinPage) },
   {
     path: '',
     component: ShellLayout,
     canActivate: [authGuard],
     children: [
-      { path: 'dashboard', component: DashboardPage },
-      { path: 'companies', component: CompaniesPage },
-      { path: 'users', loadComponent: () => import('./pages/users/users').then((m) => m.UsersPage) },
+      { path: 'dashboard', canActivate: [moduleGuard], component: DashboardPage },
+      { path: 'companies', canActivate: [moduleGuard], component: CompaniesPage },
+      { path: 'users', canActivate: [moduleGuard], loadComponent: () => import('./pages/users/users').then((m) => m.UsersPage) },
       { path: 'bolpatra', canActivate: [moduleGuard], loadComponent: () => import('./pages/bolpatra/bolpatra').then((m) => m.BolpatraPage) },
       { path: 'certificates', canActivate: [moduleGuard], loadComponent: () => import('./pages/certificates/certificates').then((m) => m.CertificatesPage) },
       // Tender + qualification screens load on demand (smaller first download)
