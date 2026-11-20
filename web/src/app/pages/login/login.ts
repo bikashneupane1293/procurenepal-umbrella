@@ -7,6 +7,7 @@ import { renderGoogleButton } from '../../core/google-signin';
 import { ApiService } from '../../api.service';
 import { AuthService } from '../../core/auth.service';
 import { API_URL } from '../../core/config';
+import { retry, throwError, timer } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -26,9 +27,6 @@ export class LoginPage {
   loading = false;
   errorMsg = '';
   successMsg = '';
-  /** The API sleeps on free hosting after ~15 min idle; we wake it as soon as this page opens. */
-  server: 'checking' | 'waking' | 'ready' | 'offline' = 'checking';
-  slowLogin = false;
   // Task 12 — Sign in with Google (shown only when the server has GOOGLE_CLIENT_ID set)
   private data = inject(DataService);
   googleClientId: string | null = null;
@@ -60,15 +58,10 @@ export class LoginPage {
     this.cdr.detectChanges();
   }
 
+  /** The API sleeps on free hosting after ~15 min idle. Wake it quietly as soon as this page opens —
+   *  no status messages; Sign In simply waits and retries until the server answers. */
   private wake() {
-    const started = Date.now();
-    const slow = setTimeout(() => { if (this.server === 'checking') { this.server = 'waking'; this.cdr.detectChanges(); } }, 2500);
-    const ctrl = new AbortController();
-    const giveUp = setTimeout(() => ctrl.abort(), 90000);
-    fetch(`${API_URL}/`, { signal: ctrl.signal, cache: 'no-store' })
-      .then(() => { this.server = 'ready'; })
-      .catch(() => { this.server = Date.now() - started > 85000 ? 'offline' : 'ready'; })
-      .finally(() => { clearTimeout(slow); clearTimeout(giveUp); this.cdr.detectChanges(); });
+    fetch(`${API_URL}/`, { cache: 'no-store' }).catch(() => { /* still starting — Sign In retries */ });
   }
 
   // Pressing Enter inside the Email or Password box signs you in
@@ -85,25 +78,26 @@ export class LoginPage {
     this.loading = true;
     this.errorMsg = '';
     this.successMsg = '';
-    this.slowLogin = false;
-    const slow = setTimeout(() => { if (this.loading) { this.slowLogin = true; this.cdr.detectChanges(); } }, 4000);
     this.cdr.detectChanges();
 
-    this.api.login(this.email, this.password).subscribe({
+    // One click: while the server is starting (no answer / 502 / 503 / 504) keep retrying every
+    // 3 seconds for up to ~90 seconds. A wrong password (401) or other answer stops at once.
+    const starting = (e: any) => !e?.status || e.status === 502 || e.status === 503 || e.status === 504;
+    this.api.login(this.email, this.password).pipe(
+      retry({ count: 30, delay: (e) => (starting(e) ? timer(3000) : throwError(() => e)) }),
+    ).subscribe({
       next: (res: any) => {
-        clearTimeout(slow);
         this.auth.saveSession(res.access_token, res.user);
         this.loading = false;
-        this.slowLogin = false;
         this.successMsg = `Welcome ${res.user.email}! Opening your dashboard...`;
         this.cdr.detectChanges();
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        clearTimeout(slow);
         this.loading = false;
-        this.slowLogin = false;
-        this.errorMsg = err.error?.message || err.message || 'Invalid credentials';
+        this.errorMsg = starting(err)
+          ? 'Could not reach the server. Check your internet connection and try again.'
+          : err.error?.message || err.message || 'Invalid credentials';
         this.cdr.detectChanges();
       },
     });

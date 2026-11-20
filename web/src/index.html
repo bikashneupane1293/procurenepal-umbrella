@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Web</title>
+  <title>ProcureNepal</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Wake the API (free hosting sleeps after ~15 min idle) the moment any page starts loading -->
+  <script>try { fetch('https://procurenepal-api.onrender.com/', { cache: 'no-store', mode: 'no-cors' }).catch(function () {}); } catch (e) {}</script>
 </head>
 <body>
   <app-root></app-root>
