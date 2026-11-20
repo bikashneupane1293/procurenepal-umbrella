@@ -12,25 +12,41 @@ function ensureWorker() {
   workerReady = true;
 }
 
-export interface PdfText { text: string; pages: number; scanned: boolean; }
+export interface PdfText {
+  text: string;
+  pages: number;
+  scanned: boolean;
+  /** Pages read (≤ maxPages). */
+  pagesRead: number;
+  /** Page numbers with (almost) no selectable text — scanned images, drawings or blank pages. */
+  emptyPages: number[];
+}
 
-/** Returns the PDF's text with one line per visual line. scanned=true when there is almost no text (image PDF). */
-export async function readPdfText(file: File | ArrayBuffer, maxPages = 30): Promise<PdfText> {
+/**
+ * Returns the PDF's text with one line per visual line. scanned=true when there is almost no text
+ * (image PDF). onPage reports progress for long documents (300-page bidding documents are common).
+ */
+export async function readPdfText(file: File | ArrayBuffer, maxPages = 30, onPage?: (page: number, of: number) => void): Promise<PdfText> {
   ensureWorker();
   const data = file instanceof ArrayBuffer ? new Uint8Array(file) : new Uint8Array(await file.arrayBuffer());
   const task = pdfjs.getDocument({ data });
   const doc = await task.promise;
   const out: string[] = [];
+  const emptyPages: number[] = [];
   const n = Math.min(doc.numPages, maxPages);
   for (let p = 1; p <= n; p++) {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
-    out.push(itemsToLines(content.items as any[]));
+    const lines = itemsToLines(content.items as any[]);
+    if (lines.replace(/\s/g, '').length < 20) emptyPages.push(p);
+    out.push(lines);
+    page.cleanup();
+    onPage?.(p, n);
   }
   const pages = doc.numPages;
   await task.destroy();
   const text = cleanupText(out.join('\n'));
-  return { text, pages, scanned: text.replace(/\s/g, '').length < 40 };
+  return { text, pages, pagesRead: n, emptyPages, scanned: text.replace(/\s/g, '').length < 40 };
 }
 
 /** Common PDF-export artifacts that confuse plain keyword/regex matching if left in. */

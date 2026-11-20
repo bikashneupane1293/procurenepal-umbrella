@@ -6,6 +6,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GRANTABLE_MODULE_KEYS, PLAN_MODULES } from '../access/module-registry';
+import { nptToday } from '../common/nepal-time';
 
 export const PLAN_KEYS = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'] as const;
 export const PERIODS = ['MONTHLY', 'YEARLY'] as const;
@@ -149,7 +150,7 @@ export class PricingService {
     const fail = (why: string): Quote => ({ ...base, promoError: why });
     if (!promo) return fail(`Promo code ${c} does not exist`);
     if (!promo.active) return fail(`Promo code ${c} is switched off`);
-    const day = today.toISOString().slice(0, 10);
+    const day = nptToday(today); // promo dates follow Nepal Time
     if (promo.validFrom && day < promo.validFrom) return fail(`Promo code ${c} starts on ${promo.validFrom}`);
     if (promo.validTo && day > promo.validTo) return fail(`Promo code ${c} ended on ${promo.validTo}`);
     if (promo.plans.length && !promo.plans.includes(plan)) return fail(`Promo code ${c} does not apply to the ${plan} plan`);

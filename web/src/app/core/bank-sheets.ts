@@ -3,13 +3,14 @@
 import * as XLSX from 'xlsx';
 import { autoWidth, dateStr, num, txt } from './excel';
 import type { SheetRow } from './sheets';
+import { nptToday } from './nepal-time';
 
 export const GUARANTEE_TYPE_LIST = ['BID_SECURITY', 'PERFORMANCE', 'ADVANCE_PAYMENT', 'RETENTION', 'CUSTOMS', 'OTHER'];
 export const GUARANTEE_STATUS_LIST = ['REQUESTED', 'ACTIVE', 'RELEASED', 'EXPIRED', 'CLAIMED', 'CANCELLED'];
 const BASES = ['QUARTER', 'YEAR', 'FLAT'];
 const ACCOUNT_TYPES = ['CURRENT', 'SAVINGS', 'OVERDRAFT', 'FIXED', 'OTHER'];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => nptToday();
 const d10 = (v: any) => (v ? String(v).slice(0, 10) : '');
 const n0 = (v: any) => (v === null || v === undefined || v === '' ? '' : Number(v));
 const key = (v: any) => txt(v).toUpperCase().replace(/[\s-]+/g, '_');

@@ -7,10 +7,12 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { FakePrisma } from './fake-prisma';
 import { ENTITIES, MENUS, entityDef, REPORT_MODULE } from '../src/erp/erp.registry';
+import { addNptDays, nptToday } from '../src/common/nepal-time';
 
 process.env.JWT_ACCESS_SECRET = 'test-secret-only';
-const today = new Date().toISOString().slice(0, 10);
-const inDays = (k: number) => new Date(Date.now() + k * 86_400_000).toISOString().slice(0, 10);
+// Nepal Time, like the ERP engine itself (UTC dates are a day behind between 00:00 and 05:45 NPT)
+const today = nptToday();
+const inDays = (k: number) => addNptDays(nptToday(), k);
 
 describe('ERP registry', () => {
   it('every menu tab points at a defined register or report, and every link field at a known list', () => {

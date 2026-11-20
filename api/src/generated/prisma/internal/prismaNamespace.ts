@@ -405,6 +405,8 @@ export const ModelName = {
   Company: 'Company',
   Certificate: 'Certificate',
   Tender: 'Tender',
+  StaffInvite: 'StaffInvite',
+  TenderRequirement: 'TenderRequirement',
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog',
@@ -431,7 +433,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "subscription" | "platformSetting" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem" | "erpRecord" | "loginSession" | "externalRef"
+    modelProps: "tenant" | "user" | "subscription" | "platformSetting" | "tenantFeatureFlag" | "company" | "certificate" | "tender" | "staffInvite" | "tenderRequirement" | "qualificationResult" | "annualTurnover" | "auditLog" | "bid" | "bank" | "bankGuarantee" | "project" | "boqItem" | "erpRecord" | "loginSession" | "externalRef"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1024,6 +1026,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TenderCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TenderCountAggregateOutputType> | number
+        }
+      }
+    }
+    StaffInvite: {
+      payload: Prisma.$StaffInvitePayload<ExtArgs>
+      fields: Prisma.StaffInviteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StaffInviteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StaffInviteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        findFirst: {
+          args: Prisma.StaffInviteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StaffInviteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        findMany: {
+          args: Prisma.StaffInviteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        create: {
+          args: Prisma.StaffInviteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        createMany: {
+          args: Prisma.StaffInviteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StaffInviteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        delete: {
+          args: Prisma.StaffInviteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        update: {
+          args: Prisma.StaffInviteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        deleteMany: {
+          args: Prisma.StaffInviteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StaffInviteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StaffInviteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>[]
+        }
+        upsert: {
+          args: Prisma.StaffInviteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffInvitePayload>
+        }
+        aggregate: {
+          args: Prisma.StaffInviteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStaffInvite>
+        }
+        groupBy: {
+          args: Prisma.StaffInviteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffInviteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StaffInviteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffInviteCountAggregateOutputType> | number
+        }
+      }
+    }
+    TenderRequirement: {
+      payload: Prisma.$TenderRequirementPayload<ExtArgs>
+      fields: Prisma.TenderRequirementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TenderRequirementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TenderRequirementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        findFirst: {
+          args: Prisma.TenderRequirementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TenderRequirementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        findMany: {
+          args: Prisma.TenderRequirementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+        }
+        create: {
+          args: Prisma.TenderRequirementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        createMany: {
+          args: Prisma.TenderRequirementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TenderRequirementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+        }
+        delete: {
+          args: Prisma.TenderRequirementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        update: {
+          args: Prisma.TenderRequirementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        deleteMany: {
+          args: Prisma.TenderRequirementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TenderRequirementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TenderRequirementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+        }
+        upsert: {
+          args: Prisma.TenderRequirementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+        }
+        aggregate: {
+          args: Prisma.TenderRequirementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTenderRequirement>
+        }
+        groupBy: {
+          args: Prisma.TenderRequirementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenderRequirementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TenderRequirementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenderRequirementCountAggregateOutputType> | number
         }
       }
     }
@@ -1890,7 +2040,9 @@ export const TenantScalarFieldEnum = {
   contactPhone: 'contactPhone',
   isActive: 'isActive',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  orgCode: 'orgCode',
+  personalOwnerId: 'personalOwnerId'
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
@@ -1907,6 +2059,7 @@ export const UserScalarFieldEnum = {
   isActive: 'isActive',
   isVerified: 'isVerified',
   googleId: 'googleId',
+  userCode: 'userCode',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
   modules: 'modules',
@@ -2043,6 +2196,46 @@ export const TenderScalarFieldEnum = {
 } as const
 
 export type TenderScalarFieldEnum = (typeof TenderScalarFieldEnum)[keyof typeof TenderScalarFieldEnum]
+
+
+export const StaffInviteScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  kind: 'kind',
+  email: 'email',
+  userCode: 'userCode',
+  userId: 'userId',
+  fullName: 'fullName',
+  role: 'role',
+  modules: 'modules',
+  customTitle: 'customTitle',
+  status: 'status',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  decidedAt: 'decidedAt'
+} as const
+
+export type StaffInviteScalarFieldEnum = (typeof StaffInviteScalarFieldEnum)[keyof typeof StaffInviteScalarFieldEnum]
+
+
+export const TenderRequirementScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tenderId: 'tenderId',
+  kind: 'kind',
+  label: 'label',
+  data: 'data',
+  sourceText: 'sourceText',
+  confidence: 'confidence',
+  needsVerification: 'needsVerification',
+  confirmedAt: 'confirmedAt',
+  confirmedBy: 'confirmedBy',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenderRequirementScalarFieldEnum = (typeof TenderRequirementScalarFieldEnum)[keyof typeof TenderRequirementScalarFieldEnum]
 
 
 export const QualificationResultScalarFieldEnum = {
@@ -2643,6 +2836,8 @@ export type GlobalOmitConfig = {
   company?: Prisma.CompanyOmit
   certificate?: Prisma.CertificateOmit
   tender?: Prisma.TenderOmit
+  staffInvite?: Prisma.StaffInviteOmit
+  tenderRequirement?: Prisma.TenderRequirementOmit
   qualificationResult?: Prisma.QualificationResultOmit
   annualTurnover?: Prisma.AnnualTurnoverOmit
   auditLog?: Prisma.AuditLogOmit

@@ -5,6 +5,8 @@ import { AuthService } from '../core/auth.service';
 import { AccessService } from '../core/access.service';
 import { I18nService } from '../core/i18n.service';
 import { MENU, MenuModule, moduleOfRoute } from '../core/modules';
+import { DataService } from '../core/data.service';
+import { nptToday } from '../core/nepal-time';
 
 const OPEN_KEY = 'pn.menu.open';
 
@@ -51,10 +53,14 @@ const OPEN_KEY = 'pn.menu.open';
       <div class="main">
         <header class="topbar">
           <button class="lang" type="button" (click)="i18n.toggle()" [attr.aria-label]="'Switch language'">{{ i18n.lang() === 'en' ? 'ने ' : 'EN ' }}</button>
+          <a class="acct" routerLink="/account" routerLinkActive="on">👤 Account @if (inviteCount()) { <span class="badge" title="Invitations waiting">{{ inviteCount() }}</span> }</a>
           <span class="email">{{ user?.email }}</span>
           <span class="role">{{ user?.role }}</span>
           <button class="logout" (click)="logout()">{{ i18n.t('logout') }}</button>
         </header>
+        @if (planBanner(); as b) {
+          <div class="planbar" [class.bad]="b.bad">{{ b.text }}</div>
+        }
         <router-outlet />
         <footer class="copy">© {{ year }} Cuidado Technology Pvt. Ltd. · ProcureNepal · All rights reserved.</footer>
       </div>
@@ -83,6 +89,11 @@ const OPEN_KEY = 'pn.menu.open';
     .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
     .email { color: #4b5563; }
     .role { background: #fef5e0; color: #b8860b; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 12px; }
+    .acct { color: #0a1f3d; text-decoration: none; font-weight: 600; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; display: inline-flex; gap: 6px; align-items: center; }
+    .acct.on, .acct:hover { border-color: #d4a017; }
+    .badge { background: #dc2626; color: #fff; border-radius: 10px; font-size: 11px; padding: 1px 7px; font-weight: 700; }
+    .planbar { background: #fff7e6; border: 1px solid #e6c870; color: #7a5200; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
+    .planbar.bad { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
     .logout { background: #0a1f3d; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .logout:hover { background: #1e3a5f; }
     .lang { background: #fff; color: #0a1f3d; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
@@ -103,7 +114,26 @@ export class ShellLayout {
   private el = inject(ElementRef);
   i18n = inject(I18nService); // used directly in the template (toggle, t, modLabel)
   user = this.auth.getUser();
-  year = new Date().getFullYear();
+  year = nptToday().slice(0, 4); // Nepal Time
+  private data = inject(DataService);
+  inviteCount = signal(0);
+  /** Task 11: plan expiry warnings (Nepal dates). Owners see the run-up; everyone sees "expired". */
+  planBanner = computed<{ text: string; bad: boolean } | null>(() => {
+    const st = this.access.info()?.planState;
+    const owner = ['OWNER', 'SUPER_ADMIN'].includes(this.access.info()?.role ?? '');
+    if (!st) return null;
+    if (st.state === 'EXPIRED') {
+      return { bad: true, text: `Your ${st.plan} plan has ended${st.expiresOn ? ` (expired ${st.expiresOn})` : ''} — only the FREE plan's modules are open.${owner ? ' Contact ProcureNepal to renew; everything comes back as it was.' : ' Ask your Owner to renew.'}` };
+    }
+    if (!owner) return null;
+    if (st.state === 'GRACE') {
+      return { bad: true, text: `Your ${st.plan} plan expired on ${st.expiresOn}. You're in the ${st.daysLeft === 0 ? 'last day of the' : ''} grace period — on ${st.graceEndsOn} the workspace drops to the FREE plan's modules unless it's renewed.` };
+    }
+    if (st.state === 'EXPIRING_SOON') {
+      return { bad: false, text: st.daysLeft === 0 ? `Your ${st.plan} plan expires today (${st.expiresOn}, Nepal time). Contact ProcureNepal to renew.` : `Your ${st.plan} plan expires in ${st.daysLeft} day(s), on ${st.expiresOn}. Contact ProcureNepal to renew.` };
+    }
+    return null;
+  });
 
   private open = signal<Set<string>>(this.readOpen());
   visible = computed<MenuModule[]>(() => {
@@ -113,6 +143,7 @@ export class ShellLayout {
 
   constructor() {
     this.access.load(true);
+    this.data.staffMe().then((m) => this.inviteCount.set(m.invites?.length ?? 0)).catch(() => { /* older API */ });
     this.openFor(this.router.url);
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e: any) => this.openFor(e.urlAfterRedirects));
   }

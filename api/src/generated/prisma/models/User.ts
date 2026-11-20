@@ -35,6 +35,7 @@ export type UserMinAggregateOutputType = {
   isActive: boolean | null
   isVerified: boolean | null
   googleId: string | null
+  userCode: string | null
   lastLoginAt: Date | null
   createdAt: Date | null
   status: string | null
@@ -54,6 +55,7 @@ export type UserMaxAggregateOutputType = {
   isActive: boolean | null
   isVerified: boolean | null
   googleId: string | null
+  userCode: string | null
   lastLoginAt: Date | null
   createdAt: Date | null
   status: string | null
@@ -73,6 +75,7 @@ export type UserCountAggregateOutputType = {
   isActive: number
   isVerified: number
   googleId: number
+  userCode: number
   lastLoginAt: number
   createdAt: number
   modules: number
@@ -95,6 +98,7 @@ export type UserMinAggregateInputType = {
   isActive?: true
   isVerified?: true
   googleId?: true
+  userCode?: true
   lastLoginAt?: true
   createdAt?: true
   status?: true
@@ -114,6 +118,7 @@ export type UserMaxAggregateInputType = {
   isActive?: true
   isVerified?: true
   googleId?: true
+  userCode?: true
   lastLoginAt?: true
   createdAt?: true
   status?: true
@@ -133,6 +138,7 @@ export type UserCountAggregateInputType = {
   isActive?: true
   isVerified?: true
   googleId?: true
+  userCode?: true
   lastLoginAt?: true
   createdAt?: true
   modules?: true
@@ -226,6 +232,7 @@ export type UserGroupByOutputType = {
   isActive: boolean
   isVerified: boolean
   googleId: string | null
+  userCode: string | null
   lastLoginAt: Date | null
   createdAt: Date
   modules: string[]
@@ -267,6 +274,7 @@ export type UserWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean
   isVerified?: Prisma.BoolFilter<"User"> | boolean
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
+  userCode?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   modules?: Prisma.StringNullableListFilter<"User">
@@ -289,6 +297,7 @@ export type UserOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  userCode?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   modules?: Prisma.SortOrder
@@ -303,6 +312,8 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  googleId?: string
+  userCode?: string
   activationToken?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
@@ -314,7 +325,6 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isActive?: Prisma.BoolFilter<"User"> | boolean
   isVerified?: Prisma.BoolFilter<"User"> | boolean
-  googleId?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   modules?: Prisma.StringNullableListFilter<"User">
@@ -323,7 +333,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   customTitle?: Prisma.StringNullableFilter<"User"> | string | null
   tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
   loginSessions?: Prisma.LoginSessionListRelationFilter
-}, "id" | "email" | "activationToken">
+}, "id" | "email" | "googleId" | "userCode" | "activationToken">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -336,6 +346,7 @@ export type UserOrderByWithAggregationInput = {
   isActive?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  userCode?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   modules?: Prisma.SortOrder
@@ -362,6 +373,7 @@ export type UserScalarWhereWithAggregatesInput = {
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   isVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  userCode?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   modules?: Prisma.StringNullableListFilter<"User">
@@ -381,6 +393,7 @@ export type UserCreateInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -403,6 +416,7 @@ export type UserUncheckedCreateInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -423,6 +437,7 @@ export type UserUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -445,6 +460,7 @@ export type UserUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -466,6 +482,7 @@ export type UserCreateManyInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -485,6 +502,7 @@ export type UserUpdateManyMutationInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -505,6 +523,7 @@ export type UserUncheckedUpdateManyInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -543,6 +562,7 @@ export type UserCountOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  userCode?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   modules?: Prisma.SortOrder
@@ -563,6 +583,7 @@ export type UserMaxOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  userCode?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -582,6 +603,7 @@ export type UserMinOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  userCode?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -678,6 +700,7 @@ export type UserCreateWithoutTenantInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -698,6 +721,7 @@ export type UserUncheckedCreateWithoutTenantInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -748,6 +772,7 @@ export type UserScalarWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean
   isVerified?: Prisma.BoolFilter<"User"> | boolean
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
+  userCode?: Prisma.StringNullableFilter<"User"> | string | null
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   modules?: Prisma.StringNullableListFilter<"User">
@@ -767,6 +792,7 @@ export type UserCreateWithoutLoginSessionsInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -788,6 +814,7 @@ export type UserUncheckedCreateWithoutLoginSessionsInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -823,6 +850,7 @@ export type UserUpdateWithoutLoginSessionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -844,6 +872,7 @@ export type UserUncheckedUpdateWithoutLoginSessionsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -863,6 +892,7 @@ export type UserCreateManyTenantInput = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: string | null
+  userCode?: string | null
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
   modules?: Prisma.UserCreatemodulesInput | string[]
@@ -882,6 +912,7 @@ export type UserUpdateWithoutTenantInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -902,6 +933,7 @@ export type UserUncheckedUpdateWithoutTenantInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -922,6 +954,7 @@ export type UserUncheckedUpdateManyWithoutTenantInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   modules?: Prisma.UserUpdatemodulesInput | string[]
@@ -973,6 +1006,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isActive?: boolean
   isVerified?: boolean
   googleId?: boolean
+  userCode?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
   modules?: boolean
@@ -996,6 +1030,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   isVerified?: boolean
   googleId?: boolean
+  userCode?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
   modules?: boolean
@@ -1017,6 +1052,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   isVerified?: boolean
   googleId?: boolean
+  userCode?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
   modules?: boolean
@@ -1038,6 +1074,7 @@ export type UserSelectScalar = {
   isActive?: boolean
   isVerified?: boolean
   googleId?: boolean
+  userCode?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
   modules?: boolean
@@ -1047,7 +1084,7 @@ export type UserSelectScalar = {
   customTitle?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "email" | "phone" | "passwordHash" | "fullName" | "role" | "isActive" | "isVerified" | "googleId" | "lastLoginAt" | "createdAt" | "modules" | "status" | "activationToken" | "activationExpires" | "customTitle", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "email" | "phone" | "passwordHash" | "fullName" | "role" | "isActive" | "isVerified" | "googleId" | "userCode" | "lastLoginAt" | "createdAt" | "modules" | "status" | "activationToken" | "activationExpires" | "customTitle", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
   loginSessions?: boolean | Prisma.User$loginSessionsArgs<ExtArgs>
@@ -1077,6 +1114,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     isActive: boolean
     isVerified: boolean
     googleId: string | null
+    userCode: string | null
     lastLoginAt: Date | null
     createdAt: Date
     modules: string[]
@@ -1519,6 +1557,7 @@ export interface UserFieldRefs {
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
   readonly isVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly googleId: Prisma.FieldRef<"User", 'String'>
+  readonly userCode: Prisma.FieldRef<"User", 'String'>
   readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly modules: Prisma.FieldRef<"User", 'String[]'>

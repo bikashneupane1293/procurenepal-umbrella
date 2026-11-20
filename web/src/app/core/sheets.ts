@@ -2,6 +2,7 @@
 // Loaded only when a button is clicked. © Cuidado Technology Pvt. Ltd.
 import * as XLSX from 'xlsx';
 import { autoWidth, dateStr, fyStr, num, txt, yes } from './excel';
+import { nptToday } from './nepal-time';
 
 export interface SheetRow {
   rowNo: number;
@@ -14,7 +15,7 @@ export interface SheetRow {
 
 const TYPES = ['ROAD', 'BUILDING', 'IRRIGATION', 'BRIDGE'];
 const STATUSES = ['active', 'submitted', 'won', 'lost', 'cancelled', 'archived'];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => nptToday();
 const help = (lines: string[]) => {
   const ws = XLSX.utils.aoa_to_sheet([...lines.map((l) => [l]), [''], ['© Cuidado Technology Pvt. Ltd. · ProcureNepal']]);
   ws['!cols'] = [{ wch: 110 }];

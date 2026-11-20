@@ -9,6 +9,7 @@ import { AuthService } from '../../core/auth.service';
 import { DataService } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { PricingAdmin } from './pricing-admin';
+import { nptToday } from '../../core/nepal-time';
 
 @Component({
   selector: 'app-admin',
@@ -36,6 +37,11 @@ import { PricingAdmin } from './pricing-admin';
             @for (k of planKeys(s.planCounts); track k) {
               <span class="tag gold">{{ k }}: {{ s.planCounts[k] }}</span>
             }
+            @if (s.expiry) {
+              @if (s.expiry.expiringSoon) { <span class="tag st-soon">Expiring within 14 days: {{ s.expiry.expiringSoon }}</span> }
+              @if (s.expiry.inGrace) { <span class="tag st-grace">In 7-day grace: {{ s.expiry.inGrace }}</span> }
+              @if (s.expiry.expired) { <span class="tag st-exp">Expired → FREE modules: {{ s.expiry.expired }}</span> }
+            }
           </div>
         } @else {
           <p class="help">Loading…</p>
@@ -45,7 +51,11 @@ import { PricingAdmin } from './pricing-admin';
       @if (createdLink()) {
         <div class="panel link-panel">
           <h2>🔗 New organization created — {{ createdTenantName() }}</h2>
-          <p class="help">There is still no email service connected, so send this link to the new owner yourself (WhatsApp, SMS, email) so they can set their own password. The link works for 7 days.</p>
+          <p class="help">
+            @if (createdEmailed()) { ✅ The activation link was emailed to the new owner. It's also below, in case it doesn't arrive. }
+            @else { Email sending isn't set up yet, so send this link to the new owner yourself (WhatsApp, SMS, email) so they can set their own password. }
+            The link works for 7 days.
+          </p>
           <div class="linkbox">
             <code>{{ fullLink(createdLink()!) }}</code>
             <button class="btn light small" (click)="copyLink(createdLink()!)">{{ copied() ? '✅ Copied' : '📋 Copy' }}</button>
@@ -106,7 +116,7 @@ import { PricingAdmin } from './pricing-admin';
         <h2>Workspaces</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Workspace</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Created</th><th></th></tr></thead>
+            <thead><tr><th>Workspace</th><th>Owner</th><th>Users</th><th>Plan</th><th>Expiry</th><th>Status</th><th>Created</th><th></th></tr></thead>
             <tbody>
               @for (t of tenants(); track t.id) {
                 <tr>
@@ -114,6 +124,15 @@ import { PricingAdmin } from './pricing-admin';
                   <td>{{ t.ownerEmail ?? '—' }}</td>
                   <td>{{ t.userCount }}</td>
                   <td><span class="tag gold">{{ t.plan }}</span></td>
+                  <td>
+                    @switch (t.planState?.state) {
+                      @case ('EXPIRING_SOON') { <span class="tag st-soon">{{ t.planState.daysLeft === 0 ? 'Expires today' : 'In ' + t.planState.daysLeft + ' day(s)' }}</span> }
+                      @case ('GRACE') { <span class="tag st-grace">Grace until {{ t.planState.graceEndsOn }}</span> }
+                      @case ('EXPIRED') { <span class="tag st-exp">Expired → FREE</span> }
+                      @case ('ACTIVE') { <span class="muted">{{ t.planState.expiresOn ?? 'No end date' }}</span> }
+                      @default { <span class="muted">No plan — all open</span> }
+                    }
+                  </td>
                   <td>
                     <span class="tag" [class.green]="t.isActive" [class.red]="!t.isActive">{{ t.isActive ? 'Active' : 'Paused' }}</span>
                   </td>
@@ -206,12 +225,13 @@ import { PricingAdmin } from './pricing-admin';
               </select>
             </div>
             <div>
-              <label>Expires on</label>
+              <label>Expires on <span class="muted">(Nepal date)</span></label>
               <input type="date" [(ngModel)]="planForm.expiresAt" />
+              <div class="muted" style="font-size:12px;margin-top:4px">Valid through 23:59 that day, then a 7-day grace period before it drops to FREE modules. Empty = no end date.</div>
             </div>
             <div>
               <label>Billing period</label>
-              <select [(ngModel)]="planForm.billingPeriod" (ngModelChange)="quote.set(null)">
+              <select [(ngModel)]="planForm.billingPeriod" (ngModelChange)="quote.set(null); suggestExpiry($event)">
                 <option value="">— don't price automatically —</option>
                 <option value="MONTHLY">Monthly</option>
                 <option value="YEARLY">Yearly</option>
@@ -267,6 +287,9 @@ import { PricingAdmin } from './pricing-admin';
     .stat { background: #f8f9fa; border-radius: 8px; padding: 12px 14px; }
     .stat span { display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; }
     .stat strong { font-size: 22px; color: #0a1f3d; }
+    .tag.st-soon { background: #fef3c7; color: #92400e; }
+    .tag.st-grace { background: #ffedd5; color: #9a3412; }
+    .tag.st-exp { background: #fee2e2; color: #991b1b; }
     .plan-counts { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
     .muted { color: #9ca3af; font-size: 12px; }
     .tag.green { background: #dcfce7; color: #15803d; }
@@ -298,10 +321,18 @@ export class AdminPage {
   planForm = { plan: 'FREE', status: 'ACTIVE', expiresAt: '', amountNPR: null as number | null, paymentMethod: '', paymentRef: '', billingPeriod: '', promoCode: '' };
   quote = signal<any | null>(null);
   lakh(n: number) { return Number(n ?? 0).toLocaleString('en-IN'); }
+  /** Picking Monthly / Yearly fills the expiry (today + 1 month / 1 year, Nepal Time) if it's empty. */
+  suggestExpiry(period: string) {
+    if (this.planForm.expiresAt || !period) return;
+    const d = new Date(nptToday() + 'T00:00:00Z');
+    if (period === 'YEARLY') d.setUTCFullYear(d.getUTCFullYear() + 1); else d.setUTCMonth(d.getUTCMonth() + 1);
+    this.planForm.expiresAt = d.toISOString().slice(0, 10);
+  }
 
   creating = signal(false);
   createError = signal('');
   createdLink = signal<string | null>(null);
+  createdEmailed = signal(false);
   createdTenantName = signal('');
   copied = signal(false);
   createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
@@ -390,6 +421,7 @@ export class AdminPage {
       if (this.grantable().length) body.modules = this.ticked(this.createMods);
       const res = await this.data.adminCreateTenant(body);
       this.createdLink.set(res.ownerActivationLink);
+      this.createdEmailed.set(!!res.emailed);
       this.createdTenantName.set(res.tenant?.name ?? f.tenantName);
       this.createForm = { tenantName: '', ownerName: '', ownerEmail: '', ownerPhone: '', plan: 'FREE' };
       this.createMods = this.presetMap('FREE');

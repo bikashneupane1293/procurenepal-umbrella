@@ -31,6 +31,7 @@ import {
   monthsBetween,
   normUnit,
 } from './fiscal-year';
+import { nptDate } from '../../common/nepal-time';
 
 // ---------------------------------------------------------------- types
 
@@ -493,8 +494,8 @@ export function evaluateSingle(
       actual: null,
       unit: 'date',
       reason: ok
-        ? `Licence${company.licenseClass ? ` (Class ${company.licenseClass})` : ''} is valid until ${company.licenseExpiry.toISOString().slice(0, 10)}, after the bid deadline.`
-        : `Licence expired on ${company.licenseExpiry.toISOString().slice(0, 10)}, before the bid deadline ${ctx.asOf.toISOString().slice(0, 10)}. Renew it before bidding.`,
+        ? `Licence${company.licenseClass ? ` (Class ${company.licenseClass})` : ''} is valid until ${nptDate(company.licenseExpiry)}, after the bid deadline.`
+        : `Licence expired on ${nptDate(company.licenseExpiry)}, before the bid deadline ${nptDate(ctx.asOf)}. Renew it before bidding.`,
       jvCanHelp: false,
     });
   } else {
@@ -892,7 +893,7 @@ export function evaluateJv(
         required: null,
         actual: null,
         unit: 'date',
-        reason: `${x.p.company.name}'s licence expired on ${lic.toISOString().slice(0, 10)}.`,
+        reason: `${x.p.company.name}'s licence expired on ${nptDate(lic)}.`,
         jvCanHelp: false,
       });
     } else if (!lic) {

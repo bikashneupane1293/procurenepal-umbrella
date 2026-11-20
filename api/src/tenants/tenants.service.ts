@@ -8,6 +8,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
 import { PricingService } from '../pricing/pricing.service';
+import { MailService } from '../mail/mail.service';
 import { ENTITLE_PREFIX, GRANTABLE_MODULE_KEYS, MODULES, entitleFlagKeyOf } from '../access/module-registry';
 import { CreateTenantDto, SetModulesDto, SetPlanDto } from './dto/admin.dto';
 
@@ -16,7 +17,7 @@ const ACTIVATION_DAYS = 7;
 
 @Injectable()
 export class TenantsService {
-  constructor(private prisma: PrismaService, private access: AccessService, private pricing: PricingService) {}
+  constructor(private prisma: PrismaService, private access: AccessService, private pricing: PricingService, private mail: MailService) {}
 
   /** Rejects unknown or core module keys (core modules are always on and never "granted"). */
   private checkGrantable(modules: string[]) {
@@ -78,6 +79,7 @@ export class TenantsService {
         .sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt));
       out.push({
         ...t,
+        planState: await this.access.planState(t.id),
         userCount: users.length,
         ownerEmail: users.find((u: any) => u.role === 'OWNER')?.email ?? null,
         plan: subs[0]?.plan ?? 'FREE',
@@ -98,6 +100,7 @@ export class TenantsService {
     return {
       tenant,
       modules: await this.access.planModulesFor(id),
+      planState: await this.access.planState(id),
       users: users.map((u: any) => ({
         id: u.id, email: u.email, fullName: u.fullName, role: u.role, status: u.status, isActive: u.isActive, createdAt: u.createdAt,
       })),
@@ -183,7 +186,12 @@ export class TenantsService {
       return { tenant, owner, subscription };
     });
 
+    const emailed = await this.mail.send({
+      to: result.owner.email, toName: result.owner.fullName, subject: `Your ProcureNepal workspace for ${result.tenant.name} is ready`,
+      lines: [`A ProcureNepal workspace has been set up for ${result.tenant.name}, with you as Owner. Open this link to choose your password (it works for ${ACTIVATION_DAYS} days):`, this.mail.url(`/activate?token=${activationToken}`)],
+    });
     return {
+      emailed,
       tenant: result.tenant,
       owner: { id: result.owner.id, email: result.owner.email, fullName: result.owner.fullName },
       subscription: result.subscription,
@@ -218,7 +226,12 @@ export class TenantsService {
     const users = await this.prisma.user.findMany({});
     const since30 = Date.now() - 30 * 86_400_000;
     const planCounts: Record<string, number> = {};
+    const expiry = { expiringSoon: 0, inGrace: 0, expired: 0 };
     for (const t of tenants) {
+      const st = await this.access.planState((t as any).id);
+      if (st.state === 'EXPIRING_SOON') expiry.expiringSoon++;
+      else if (st.state === 'GRACE') expiry.inGrace++;
+      else if (st.state === 'EXPIRED') expiry.expired++;
       const subs = (await this.prisma.subscription.findMany({ where: { tenantId: t.id } }))
         .sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt));
       const plan = subs[0]?.plan ?? 'FREE';
@@ -230,6 +243,7 @@ export class TenantsService {
       totalUsers: users.length,
       newTenants30d: tenants.filter((t: any) => +new Date(t.createdAt) >= since30).length,
       planCounts,
+      expiry,
     };
   }
 

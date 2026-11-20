@@ -11,6 +11,7 @@ import { ImportPanel } from '../../shared/import-panel';
 import { PdfFill, PdfApply } from '../../shared/pdf-fill';
 import { adToBs } from '../../core/nepali-date';
 import type { SheetRow } from '../../core/sheets';
+import { nptToday } from '../../core/nepal-time';
 
 const loadSheets = () => import('../../core/bank-sheets');
 
@@ -585,7 +586,7 @@ export class BankGuaranteesPage {
 
   async markReleased() {
     this.f.status = 'RELEASED';
-    if (!this.f.releaseDate) this.f.releaseDate = new Date().toISOString().slice(0, 10);
+    if (!this.f.releaseDate) this.f.releaseDate = nptToday();
     await this.save();
   }
 

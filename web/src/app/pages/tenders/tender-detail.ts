@@ -11,6 +11,7 @@ import { STATUS_LABEL } from '../../core/bid-labels';
 import { readPdfText } from '../../core/pdf-reader';
 import { parseTenderText, findDocumentChecklist, checklistFromClause21, findKeyClauses, estimateExcludingVat, ChecklistItem, ClauseFind, Suggestions } from '../../core/pdf-parse';
 import { tablesToExcel } from '../../core/erp-sheets';
+import { extractRequirements, pdfReadNote, FoundRequirement, KIND_LABEL, RequirementKind } from '../../core/pdf-requirements';
 // Phase 1B: experimental table reconstruction — additive only. Never imported by, or imported
 // into, pdf-reader.ts/pdf-parse.ts; the flat extraction above is untouched and remains the
 // default. This is called only when the local, disabled-by-default toggle below is turned on.
@@ -66,11 +67,39 @@ interface JvRow { companyId: string; share: number | null; }
         }
       </div>
 
+      @if (savedReqs().length) {
+        <div class="panel no-print">
+          <div class="bar tight">
+            <h2>📋 Requirements read from the bidding document</h2>
+            <div class="tools">
+              <button class="btn light small" (click)="applySavedToTender()" [disabled]="reqBusy() || !confirmedCount()">Use confirmed values in the requirements above</button>
+            </div>
+          </div>
+          <p class="help">{{ confirmedCount() }} of {{ savedReqs().length }} confirmed. Unconfirmed rows still need checking against the document — tick ✔ once you have.</p>
+          @if (reqMsg()) { <div class="msg info">{{ reqMsg() }}</div> }
+          <div class="table-wrap"><table class="tbl">
+            <thead><tr><th>Checked</th><th>Requirement</th><th>Read from</th><th></th></tr></thead>
+            <tbody>
+              @for (r of savedReqs(); track r.id) {
+                <tr [class.bad]="r.needsVerification">
+                  <td><input type="checkbox" [checked]="!r.needsVerification" (change)="confirmSaved(r, $any($event.target).checked)" [disabled]="reqBusy()" title="I checked this against the document" /></td>
+                  <td><span class="tag">{{ kindLabel(r.kind) }}</span> {{ r.label }}
+                    @if (r.confirmedAt) { <div class="muted">Confirmed {{ r.confirmedAt.slice(0, 10) }}</div> }</td>
+                  <td class="muted src">{{ r.sourceText || '—' }}</td>
+                  <td><button class="btn light small" (click)="deleteSaved(r)" [disabled]="reqBusy()">Remove</button></td>
+                </tr>
+              }
+            </tbody>
+          </table></div>
+        </div>
+      }
+
       <div class="panel no-print">
         <h2>📄 Bid Document Reader</h2>
         <p class="help">Upload the full bid document (PDF) to read the values it states and get a draft readiness checklist. This is a reading aid, not a compliance check — verify every row against the actual document before submission.</p>
         <input type="file" accept="application/pdf" (change)="onPdfChosen($event)" [disabled]="pdfBusy()" />
-        @if (pdfBusy()) { <div class="msg info" style="margin-top:8px">Reading the PDF… large documents can take a little while.</div> }
+        @if (pdfBusy()) { <div class="msg info" style="margin-top:8px">{{ pdfProgress() || 'Reading the PDF…' }} Large documents can take a little while.</div> }
+        @if (pdfNote()) { <div class="msg info" style="margin-top:8px">⚠️ {{ pdfNote() }}</div> }
         @if (pdfError()) { <div class="msg error" style="margin-top:8px">{{ pdfError() }}</div> }
         @if (pdfScanned()) { <div class="msg error" style="margin-top:8px">This looks like a scanned PDF (no selectable text), so nothing could be read automatically.</div> }
 
@@ -85,6 +114,35 @@ interface JvRow { companyId: string; share: number | null; }
             </tbody>
           </table>
           <p class="help">Compare these with the "Requirements" box above and use "Edit requirements" to correct anything.</p>
+        }
+
+        @if (reqFound(); as rf) {
+          <h3 style="margin-top:16px">📋 Requirements found in this document</h3>
+          @if (rf.length) {
+            <p class="help">Read from the IFB, the Bid Data Sheet and Section III (qualification criteria). Untick anything wrong, correct the wording if needed, and tick <strong>Checked</strong> for rows you have verified against the document. Saving replaces the rows saved for this tender before.</p>
+            <div class="table-wrap"><table class="tbl">
+              <thead><tr><th>Save</th><th>Checked</th><th>Requirement</th><th>Confidence</th><th>Read from</th></tr></thead>
+              <tbody>
+                @for (r of rf; track $index) {
+                  <tr [class.bad]="r.confidence < 0.6">
+                    <td><input type="checkbox" [(ngModel)]="r.use" /></td>
+                    <td><input type="checkbox" [(ngModel)]="r.confirmed" [disabled]="!r.use" /></td>
+                    <td><span class="tag">{{ kindLabel(r.kind) }}</span>
+                      <input class="lbl" [(ngModel)]="r.label" [disabled]="!r.use" />
+                      @if (r.note) { <div class="muted">{{ r.note }}</div> }</td>
+                    <td><span [class]="'conf ' + confTone(r.confidence)">{{ r.confidence * 100 | number: '1.0-0' }}%</span></td>
+                    <td class="muted src">{{ r.sourceText }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table></div>
+            <div class="tools" style="margin-top:10px">
+              <button class="btn gold" (click)="saveFound()" [disabled]="reqBusy() || !useCount()">{{ reqBusy() ? 'Saving…' : 'Save ' + useCount() + ' to this tender' }}</button>
+            </div>
+            @if (reqSaveMsg()) { <div class="msg info" style="margin-top:8px">{{ reqSaveMsg() }}</div> }
+          } @else {
+            <div class="msg info">No qualification requirements were recognised in this document. If it is the full bidding document, open "Show extracted text" below and check that Section III reads properly — then send us the PDF so the reader can learn its layout.</div>
+          }
         }
 
         @if (estimateVat(); as ev) {
@@ -332,6 +390,12 @@ interface JvRow { companyId: string; share: number | null; }
     }
   `,
   styles: [UI_STYLES, `
+    input.lbl { width: 100%; margin-top: 4px; font-size: 13px; padding: 4px 6px; }
+    td.src { font-size: 12px; max-width: 360px; }
+    .conf { font-weight: 800; font-size: 12px; padding: 2px 6px; border-radius: 8px; }
+    .conf.hi { background: #dcfce7; color: #15803d; }
+    .conf.mid { background: #fef5e0; color: #8a6508; }
+    .conf.lo { background: #fee2e2; color: #b91c1c; }
     .exp-toggle { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
     .exp-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 600; }
     .exp-panel { border: 1px dashed #c7a600; background: #fffdf5; }
@@ -390,6 +454,81 @@ export class TenderDetailPage {
   jvRows: JvRow[] = [{ companyId: '', share: 60 }, { companyId: '', share: 40 }];
   leadIndex = 0;
 
+  // ---------- Requirements read from the bidding document (Task 13) ----------
+  reqFound = signal<(FoundRequirement & { use: boolean; confirmed: boolean })[] | null>(null);
+  savedReqs = signal<any[]>([]);
+  reqBusy = signal(false);
+  reqMsg = signal('');
+  reqSaveMsg = signal('');
+  pdfProgress = signal('');
+  pdfNote = signal('');
+  confirmedCount = computed(() => this.savedReqs().filter((r) => !r.needsVerification).length);
+  useCount() { return (this.reqFound() ?? []).filter((r) => r.use).length; }
+  kindLabel(k: string) { return KIND_LABEL[k as RequirementKind] ?? k; }
+  confTone(c: number) { return c >= 0.8 ? 'hi' : c >= 0.6 ? 'mid' : 'lo'; }
+
+  async loadSavedReqs() {
+    try { this.savedReqs.set(await this.data.tenderRequirements(this.id)); } catch { /* module off or server asleep — the panel just stays hidden */ }
+  }
+
+  async saveFound() {
+    const rows = (this.reqFound() ?? []).filter((r) => r.use)
+      .map((r) => ({ kind: r.kind, label: r.label.trim() || KIND_LABEL[r.kind], data: r.data, sourceText: r.sourceText, confidence: r.confidence, confirmed: r.confirmed }));
+    if (!rows.length) return;
+    this.reqBusy.set(true); this.reqSaveMsg.set('');
+    try {
+      this.savedReqs.set(await this.data.saveTenderRequirements(this.id, rows));
+      const unchecked = rows.filter((r) => !r.confirmed).length;
+      this.reqSaveMsg.set(`✅ Saved ${rows.length} requirement${rows.length > 1 ? 's' : ''} to this tender` + (unchecked ? ` — ${unchecked} still marked "needs checking".` : '.'));
+    } catch (e) { this.reqSaveMsg.set('Could not save: ' + errorText(e)); }
+    this.reqBusy.set(false);
+  }
+
+  async confirmSaved(r: any, confirmed: boolean) {
+    this.reqBusy.set(true); this.reqMsg.set('');
+    try {
+      const u = await this.data.updateTenderRequirement(this.id, r.id, { confirmed });
+      this.savedReqs.update((l) => l.map((x) => (x.id === r.id ? u : x)));
+    } catch (e) { this.reqMsg.set(errorText(e)); }
+    this.reqBusy.set(false);
+  }
+
+  async deleteSaved(r: any) {
+    this.reqBusy.set(true); this.reqMsg.set('');
+    try {
+      await this.data.deleteTenderRequirement(this.id, r.id);
+      this.savedReqs.update((l) => l.filter((x) => x.id !== r.id));
+    } catch (e) { this.reqMsg.set(errorText(e)); }
+    this.reqBusy.set(false);
+  }
+
+  /** Copy the CONFIRMED rows into the tender's own requirement fields (used by the eligibility check). */
+  async applySavedToTender() {
+    const rows = this.savedReqs().filter((r) => !r.needsVerification);
+    const one = (k: string) => rows.find((r) => r.kind === k)?.data;
+    const patch: Record<string, any> = {};
+    const set = (key: string, v: any) => { if (v != null && v !== '' && !Number.isNaN(v)) patch[key] = v; };
+    set('reqTurnover', one('TURNOVER')?.amountNPR);
+    set('reqBidCapacity', one('BID_CAPACITY')?.amountNPR);
+    set('reqSimilarValue', one('SIMILAR_CONTRACT')?.amountNPR);
+    set('reqSimilarCount', one('SIMILAR_CONTRACT')?.count);
+    set('similarDescription', one('SIMILAR_CONTRACT')?.description);
+    set('contractPeriodMonths', one('COMPLETION_PERIOD')?.months);
+    set('bidSecurityAmount', one('BID_SECURITY')?.amountNPR);
+    set('bidValidityDays', one('BID_VALIDITY')?.days);
+    const acts = rows.filter((r) => r.kind === 'KEY_ACTIVITY' && r.data?.name && r.data?.quantity)
+      .map((r) => ({ name: String(r.data.name), unit: String(r.data.unit || 'Nos'), quantity: Number(r.data.quantity) * (r.data.period === 'month' ? 12 : 1) }));
+    if (acts.length) patch['keyActivityReqs'] = acts;
+    if (!Object.keys(patch).length) { this.reqMsg.set('None of the confirmed rows map to the requirement fields (turnover, bid capacity, similar contract, key activities, period, bid security, validity).'); return; }
+    this.reqBusy.set(true); this.reqMsg.set('');
+    try {
+      await firstValueFrom(this.data.updateTender(this.id, patch));
+      this.tender.set(await firstValueFrom(this.data.getTender(this.id)));
+      this.reqMsg.set(`✅ Updated ${Object.keys(patch).length} requirement field${Object.keys(patch).length > 1 ? 's' : ''} from the confirmed rows. Run the eligibility check again to use them.`);
+    } catch (e) { this.reqMsg.set('Could not update the tender: ' + errorText(e)); }
+    this.reqBusy.set(false);
+  }
+
   // ---------- Bid Document Reader (Task 5) ----------
   pdfBusy = signal(false);
   pdfError = signal('');
@@ -441,12 +580,17 @@ export class TenderDetailPage {
     this.keyClauses.set(null); this.estimateVat.set(null); this.checklistFromClause21Used.set(false);
     this.checklistTablePage.set(null); this.checklistTableConfidence.set(0);
     this.rawPdfText.set(''); this.showRawText.set(false);
+    this.reqFound.set(null); this.reqSaveMsg.set(''); this.pdfNote.set(''); this.pdfProgress.set('');
     this.lastPdfFile = file; this.hasPdfFile.set(true);
     this.experimentalResult.set(null); this.experimentalTried.set(false); this.experimentalError.set('');
     try {
-      const { text, scanned } = await readPdfText(file, 80);
+      // the whole document: Section III (EQC) and the SCC are often past page 80
+      const pdf = await readPdfText(file, 600, (p, n) => { if (p % 10 === 0 || p === n) this.pdfProgress.set(`Reading page ${p} of ${n}…`); });
+      const { text, scanned } = pdf;
       this.rawPdfText.set(text);
       if (scanned) { this.pdfScanned.set(true); return; }
+      this.pdfNote.set(pdfReadNote(pdf));
+      this.reqFound.set(extractRequirements(text).map((r) => ({ ...r, use: true, confirmed: false })));
       const { fields } = parseTenderText(text);
       this.suggestions.set(fields);
       const own = checklistFromClause21(text);
@@ -478,6 +622,7 @@ export class TenderDetailPage {
       this.pdfError.set('Could not read this PDF: ' + (e?.message ?? 'unknown error'));
     } finally {
       this.pdfBusy.set(false);
+      this.pdfProgress.set('');
       (ev.target as HTMLInputElement).value = '';
     }
   }
@@ -528,6 +673,7 @@ export class TenderDetailPage {
     });
     this.data.getCompanies().subscribe({ next: (l) => this.companies.set(l), error: () => {} });
     this.loadHistory();
+    this.loadSavedReqs();
     this.data.getBids({ tenderId: this.id }).subscribe({ next: (l) => this.tenderBids.set(l), error: () => {} });
   }
 

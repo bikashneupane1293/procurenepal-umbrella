@@ -1,7 +1,9 @@
-import { Component, inject, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { DataService, errorText } from '../../core/data.service';
+import { renderGoogleButton } from '../../core/google-signin';
 import { ApiService } from '../../api.service';
 import { AuthService } from '../../core/auth.service';
 import { API_URL } from '../../core/config';
@@ -9,7 +11,7 @@ import { API_URL } from '../../core/config';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -27,6 +29,12 @@ export class LoginPage {
   /** The API sleeps on free hosting after ~15 min idle; we wake it as soon as this page opens. */
   server: 'checking' | 'waking' | 'ready' | 'offline' = 'checking';
   slowLogin = false;
+  // Task 12 — Sign in with Google (shown only when the server has GOOGLE_CLIENT_ID set)
+  private data = inject(DataService);
+  googleClientId: string | null = null;
+  @ViewChild('gbtn') set gbtn(el: ElementRef<HTMLElement> | undefined) {
+    if (el && this.googleClientId) renderGoogleButton(el.nativeElement, this.googleClientId, (c) => this.withGoogle(c), 'signin_with').catch(() => {});
+  }
 
   constructor() {
     if (this.auth.isLoggedIn()) {
@@ -34,6 +42,22 @@ export class LoginPage {
       return;
     }
     this.wake();
+    this.data.authConfig().then((c) => { this.googleClientId = c.googleClientId; this.cdr.detectChanges(); }).catch(() => { /* older API or asleep */ });
+  }
+
+  async withGoogle(credential: string) {
+    this.loading = true; this.errorMsg = ''; this.cdr.detectChanges();
+    try {
+      const res = await this.data.googleLogin(credential);
+      this.auth.saveSession(res.access_token, res.user);
+      this.successMsg = res.created ? 'Your free account is ready! Opening…' : `Welcome ${res.user.email}! Opening your dashboard...`;
+      this.cdr.detectChanges();
+      this.router.navigate([res.created ? '/account' : '/dashboard']);
+    } catch (e) {
+      this.errorMsg = errorText(e);
+    }
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
   private wake() {

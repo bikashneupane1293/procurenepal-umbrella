@@ -58,6 +58,16 @@ export type Certificate = Prisma.CertificateModel
  */
 export type Tender = Prisma.TenderModel
 /**
+ * Model StaffInvite
+ * 
+ */
+export type StaffInvite = Prisma.StaffInviteModel
+/**
+ * Model TenderRequirement
+ * 
+ */
+export type TenderRequirement = Prisma.TenderRequirementModel
+/**
  * Model QualificationResult
  * 
  */

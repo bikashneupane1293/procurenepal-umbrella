@@ -1,15 +1,22 @@
-import { BadRequestException, Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { StaffService } from '../staff/staff.service';
+import { GoogleVerifier } from './google-verifier';
+import { MailService } from '../mail/mail.service';
+import { normalizeCode } from '../common/codes';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private staff: StaffService,
+    private googleVerifier: GoogleVerifier,
+    private mail: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -129,6 +136,65 @@ export class AuthService {
     });
     await this.prisma.loginSession.create({ data: { tenantId: user.tenantId, userId: user.id } });
     return this.generateTokens(user.id, user.email, user.role, user.tenantId);
+  }
+
+  // ------------------------------------------------------- Task 12: Google + Org ID sign-up
+
+  /** What the sign-in / sign-up pages need to know about this server. */
+  config() {
+    return { googleClientId: this.googleVerifier.clientId(), emailEnabled: this.mail.enabled() };
+  }
+
+  /**
+   * Sign in (or sign up) with Google. A new person starts in their own free workspace; with an
+   * Org ID they join that organization at once if it already invited this exact Google-verified
+   * email, otherwise the Owner gets a join request. Joining never blocks the sign-in itself.
+   */
+  async googleLogin(credential: string, orgCode?: string) {
+    const g = await this.googleVerifier.verify(credential);
+    if (!g.emailVerified) throw new UnauthorizedException('Your Google email address is not verified');
+    let user: any = (await this.prisma.user.findUnique({ where: { googleId: g.sub } as any })) ?? (await this.prisma.user.findUnique({ where: { email: g.email } }));
+    let created = false;
+    if (user) {
+      if (user.googleId && user.googleId !== g.sub) throw new UnauthorizedException('This email is linked to a different Google account');
+      if (!user.isActive) throw new UnauthorizedException('Account is deactivated');
+      const data: any = { lastLoginAt: new Date() };
+      if (!user.googleId) data.googleId = g.sub;
+      // Google has proven they own the email, so an unused activation link isn't needed any more.
+      if (user.status === 'PENDING') Object.assign(data, { status: 'ACTIVE', isVerified: true, activationToken: null, activationExpires: null });
+      user = await this.prisma.user.update({ where: { id: user.id }, data });
+    } else {
+      user = await this.staff.createPersonalUser({ email: g.email, fullName: g.name, googleId: g.sub, verified: true });
+      created = true;
+    }
+    await this.staff.ensureUserCode(user.id);
+    let join: any = null;
+    if (orgCode && normalizeCode(orgCode)) {
+      try {
+        join = await this.staff.requestToJoin(user.id, orgCode);
+      } catch (e: any) {
+        join = { result: 'ERROR', message: e?.response?.message ?? e?.message ?? 'Could not join' };
+      }
+    }
+    user = await this.prisma.user.findUnique({ where: { id: user.id } });
+    await this.prisma.loginSession.create({ data: { tenantId: user.tenantId, userId: user.id } });
+    return { ...(await this.generateTokens(user.id, user.email, user.role, user.tenantId)), created, join };
+  }
+
+  /**
+   * Sign up with an Org ID and a password. The email isn't proven here, so the person always
+   * starts in their own free workspace with a join request the Owner approves (never an
+   * automatic join, even if that email was invited — that needs Google's verified email).
+   */
+  async joinWithPassword(dto: { orgCode: string; fullName: string; email: string; password: string; phone?: string }) {
+    const code = normalizeCode(dto.orgCode);
+    const tenant: any = await this.prisma.tenant.findUnique({ where: { orgCode: code } as any });
+    if (!tenant) throw new NotFoundException(`No organization has the Org ID ${code} — check it with your office`);
+    const user: any = await this.staff.createPersonalUser({ email: dto.email, fullName: dto.fullName, phone: dto.phone, password: dto.password, verified: false });
+    await this.staff.ensureUserCode(user.id);
+    const join = await this.staff.requestToJoin(user.id, code, false);
+    await this.prisma.loginSession.create({ data: { tenantId: user.tenantId, userId: user.id } });
+    return { ...(await this.generateTokens(user.id, user.email, user.role, user.tenantId)), created: true, join };
   }
 
   private async generateTokens(userId: string, email: string, role: string, tenantId: string) {

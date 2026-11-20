@@ -22,6 +22,28 @@ export class DataService {
   adminTenant(id: string): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/tenants/${id}`)); }
   adminCreateTenant(body: any): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/tenants`, body)); }
   adminPlans(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/plans`)); }
+  // ---------- Sign-in config, Google, Org ID sign-up (Task 12) ----------
+  authConfig(): Promise<{ googleClientId: string | null; emailEnabled: boolean }> { return firstValueFrom(this.http.get<any>(`${API_URL}/auth/config`)); }
+  googleLogin(credential: string, orgCode?: string): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/auth/google`, { credential, ...(orgCode ? { orgCode } : {}) })); }
+  joinSignup(body: { orgCode: string; fullName: string; email: string; password: string; phone?: string }): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/auth/join`, body)); }
+  // ---------- Staff: Org ID, invites, join requests, remove (Task 12) ----------
+  staffOrg(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/staff/org`)); }
+  staffRegenerateOrg(): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/org/regenerate`, {})); }
+  staffMe(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/staff/me`)); }
+  staffInvite(body: { target: string; role?: string; modules?: string[]; customTitle?: string }): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/invites`, body)); }
+  staffInvites(): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/staff/invites`)); }
+  staffCancel(id: string): Promise<any> { return firstValueFrom(this.http.delete<any>(`${API_URL}/staff/invites/${id}`)); }
+  staffApprove(id: string, body: { role?: string; modules?: string[] }): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/requests/${id}/approve`, body)); }
+  staffAccept(id: string): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/invites/${id}/accept`, {})); }
+  staffDecline(id: string): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/invites/${id}/decline`, {})); }
+  staffJoin(orgCode: string): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/join`, { orgCode })); }
+  staffRemove(userId: string): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/staff/remove/${userId}`, {})); }
+  // ---------- Tender requirements (Task 13) ----------
+  tenderRequirements(tenderId: string): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/tenders/${tenderId}/requirements`)); }
+  saveTenderRequirements(tenderId: string, rows: any[]): Promise<any[]> { return firstValueFrom(this.http.put<any[]>(`${API_URL}/tenders/${tenderId}/requirements`, { rows })); }
+  updateTenderRequirement(tenderId: string, id: string, body: any): Promise<any> { return firstValueFrom(this.http.patch<any>(`${API_URL}/tenders/${tenderId}/requirements/${id}`, body)); }
+  deleteTenderRequirement(tenderId: string, id: string): Promise<any> { return firstValueFrom(this.http.delete<any>(`${API_URL}/tenders/${tenderId}/requirements/${id}`)); }
+
   // ---------- Pricing & promotions (Task 10) ----------
   adminPricing(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/admin/pricing`)); }
   adminSavePricing(catalog: any): Promise<any> { return firstValueFrom(this.http.put<any>(`${API_URL}/admin/pricing`, { catalog })); }

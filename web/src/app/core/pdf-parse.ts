@@ -2,6 +2,7 @@
 // Pure functions (no browser) — tested in Node. Every value is a suggestion the user reviews.
 // © Cuidado Technology Pvt. Ltd.
 import { bsToAd, fiscalYearOf } from './nepali-date';
+import { extractRequirements } from './pdf-requirements';
 
 export interface Found<T = any> { value: T; line: string; }
 export type Suggestions = Record<string, Found>;
@@ -142,7 +143,31 @@ export function parseTenderText(text: string): { fields: Suggestions; activities
   const type = guessType(text);
   if (type) put('projectType', type.value, type.line);
 
-  return { fields: f, activities: findActivities(lines) };
+  // Many documents don't summarise the requirements in the IFB, or the first mention of a label
+  // has no value (table of contents, generic ITB text). Fill the gaps from the whole-document
+  // requirements reader, which reads the BDS and Section III (EQC) tables too.
+  let activities = findActivities(lines);
+  try {
+    const req = extractRequirements(text);
+    const by = (k: string) => req.find((r) => r.kind === k);
+    const fill = (key: string, kind: string, pick: (d: any) => any) => {
+      const r = by(kind);
+      if (r) put(key, pick(r.data), r.sourceText);
+    };
+    fill('reqTurnover', 'TURNOVER', (d) => d.amountNPR);
+    fill('reqBidCapacity', 'BID_CAPACITY', (d) => d.amountNPR);
+    fill('reqSimilarValue', 'SIMILAR_CONTRACT', (d) => d.amountNPR);
+    fill('reqSimilarCount', 'SIMILAR_CONTRACT', (d) => d.count);
+    fill('bidSecurityAmount', 'BID_SECURITY', (d) => d.amountNPR);
+    fill('bidValidityDays', 'BID_VALIDITY', (d) => d.days);
+    fill('contractPeriodMonths', 'COMPLETION_PERIOD', (d) => d.months);
+    if (!activities.length) {
+      activities = req.filter((r) => r.kind === 'KEY_ACTIVITY')
+        .map((r) => ({ name: r.data['name'], unit: r.data['unit'], quantity: r.data['quantity'], line: r.sourceText }));
+    }
+  } catch { /* the requirements reader is best-effort; the fields above still stand */ }
+
+  return { fields: f, activities };
 }
 
 // ---------------------------------------------------------------- bank guarantee (bid / performance security)
@@ -201,7 +226,31 @@ export function parseCertificateText(text: string): { fields: Suggestions; activ
   const type = guessType(text);
   if (type) put('projectType', type.value, type.line);
 
-  return { fields: f, activities: findActivities(lines) };
+  // Many documents don't summarise the requirements in the IFB, or the first mention of a label
+  // has no value (table of contents, generic ITB text). Fill the gaps from the whole-document
+  // requirements reader, which reads the BDS and Section III (EQC) tables too.
+  let activities = findActivities(lines);
+  try {
+    const req = extractRequirements(text);
+    const by = (k: string) => req.find((r) => r.kind === k);
+    const fill = (key: string, kind: string, pick: (d: any) => any) => {
+      const r = by(kind);
+      if (r) put(key, pick(r.data), r.sourceText);
+    };
+    fill('reqTurnover', 'TURNOVER', (d) => d.amountNPR);
+    fill('reqBidCapacity', 'BID_CAPACITY', (d) => d.amountNPR);
+    fill('reqSimilarValue', 'SIMILAR_CONTRACT', (d) => d.amountNPR);
+    fill('reqSimilarCount', 'SIMILAR_CONTRACT', (d) => d.count);
+    fill('bidSecurityAmount', 'BID_SECURITY', (d) => d.amountNPR);
+    fill('bidValidityDays', 'BID_VALIDITY', (d) => d.days);
+    fill('contractPeriodMonths', 'COMPLETION_PERIOD', (d) => d.months);
+    if (!activities.length) {
+      activities = req.filter((r) => r.kind === 'KEY_ACTIVITY')
+        .map((r) => ({ name: r.data['name'], unit: r.data['unit'], quantity: r.data['quantity'], line: r.sourceText }));
+    }
+  } catch { /* the requirements reader is best-effort; the fields above still stand */ }
+
+  return { fields: f, activities };
 }
 
 function guessType(text: string): Found | null {

@@ -6,6 +6,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { FakePrisma } from './fake-prisma';
+import { addNptDays, nptToday } from '../src/common/nepal-time';
 
 process.env.JWT_ACCESS_SECRET = 'test-secret-only';
 
@@ -152,5 +153,64 @@ describe('Access: modules + User Setup (e2e)', () => {
     me = (await http().get('/access/me').set(as('ownerC')).expect(200)).body;
     expect(me.plan).toBe('ENTERPRISE');
     expect(me.modules).toEqual(['companies', 'bolpatra', 'procurement', 'fleet', 'hr', 'project', 'bank']);
+  });
+
+  it('plan expiry (Nepal Time): expiring soon → 7-day grace → FREE modules; CANCELED is immediate; renewal restores', async () => {
+    db.db.tenant.push({ id: 'E', name: 'E' });
+    db.db.user.push({ id: 'ownerE', email: 'owner@e.com', fullName: 'Owner E', role: 'OWNER', tenantId: 'E', isActive: true, modules: [], passwordHash: 'x' });
+    tok.ownerE = sign('ownerE');
+    let n = 0;
+    // a later createdAt each time, so the newest row is "the plan"
+    const setPlan = (plan: string, expiresInDays: number | null, status = 'ACTIVE') =>
+      db.db.subscription.push({
+        id: `e${++n}`, tenantId: 'E', plan, status, createdAt: new Date(Date.now() + n * 1000),
+        expiresAt: expiresInDays == null ? null : new Date(addNptDays(nptToday(), expiresInDays) + 'T00:00:00Z'),
+      });
+    const me = async () => (await http().get('/access/me').set(as('ownerE')).expect(200)).body;
+    const STARTER = ['companies', 'bolpatra', 'procurement', 'hr'];
+    const FREE = ['companies', 'bolpatra'];
+
+    setPlan('STARTER', 30);
+    let m = await me();
+    expect(m.planState).toMatchObject({ plan: 'STARTER', state: 'ACTIVE', daysLeft: 30, expiresOn: addNptDays(nptToday(), 30) });
+    expect(m.modules).toEqual(STARTER);
+
+    setPlan('STARTER', 0); // expires today → still valid through 23:59 Nepal Time
+    expect((await me()).planState).toMatchObject({ state: 'EXPIRING_SOON', daysLeft: 0 });
+
+    setPlan('STARTER', 5);
+    expect((await me()).planState).toMatchObject({ state: 'EXPIRING_SOON', daysLeft: 5 });
+
+    setPlan('STARTER', -3); // 3 days past expiry → grace, still full STARTER access
+    m = await me();
+    expect(m.planState).toMatchObject({ state: 'GRACE', daysLeft: 4, graceEndsOn: addNptDays(nptToday(), 4) });
+    expect(m.modules).toEqual(STARTER);
+
+    setPlan('STARTER', -7); // last day of grace
+    expect((await me()).planState).toMatchObject({ state: 'GRACE', daysLeft: 0 });
+
+    setPlan('STARTER', -8); // grace over → FREE modules only
+    m = await me();
+    expect(m.planState).toMatchObject({ plan: 'STARTER', effectivePlan: 'FREE', state: 'EXPIRED' });
+    expect(m.modules).toEqual(FREE);
+    const r = await http().put('/access/workspace-modules').set(as('ownerE')).send({ modules: { procurement: true } }).expect(400);
+    expect(r.body.message).toMatch(/STARTER plan has expired/);
+    await http().get('/tenders').set(as('ownerE')).expect(200); // FREE still includes Bolpatra
+
+    // Super Admin's per-workspace choice is ignored while expired, but kept for renewal
+    db.db.tenantFeatureFlag.push({ id: 'ent-e', tenantId: 'E', flagKey: 'entitle:bank', enabled: true });
+    expect((await me()).modules).toEqual(FREE);
+    setPlan('STARTER', 365); // renewed
+    m = await me();
+    expect(m.planState.state).toBe('ACTIVE');
+    expect(m.modules).toEqual(['companies', 'bank']); // the kept per-workspace choice is back
+
+    setPlan('PROFESSIONAL', 200, 'CANCELED'); // cancelled → FREE immediately, whatever the date
+    m = await me();
+    expect(m.planState).toMatchObject({ state: 'EXPIRED', effectivePlan: 'FREE' });
+    expect(m.modules).toEqual(FREE);
+
+    setPlan('STARTER', null); // no end date → never expires
+    expect((await me()).planState).toMatchObject({ state: 'ACTIVE', expiresOn: null, daysLeft: null });
   });
 });

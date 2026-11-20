@@ -19,3 +19,6 @@ prisma/*.db-journal
 # IDE
 .vscode/
 .idea/
+
+# tender PDFs shared for reader testing (never committed)
+samples/

@@ -21,6 +21,7 @@ async function bootstrap() {
       'http://localhost:4200',
       'https://app.procurenepal.com',
       'https://procurenepal.com',
+      'https://www.procurenepal.com',
     ],
     credentials: true,
   });

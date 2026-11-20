@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BID_STATUSES, IN_PROGRESS, WON } from './bid.constants';
+import { nptDate, nptDaysBetween } from '../common/nepal-time';
 
 const DAY = 86_400_000;
 const n = (v: any) => (v === null || v === undefined ? 0 : Number(v));
+/** Nepal calendar days from `now` to `d`. */
 const days = (d: Date | string | null | undefined, now: Date) =>
-  d ? Math.ceil((new Date(d).getTime() - now.getTime()) / DAY) : null;
+  d ? nptDaysBetween(nptDate(now), nptDate(d)) : null;
 
 /**
  * Bolpatra Reports — everything is calculated from the workspace's own data (tenantId).
@@ -96,12 +98,13 @@ export class BidReportService {
     // ---- last 12 months (by submission date)
     const months: { month: string; submitted: number; won: number }[] = [];
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      const n0 = new Date(nptDate(now) + 'T00:00:00Z'); // this month in Nepal Time
+      const d = new Date(Date.UTC(n0.getUTCFullYear(), n0.getUTCMonth() - i, 1));
       const key = d.toISOString().slice(0, 7);
       months.push({
         month: key,
-        submitted: bids.filter((b) => b.submittedAt && new Date(b.submittedAt).toISOString().slice(0, 7) === key).length,
-        won: bids.filter((b) => isWon(b) && (b.awardDate ?? b.submittedAt) && new Date((b.awardDate ?? b.submittedAt)!).toISOString().slice(0, 7) === key).length,
+        submitted: bids.filter((b) => b.submittedAt && nptDate(b.submittedAt).slice(0, 7) === key).length,
+        won: bids.filter((b) => isWon(b) && (b.awardDate ?? b.submittedAt) && nptDate((b.awardDate ?? b.submittedAt)!).slice(0, 7) === key).length,
       });
     }
 

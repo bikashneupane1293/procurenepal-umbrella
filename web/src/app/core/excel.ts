@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { bsToAd } from './nepali-date';
+import { nptToday } from './nepal-time';
 
 // ---------- Column names used in the Excel file (export, template and import) ----------
 export const CERT_COLS = [
@@ -175,7 +176,7 @@ function buildBook(certRows: any[][], actRows: any[][]): XLSX.WorkBook {
 export async function downloadCompanyZip(company: any, certs: any[], turnovers: any[] = []) {
   const { zipSync, strToU8 } = await import('fflate');
   const files: Record<string, Uint8Array> = {};
-  const date = new Date().toISOString().slice(0, 10);
+  const date = nptToday();
   const safe = String(company.name || 'Company').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
   // 1. Certificates in the same Excel format as "Import Excel" (+ a Company Details sheet)

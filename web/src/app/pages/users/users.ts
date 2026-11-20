@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AccessService } from '../../core/access.service';
 import { AuthService } from '../../core/auth.service';
-import { errorText } from '../../core/data.service';
+import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { MENU } from '../../core/modules';
 import { showBoth } from '../../core/nepali-date';
@@ -36,6 +36,53 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
 
     @if (okMsg()) { <div class="msg ok">{{ okMsg() }}</div> }
     @if (error()) { <div class="msg error">{{ error() }}</div> }
+
+    @if (canManage() && org(); as o) {
+      <div class="panel staff">
+        <h2>👥 Staff joining &amp; leaving</h2>
+        <div class="orgrow">
+          <div>
+            <div class="lbl">Your Org ID</div>
+            <div class="orgcode">{{ o.orgCode }}</div>
+          </div>
+          <div class="orgbtns">
+            <button class="btn light small" (click)="copyText(o.orgCode, 'id')">{{ copiedWhat() === 'id' ? '✅ Copied' : '📋 Copy ID' }}</button>
+            <button class="btn light small" (click)="copyText(o.signupLink, 'link')">{{ copiedWhat() === 'link' ? '✅ Copied' : '🔗 Copy sign-up link' }}</button>
+            <button class="btn light small" (click)="regenerateOrg()" title="Use if the ID was shared too widely — the old one stops working">↻ New ID</button>
+          </div>
+        </div>
+        <p class="help">Give staff this Org ID (or the link). They sign up with it — with Google, if you've already added their email they join at once; otherwise you approve them below. When someone leaves, <strong>Remove</strong> them: they keep their login as a free user, and their next company can add them.</p>
+
+        <div class="addrow">
+          <input [(ngModel)]="inviteTarget" placeholder="Email or personal ID (U-XXXXXX)" />
+          <select [(ngModel)]="inviteRole">@for (r of roles; track r.value) { <option [value]="r.value">{{ r.label }}</option> }</select>
+          <button class="btn gold" (click)="sendInvite()" [disabled]="staffBusy() || !inviteTarget.trim()">Add staff</button>
+        </div>
+
+        @if (pending().length) {
+          <div class="table-wrap"><table>
+            <thead><tr><th>Person</th><th>Type</th><th>Role</th><th></th></tr></thead>
+            <tbody>
+              @for (i of pending(); track i.id) {
+                <tr>
+                  <td><strong>{{ i.fullName || i.email || i.userCode }}</strong><div class="help">{{ i.email }}{{ i.userCode ? ' · ' + i.userCode : '' }}</div></td>
+                  <td>@if (i.kind === 'REQUEST') { <span class="tag warn">Asked to join</span> } @else { <span class="tag">Invited — waiting for them</span> }</td>
+                  <td>
+                    @if (i.kind === 'REQUEST') {
+                      <select [(ngModel)]="approveRole[i.id]">@for (r of roles; track r.value) { <option [value]="r.value">{{ r.label }}</option> }</select>
+                    } @else { <span class="tag gold">{{ i.role }}</span> }
+                  </td>
+                  <td class="rowbtns">
+                    @if (i.kind === 'REQUEST') { <button class="btn gold small" (click)="approve(i)" [disabled]="staffBusy()">Approve</button> }
+                    <button class="btn light small" (click)="cancelInvite(i)" [disabled]="staffBusy()">{{ i.kind === 'REQUEST' ? 'Decline' : 'Cancel' }}</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table></div>
+        }
+      </div>
+    }
 
     @if (activationLink()) {
       <div class="panel link-panel">
@@ -162,6 +209,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
                   <td class="rowbtns">
                     @if (canManage() && u.status === 'PENDING') { <button class="btn light small" (click)="newLink(u)">New link</button> }
                     @if (canManage() && u.role !== 'SUPER_ADMIN') { <button class="btn light small" (click)="openEdit(u)">Edit</button> }
+                    @if (canManage() && u.role !== 'SUPER_ADMIN' && u.id !== myId) { <button class="btn light small" (click)="removeUser(u)" title="They keep their login as a free user">Remove</button> }
                   </td>
                 </tr>
               } @empty { <tr><td colspan="6" class="empty">No users.</td></tr> }
@@ -214,6 +262,12 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     .itemgrp summary { cursor: pointer; font-weight: 700; color: #0a1f3d; padding: 4px 0; }
     .itemgrp summary small { color: #9ca3af; font-weight: 400; }
     .link-panel { border-left: 4px solid #d4a017; }
+    .staff .orgrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .staff .lbl { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+    .staff .orgcode { font-size: 28px; font-weight: 800; color: #0a1f3d; letter-spacing: .05em; }
+    .staff .orgbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .staff .addrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+    .staff .addrow input { flex: 2 1 240px; } .staff .addrow select { flex: 1 1 200px; width: auto; }
     .linkbox { display: flex; align-items: center; gap: 10px; background: #f8f9fa; border-radius: 8px; padding: 10px 14px; flex-wrap: wrap; }
     .linkbox code { word-break: break-all; font-size: 13px; }
   `],
@@ -223,6 +277,63 @@ export class UsersPage {
   private auth = inject(AuthService);
   menu = MENU;
   roles = ROLES;
+  // ---- Task 12: staff joining & leaving
+  private staffApi = inject(DataService);
+  myId = inject(AuthService).getUser()?.id ?? '';
+  org = signal<any | null>(null);
+  pending = signal<any[]>([]);
+  staffBusy = signal(false);
+  copiedWhat = signal('');
+  inviteTarget = '';
+  inviteRole = 'VIEWER';
+  approveRole: Record<string, string> = {};
+
+  async loadStaff() {
+    if (!this.canManage()) return;
+    try {
+      const [o, p] = await Promise.all([this.staffApi.staffOrg(), this.staffApi.staffInvites()]);
+      this.org.set(o);
+      for (const i of p) if (!this.approveRole[i.id]) this.approveRole[i.id] = i.role || 'VIEWER';
+      this.pending.set(p);
+    } catch (e) { this.error.set(errorText(e)); }
+  }
+  async copyText(v: string, what: string) {
+    try { await navigator.clipboard.writeText(v); this.copiedWhat.set(what); setTimeout(() => this.copiedWhat.set(''), 2500); } catch { /* clipboard blocked */ }
+  }
+  async regenerateOrg() {
+    if (!confirm('Make a new Org ID? The current one stops working for new sign-ups.')) return;
+    try { this.org.set(await this.staffApi.staffRegenerateOrg()); this.okMsg.set('✅ New Org ID made. Give staff the new one.'); } catch (e) { this.error.set(errorText(e)); }
+  }
+  async sendInvite() {
+    this.staffBusy.set(true); this.error.set(''); this.okMsg.set('');
+    try {
+      const r = await this.staffApi.staffInvite({ target: this.inviteTarget.trim(), role: this.inviteRole });
+      const who = r.invite.email || r.invite.userCode;
+      this.okMsg.set(r.existingAccount
+        ? `✅ Invitation sent to ${who}. They accept it on their Account page${r.emailed ? ' (we emailed them)' : ''}.`
+        : `✅ ${who} is added. Ask them to sign up with Google using this email and your Org ID ${this.org()?.orgCode} — they'll join at once${r.emailed ? ' (we emailed them the link)' : ''}.`);
+      this.inviteTarget = '';
+      await this.loadStaff();
+    } catch (e) { this.error.set(errorText(e)); }
+    this.staffBusy.set(false);
+  }
+  async approve(i: any) {
+    this.staffBusy.set(true); this.error.set('');
+    try { await this.staffApi.staffApprove(i.id, { role: this.approveRole[i.id] }); this.okMsg.set(`✅ ${i.fullName || i.email} joined your workspace.`); await Promise.all([this.loadStaff(), this.loadUsers()]); }
+    catch (e) { this.error.set(errorText(e)); }
+    this.staffBusy.set(false);
+  }
+  async cancelInvite(i: any) {
+    this.staffBusy.set(true); this.error.set('');
+    try { await this.staffApi.staffCancel(i.id); await this.loadStaff(); } catch (e) { this.error.set(errorText(e)); }
+    this.staffBusy.set(false);
+  }
+  async removeUser(u: any) {
+    if (!confirm(`Remove ${u.fullName} from this workspace?\n\nThey keep their login and become a free user; their records stay here.`)) return;
+    this.error.set(''); this.okMsg.set('');
+    try { await this.staffApi.staffRemove(u.id); this.okMsg.set(`✅ ${u.fullName} was removed. They're now a free user and another company can add them.`); await this.loadUsers(); }
+    catch (e) { this.error.set(errorText(e)); }
+  }
   me = this.auth.getUser();
 
   users = signal<any[]>([]);
@@ -260,6 +371,7 @@ export class UsersPage {
     this.ws = { ...this.ws, ...info.workspaceModules };
     this.wsItems = { ...(info.itemFlags ?? {}) };
     await this.loadUsers();
+    this.loadStaff();
     if (this.canViewLogins()) this.loadLogins();
   }
   async loadUsers() {
@@ -333,7 +445,9 @@ export class UsersPage {
       } else {
         const created = await this.access.createUser(body);
         this.okMsg.set(created.activationLink
-          ? `✅ ${body.fullName} was added. Send them the activation link below so they can set their own password.`
+          ? created.emailed
+            ? `✅ ${body.fullName} was added and the activation link was emailed to ${body.email} (also shown below in case it doesn't arrive).`
+            : `✅ ${body.fullName} was added. Send them the activation link below so they can set their own password.`
           : `✅ ${body.fullName} was added. They can sign in with ${body.email} and the password you set.`);
         this.activationLink.set(created.activationLink ?? null);
       }

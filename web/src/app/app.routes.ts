@@ -9,6 +9,8 @@ import { moduleGuard } from './core/module.guard';
 export const routes: Routes = [
   { path: 'login', component: LoginPage },
   { path: 'activate', loadComponent: () => import('./pages/activate/activate').then((m) => m.ActivatePage) },
+  // Task 12 — join a company with its Org ID, or create a free account (public)
+  { path: 'join', loadComponent: () => import('./pages/join/join').then((m) => m.JoinPage) },
   {
     path: '',
     component: ShellLayout,
@@ -32,6 +34,7 @@ export const routes: Routes = [
       { path: 'projects/:id', canActivate: [moduleGuard], loadComponent: () => import('./pages/projects/project-detail').then((m) => m.ProjectDetailPage) },
       { path: 'boq', canActivate: [moduleGuard], data: { boq: true }, loadComponent: () => import('./pages/projects/projects').then((m) => m.ProjectsPage) },
       { path: 'm/:menuId', canActivate: [moduleGuard], loadComponent: () => import('./pages/erp/erp-page').then((m) => m.ErpPage) },
+      { path: 'account', loadComponent: () => import('./pages/account/account').then((m) => m.AccountPage) },
       { path: 'admin', loadComponent: () => import('./pages/admin/admin').then((m) => m.AdminPage) },
       { path: 'soon/:id', loadComponent: () => import('./pages/soon/soon').then((m) => m.SoonPage) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },

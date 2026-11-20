@@ -1,6 +1,7 @@
 import { Component, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import type { FoundActivity, Suggestions } from '../core/pdf-parse';
+import { pdfReadNote } from '../core/pdf-requirements';
 import { showBoth } from '../core/nepali-date';
 
 const loadPdf = () => Promise.all([import('../core/pdf-reader'), import('../core/pdf-parse')]);
@@ -33,14 +34,15 @@ const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completi
   imports: [DecimalPipe],
   template: `
     <div class="pdf-bar">
-      <button type="button" class="btn light" (click)="file.click()" [disabled]="busy()">{{ busy() ? 'Reading PDF…' : '📄 Read from PDF' }}</button>
-      <span class="help">{{ kind() === 'tender' ? 'Choose the IFB / bid notice PDF' : kind() === 'guarantee' ? 'Choose the bank guarantee (bid / performance security) PDF' : 'Choose the experience / completion certificate PDF' }} — the form fills itself, you check and save. The PDF stays on your computer.</span>
+      <button type="button" class="btn light" (click)="file.click()" [disabled]="busy()">{{ busy() ? (progress() || 'Reading PDF…') : '📄 Read from PDF' }}</button>
+      <span class="help">{{ kind() === 'tender' ? 'Choose the IFB or the full bidding document PDF' : kind() === 'guarantee' ? 'Choose the bank guarantee (bid / performance security) PDF' : 'Choose the experience / completion certificate PDF' }} — the form fills itself, you check and save. The PDF stays on your computer.</span>
       <input #file type="file" accept="application/pdf,.pdf" hidden (change)="onFile($event)" />
     </div>
     @if (error()) { <div class="msg error">{{ error() }}</div> }
     @if (found(); as f) {
       <div class="review">
         <strong>Found in {{ fileName() }}</strong> — tick what to use, then click <em>Fill the form</em>.
+        @if (readNote()) { <div class="note">{{ readNote() }}</div> }
         <div class="table-wrap">
           <table>
             <thead><tr><th></th><th>Field</th><th>Value found</th><th>From this line in the PDF</th></tr></thead>
@@ -91,6 +93,7 @@ const DATES = new Set(['deadlineDate', 'publicationDate', 'startDate', 'completi
     td.src { color: #6b7280; font-size: 12px; max-width: 420px; }
     .empty { text-align: center; color: #9ca3af; padding: 16px; }
     .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .note { margin-top: 6px; color: #92400e; font-size: 12px; }
   `],
 })
 export class PdfFill {
@@ -98,6 +101,8 @@ export class PdfFill {
   filled = output<PdfApply>();
 
   busy = signal(false);
+  progress = signal('');
+  readNote = signal('');
   error = signal('');
   found = signal<{ fields: Suggestions; activities: FoundActivity[] } | null>(null);
   fileName = signal('');
@@ -119,11 +124,13 @@ export class PdfFill {
     if (!file) return;
     this.error.set('');
     this.found.set(null);
-    if (file.size > 25 * 1024 * 1024) { this.error.set('This PDF is larger than 25 MB.'); return; }
+    if (file.size > 150 * 1024 * 1024) { this.error.set('This PDF is larger than 150 MB.'); return; }
     this.busy.set(true);
     try {
       const [{ readPdfText }, parse] = await loadPdf();
-      const pdf = await readPdfText(file);
+      // the whole document — Section III (EQC) and the SCC are often past page 80
+      const pdf = await readPdfText(file, 600, (p, n) => { if (p % 10 === 0 || p === n) this.progress.set(`Reading page ${p} of ${n}…`); });
+      this.readNote.set(pdfReadNote(pdf));
       if (pdf.scanned) {
         this.error.set('This PDF looks like a scanned image (no text inside), so it cannot be read yet. Please type the values. (Reading scanned PDFs is planned.)');
       } else {
@@ -139,6 +146,7 @@ export class PdfFill {
       this.error.set('Could not read this PDF' + (err?.name === 'PasswordException' ? ' — it is password protected.' : '. Is it a valid PDF file?'));
     }
     this.busy.set(false);
+    this.progress.set('');
   }
 
   apply() {

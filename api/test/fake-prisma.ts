@@ -62,6 +62,8 @@ const DEFAULTS: Record<string, () => Row> = {
   tenant: () => ({ isActive: true, createdAt: new Date() }),
   subscription: () => ({ plan: 'FREE', status: 'ACTIVE', startsAt: new Date(), createdAt: new Date(), promoCode: null }),
   platformSetting: () => ({ updatedAt: new Date() }),
+  staffInvite: () => ({ status: 'PENDING', role: 'VIEWER', modules: [], createdAt: new Date(), decidedAt: null, userId: null, userCode: null, email: null }),
+  tenderRequirement: () => ({ confidence: 0, needsVerification: true, sortOrder: 0, confirmedAt: null, confirmedBy: null, sourceText: null, createdAt: new Date(), updatedAt: new Date() }),
   bank: () => ({ isActive: true, createdAt: new Date(), updatedAt: new Date() }),
   project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
   boqItem: () => ({ isHeading: false, createdAt: new Date() }),
@@ -74,7 +76,7 @@ export class FakePrisma {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
     bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
-    loginSession: [], externalRef: [], subscription: [], platformSetting: [],
+    loginSession: [], externalRef: [], subscription: [], platformSetting: [], staffInvite: [], tenderRequirement: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -210,6 +212,8 @@ export class FakePrisma {
   externalRef = this.model('externalRef');
   subscription = this.model('subscription');
   platformSetting = this.model('platformSetting');
+  staffInvite = this.model('staffInvite');
+  tenderRequirement = this.model('tenderRequirement');
 
   /**
    * Supports both forms real Prisma does: the batch form (an array of pending ops, run

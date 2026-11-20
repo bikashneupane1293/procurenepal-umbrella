@@ -619,14 +619,6 @@ export type BoqItemUncheckedUpdateManyWithoutProjectNestedInput = {
   deleteMany?: Prisma.BoqItemScalarWhereInput | Prisma.BoqItemScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type BoqItemCreateWithoutProjectInput = {
   id?: string
   tenantId: string

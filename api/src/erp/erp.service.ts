@@ -2,12 +2,14 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../access/access.service';
 import { CAN_DELETE_ERP, ENTITIES, EntityDef, entityDef, FieldDef, MENUS, menuDef, moduleOf, REPORT_MODULE, STOCK_ENTITIES } from './erp.registry';
+import { nptDate, nptDaysBetween, nptToday } from '../common/nepal-time';
 
 export interface ErpUser { tenantId: string; userId: string; role: string }
 export const r2 = (v: number) => Math.round(v * 100) / 100;
 export const num = (v: any) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 const DAY = 86_400_000;
-export const daysTo = (d: any) => Math.ceil((new Date(d).getTime() - Date.now()) / DAY);
+/** Nepal calendar days from today to `d` (0 = today, negative = past) — not hours ÷ 24 from now. */
+export const daysTo = (d: any) => nptDaysBetween(nptToday(), nptDate(d));
 const isDate = (v: any) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) && !isNaN(new Date(v.slice(0, 10)).getTime());
 
 /**

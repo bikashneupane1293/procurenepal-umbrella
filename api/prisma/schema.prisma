@@ -26,6 +26,11 @@ model Tenant {
   certificates    Certificate[]
   tenders         Tender[]
   auditLogs       AuditLog[]
+  // Task 12 — organization ID staff give at sign-up (e.g. PN-7K3Q9M), assigned on first use
+  orgCode         String?  @unique
+  // Task 12 — set when this is a person's own free workspace (where they go when a company removes them)
+  personalOwnerId String?  @unique
+  staffInvites    StaffInvite[]
 }
 
 // ==================== USER & RBAC ====================
@@ -40,7 +45,9 @@ model User {
   role         Role     @default(VIEWER)
   isActive     Boolean  @default(true)
   isVerified   Boolean  @default(false)
-  googleId     String?
+  googleId     String?  @unique
+  // Task 12 — the person's own ID (e.g. U-8H3K2M) a company can use to add them as staff
+  userCode     String?  @unique
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
   // ERP modules this user may open (empty = every module active in the workspace)
@@ -230,8 +237,60 @@ model Tender {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
+  requirements      TenderRequirement[]
+
   @@unique([tenantId, ifbNumber])
   @@index([tenantId])
+}
+
+// Task 12 — staff joining an organization.
+//   INVITE  = the company added a person (by email or personal ID); the person accepts.
+//   REQUEST = a person signed up with the company's Org ID; the Owner approves.
+model StaffInvite {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kind        String    // INVITE | REQUEST
+  email       String?   // lower-case
+  userCode    String?
+  userId      String?   // the existing account, once known
+  fullName    String?
+  role        Role      @default(VIEWER)
+  modules     String[]  @default([])
+  customTitle String?
+  status      String    @default("PENDING") // PENDING | ACCEPTED | DECLINED | CANCELLED
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  decidedAt   DateTime?
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([userCode])
+  @@index([userId])
+}
+
+// Task 13 — requirements read from a tender's bidding document, one row per requirement.
+// Always shown as "needs verification" until a person confirms it.
+model TenderRequirement {
+  id                String    @id @default(uuid())
+  tenantId          String
+  tenderId          String
+  tender            Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  // TURNOVER | SIMILAR_CONTRACT | KEY_ACTIVITY | GENERAL_EXPERIENCE | FINANCIAL_RESOURCES | BID_CAPACITY
+  // | PERSONNEL | EQUIPMENT | COMPLETION_PERIOD | BID_SECURITY | BID_VALIDITY | PRICE_ADJUSTMENT
+  kind              String
+  label             String
+  data              Json
+  sourceText        String?
+  confidence        Float     @default(0)
+  needsVerification Boolean   @default(true)
+  confirmedAt       DateTime?
+  confirmedBy       String?
+  sortOrder         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId, tenderId])
 }
 
 model QualificationResult {

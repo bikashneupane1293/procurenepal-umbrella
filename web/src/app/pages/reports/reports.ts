@@ -6,6 +6,7 @@ import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { adToBs, showBoth } from '../../core/nepali-date';
 import { STATUS_LABEL } from '../../core/bid-labels';
+import { nptToday } from '../../core/nepal-time';
 
 @Component({
   selector: 'app-reports',
@@ -213,6 +214,6 @@ export class ReportsPage {
     add('Expiring', this.expiries().map((e) => ({ What: e.kind, Who: e.who, 'Expiry (AD)': String(e.expiry).slice(0, 10), 'Expiry (BS)': this.bs(e.expiry), 'Days left': e.daysLeft, 'Amount (NPR)': e.amount ?? '' })));
     add('By Company', r.perCompany.map((c: any) => ({ Company: c.company, Bids: c.bids, Submitted: c.submitted, Won: c.won, Lost: c.lost, 'Win rate %': c.winRate ?? '', 'Won value (NPR)': c.wonValue, 'Checked tenders': c.tendersChecked, Eligible: c.eligible, 'JV required': c.jvRequired, 'Not eligible': c.notEligible, 'Certificates to check': c.pendingDocumentChecks })));
     add('Months', r.months.map((m: any) => ({ Month: m.month, Submitted: m.submitted, Won: m.won })));
-    XLSX.writeFile(wb, `ProcureNepal_Bolpatra_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `ProcureNepal_Bolpatra_Report_${nptToday()}.xlsx`);
   }
 }

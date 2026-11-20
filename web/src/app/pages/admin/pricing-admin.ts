@@ -6,9 +6,10 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
+import { nptDate } from '../../core/nepal-time';
 
 const PLANS = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+const iso = (d: Date) => nptDate(d);
 const addDays = (n: number) => iso(new Date(Date.now() + n * 86_400_000));
 
 @Component({

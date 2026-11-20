@@ -2,6 +2,7 @@
 import * as XLSX from 'xlsx';
 import { verdictText } from '../shared/qual-result';
 import { showBoth } from './nepali-date';
+import { nptToday, nptStamp } from './nepal-time';
 
 const n = (v: any) => (v === null || v === undefined || v === '' ? '' : Math.round(Number(v) * 100) / 100);
 
@@ -19,7 +20,7 @@ export function downloadQualificationReport(tender: any, results: any[], fileNam
     ['Deadline', showBoth(tender.deadlineDate)],
     ['Cost Estimate (NPR, excl. VAT)', n(tender.boqAmount)],
     ['Contract Period (months)', tender.contractPeriodMonths ?? ''],
-    ['Generated', new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'],
+    ['Generated', nptStamp()],
     [],
     ['This report is a guide calculated from the data entered and the default PPMO rules. The bid document always takes priority. Not legal advice.'],
   ];
@@ -63,5 +64,5 @@ export function downloadQualificationReport(tender: any, results: any[], fileNam
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(warnings.length ? warnings : [{ Bidder: '', Warning: 'None' }]), 'Warnings');
 
   const safe = String(tender.ifbNumber ?? 'Tender').replace(/[^A-Za-z0-9]+/g, '_');
-  XLSX.writeFile(wb, fileName ?? `ProcureNepal_Qualification_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  XLSX.writeFile(wb, fileName ?? `ProcureNepal_Qualification_${safe}_${nptToday()}.xlsx`);
 }

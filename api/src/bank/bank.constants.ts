@@ -1,3 +1,4 @@
+import { nptDate, nptDaysBetween } from '../common/nepal-time';
 // Bank System — guarantee types, statuses, cost estimates and alerts. © Cuidado Technology Pvt. Ltd.
 
 export const GUARANTEE_TYPES = ['BID_SECURITY', 'PERFORMANCE', 'ADVANCE_PAYMENT', 'RETENTION', 'CUSTOMS', 'OTHER'] as const;
@@ -16,7 +17,8 @@ export const CAN_DELETE_BANK = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'];
 export const BID_SECURITY_MARGIN_DAYS = 30;
 
 const DAY = 86_400_000;
-export const daysBetween = (from: Date, to: Date) => Math.ceil((to.getTime() - from.getTime()) / DAY);
+/** Nepal calendar days between two moments (same as before for plain dates; correct at any hour for "now"). */
+export const daysBetween = (from: Date, to: Date) => nptDaysBetween(nptDate(from), nptDate(to));
 
 /**
  * Commission estimate. Banks differ, so this is only an estimate the user can overwrite:

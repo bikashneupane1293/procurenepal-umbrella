@@ -7,11 +7,13 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { FakePrisma } from './fake-prisma';
 import { alertsFor, estimateCommission } from '../src/bank/bank.constants';
+import { addNptDays, nptToday } from '../src/common/nepal-time';
 
 process.env.JWT_ACCESS_SECRET = 'test-secret-only';
 const D = (s: string) => new Date(s);
 const day = (v: any) => (v ? new Date(v).toISOString().slice(0, 10) : null);
-const inDays = (k: number) => new Date(Date.now() + k * 86_400_000).toISOString().slice(0, 10);
+// Nepal Time, like the app (UTC dates are a day behind between 00:00 and 05:45 NPT)
+const inDays = (k: number) => addNptDays(nptToday(), k);
 
 describe('Bank rules', () => {
   it('estimates commission per quarter, per year or flat', () => {

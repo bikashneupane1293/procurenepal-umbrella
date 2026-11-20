@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, SaveBoqDto, UpdateProjectDto } from './dto/project.dto';
 import { ACTIVE_PROJECT, addMonths, CAN_DELETE_PROJECT, lineAmount, MAX_BOQ_ITEMS, projectAlerts, WON_BID } from './project.constants';
 import { ProjectSyncService } from './project-sync.service';
+import { nptDate, nptDaysBetween } from '../common/nepal-time';
 
 const num = (v: any) => (v === null || v === undefined ? 0 : Number(v));
 const DATE_FIELDS = ['contractSignDate', 'startDate', 'intendedCompletionDate', 'revisedCompletionDate', 'actualCompletionDate'] as const;
@@ -57,7 +58,7 @@ export class ProjectService {
       boqCount: s.count,
       boqTotal: Math.round(s.total * 100) / 100,
       timeUsedPct,
-      daysToCompletion: due ? Math.ceil((new Date(due).getTime() - today.getTime()) / 86_400_000) : null,
+      daysToCompletion: due ? nptDaysBetween(nptDate(today), nptDate(due)) : null, // Nepal calendar days
       openGuarantees: open.length,
       openGuaranteeAmount: open.reduce((t, g) => t + num(g.amount), 0),
       alerts: projectAlerts(p, s.total, s.count, open, today),

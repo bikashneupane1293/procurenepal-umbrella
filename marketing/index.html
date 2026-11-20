@@ -85,6 +85,30 @@
   section.cta h2 { font-size: 28px; margin: 0 0 12px; }
   section.cta p { color: var(--muted); margin: 0 0 28px; }
 
+  section.pricing { padding: 70px 0; }
+  section.pricing h2 { text-align: center; font-size: 28px; margin: 0 0 8px; }
+  section.pricing p.sub { text-align: center; color: var(--muted); margin: 0 0 26px; }
+  .period { display: flex; justify-content: center; gap: 0; margin: 0 auto 26px; background: #e9edf2; border-radius: 999px; padding: 4px; width: max-content; }
+  .period button { border: 0; background: transparent; padding: 8px 20px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .period button.on { background: var(--navy); color: #fff; }
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; }
+  .plan { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 26px; display: flex; flex-direction: column; }
+  .plan.hi { border: 2px solid var(--gold); box-shadow: 0 8px 26px rgba(10,31,61,.08); }
+  .plan h3 { margin: 0; font-size: 18px; }
+  .plan .tag { color: var(--muted); font-size: 13px; min-height: 20px; margin: 4px 0 14px; }
+  .plan .price { font-size: 30px; font-weight: 800; color: var(--navy); }
+  .plan .price small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .plan .was { color: var(--muted); text-decoration: line-through; font-size: 14px; min-height: 20px; }
+  .plan .save { color: #15803d; font-size: 13px; font-weight: 700; min-height: 18px; }
+  .plan ul { list-style: none; padding: 0; margin: 16px 0 20px; font-size: 14px; flex: 1; }
+  .plan li { padding: 4px 0; }
+  .plan li::before { content: "✓ "; color: var(--gold); font-weight: 800; }
+  .promo { display: flex; justify-content: center; gap: 8px; margin-top: 26px; flex-wrap: wrap; }
+  .promo input { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; text-transform: uppercase; min-width: 200px; }
+  .promo-msg { text-align: center; margin-top: 10px; font-size: 14px; min-height: 20px; }
+  .promo-msg.ok { color: #15803d; } .promo-msg.bad { color: #b91c1c; }
+  .pricing-note { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
+
   footer.site { background: var(--navy); color: #cdd8e6; padding: 34px 0; font-size: 13px; }
   footer.site .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   footer.site a { color: #cdd8e6; }
@@ -110,6 +134,7 @@
     <nav class="top">
       <a href="#features">Features</a>
       <a href="#why">Why ProcureNepal</a>
+      <a href="#pricing">Pricing</a>
       <a href="https://app.procurenepal.com" class="btn gold" style="margin-left:22px">Open the app</a>
     </nav>
   </div>
@@ -189,6 +214,24 @@
   </div>
 </section>
 
+<section class="pricing" id="pricing">
+  <div class="wrap">
+    <h2>Simple pricing in Nepali rupees</h2>
+    <p class="sub">Pick the modules your office needs. Upgrade any time — your data stays where it is.</p>
+    <div class="period" role="tablist">
+      <button id="pm" class="on" type="button">Monthly</button>
+      <button id="py" type="button">Yearly</button>
+    </div>
+    <div class="plans" id="plans"><p class="pricing-note">Loading current prices… (the first load can take up to a minute while the server wakes up)</p></div>
+    <form class="promo" id="promo-form">
+      <input id="promo" placeholder="Have a promo code?" autocomplete="off" />
+      <button class="btn gold" type="submit">Apply</button>
+    </form>
+    <div class="promo-msg" id="promo-msg"></div>
+    <p class="pricing-note">Prices are in NPR. Payment is arranged with our team for now — online payment is coming.</p>
+  </div>
+</section>
+
 <section class="cta">
   <div class="wrap">
     <h2>Ready to run your next bid properly?</h2>
@@ -204,6 +247,84 @@
   </div>
 </footer>
 
-<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+<script>
+// Footer year in Nepal Time (UTC+05:45).
+document.getElementById('y').textContent = new Date(Date.now() + 345 * 60000).getUTCFullYear();
+
+// Live prices from the ProcureNepal API — change them in the app's Admin Panel → Pricing & promotions;
+// nothing on this page needs editing.
+(function () {
+  var API = 'https://procurenepal-api.onrender.com';
+  var MOD = { bolpatra: 'Bolpatra e-GP bids & qualification', procurement: 'Procurement & inventory', fleet: 'Vehicle & fleet',
+    hr: 'HR & payroll', project: 'Project management & BOQ', bank: 'Bank guarantees, loans & LC' };
+  var state = { plans: [], period: 'MONTHLY', quotes: null, code: '' };
+  var el = function (id) { return document.getElementById(id); };
+  var npr = function (n) { return 'NPR ' + Number(n || 0).toLocaleString('en-IN'); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  function render() {
+    var box = el('plans');
+    if (!state.plans.length) return;
+    var yearly = state.period === 'YEARLY';
+    box.innerHTML = state.plans.map(function (p, i) {
+      var list = yearly ? p.yearlyNPR : p.monthlyNPR;
+      var q = state.quotes && state.quotes[p.plan];
+      var final = q && q.promo ? q.finalNPR : list;
+      var saving = yearly && p.monthlyNPR > 0 && p.yearlyNPR > 0 ? Math.round((1 - p.yearlyNPR / (p.monthlyNPR * 12)) * 100) : 0;
+      var price = list > 0 ? npr(final) + ' <small>/ ' + (yearly ? 'year' : 'month') + '</small>' : 'Free';
+      return '<div class="plan' + (i === 1 ? ' hi' : '') + '">' +
+        '<h3>' + esc(p.label) + '</h3><div class="tag">' + esc(p.tagline) + '</div>' +
+        '<div class="was">' + (q && q.promo && list > 0 ? npr(list) : '') + '</div>' +
+        '<div class="price">' + price + '</div>' +
+        '<div class="save">' + (q && q.promo ? esc(q.promo.label) : saving > 0 ? 'Save ' + saving + '% vs monthly' : '') + '</div>' +
+        '<ul><li>Companies &amp; user setup</li>' + p.modules.map(function (m) { return '<li>' + esc(MOD[m] || m) + '</li>'; }).join('') + '</ul>' +
+        '<a class="btn gold" style="text-align:center" href="https://app.procurenepal.com/join">Get started</a></div>';
+    }).join('');
+  }
+
+  function load() {
+    fetch(API + '/pricing').then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.configured) {
+        el('plans').innerHTML = '<p class="pricing-note">Pricing is being finalised — <a href="https://app.procurenepal.com">open the app</a> or contact us for a quote.</p>';
+        el('promo-form').style.display = 'none';
+        return;
+      }
+      state.plans = d.plans || [];
+      render();
+    }).catch(function () {
+      el('plans').innerHTML = '<p class="pricing-note">Prices couldn\u2019t load right now — please refresh in a minute, or contact us for a quote.</p>';
+    });
+  }
+
+  function applyCode() {
+    var code = el('promo').value.trim().toUpperCase();
+    var msg = el('promo-msg');
+    state.code = code;
+    if (!code) { state.quotes = null; msg.textContent = ''; render(); return; }
+    msg.className = 'promo-msg'; msg.textContent = 'Checking ' + code + '…';
+    Promise.all(state.plans.map(function (p) {
+      return fetch(API + '/pricing/quote?plan=' + encodeURIComponent(p.plan) + '&period=' + state.period + '&code=' + encodeURIComponent(code))
+        .then(function (r) { return r.json(); });
+    })).then(function (qs) {
+      var map = {}; var ok = 0; var why = '';
+      qs.forEach(function (q, i) { map[state.plans[i].plan] = q; if (q.promo) ok++; else if (!why && q.promoError) why = q.promoError; });
+      state.quotes = map;
+      msg.className = 'promo-msg ' + (ok ? 'ok' : 'bad');
+      msg.textContent = ok ? '✓ ' + code + ' applied' + (ok < qs.length ? ' to the plans it covers' : '') + '.' : why || 'That code can\u2019t be used.';
+      render();
+    }).catch(function () { msg.className = 'promo-msg bad'; msg.textContent = 'Couldn\u2019t check the code right now — please try again.'; });
+  }
+
+  function setPeriod(p) {
+    state.period = p;
+    el('pm').className = p === 'MONTHLY' ? 'on' : ''; el('py').className = p === 'YEARLY' ? 'on' : '';
+    if (state.code) applyCode(); else render();
+  }
+  el('pm').onclick = function () { setPeriod('MONTHLY'); };
+  el('py').onclick = function () { setPeriod('YEARLY'); };
+  el('promo-form').onsubmit = function (e) { e.preventDefault(); applyCode(); };
+  load();
+})();
+</script>
 </body>
 </html>

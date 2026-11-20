@@ -254,15 +254,43 @@ Super Admin can now set prices and run promotions from the Admin Panel, with no 
 
 **Not done / next:** marketing page doesn't read `/pricing` yet; customers can't enter a promo code themselves (no self-service checkout until eSewa/Khalti); promotions aren't time-zone aware (dates compare in UTC — a code ending "2026-12-31" stops at 05:45 NPT on Jan 1).
 
+## Tasks 11–13 — Live prices, plan expiry, PDF reader, tender requirements table, staff & Google sign-up, email, Nepal Time (2026-11-20)
+
+**Nepal Time everywhere (item 6).** New helpers `api/src/common/nepal-time.ts` and `web/src/app/core/nepal-time.ts` (fixed UTC+05:45, no DST): `nptToday`, `nptDate`, `endOfNptDay`, `addNptDays`, `nptDaysBetween`, `nptStamp`. Every "days left / overdue / expiring" count (ERP, bank guarantees, projects, bids report, licences, promotions) now counts Nepal calendar days, so results no longer flip at 05:45 NPT. Excel/print stamps say "NPT"; Angular's date pipe defaults to +0545. Tested with the clock shifted to 00:20, 10:55 and 23:50 NPT.
+
+**Marketing page with live prices (item 1).** `marketing/index.html` has a Pricing section that reads `GET /pricing` (monthly/yearly toggle, promo-code check via `/pricing/quote`). If prices can't load it says so and suggests refreshing or contacting for a quote, instead of showing a broken table. "Get started" → `https://app.procurenepal.com/join`.
+
+**Plan expiry (item 2).** States: ACTIVE → EXPIRING_SOON (≤14 days) → GRACE (7 days after expiry; plan still works) → EXPIRED (only FREE plan modules). Data is never deleted; Super Admin's per-workspace module choices are kept and come back on renewal. Shell banner: everyone sees EXPIRED, Owners/Super Admin also see GRACE/EXPIRING_SOON. Admin Panel: Expiry column, expiry counters on the stats cards, "Expires on" suggested from the billing period.
+
+**Email (item 5a).** `api/src/mail/` sends through Brevo's HTTP API (no new npm dependency). Switched on by `BREVO_API_KEY` + `MAIL_FROM_EMAIL` (+ `MAIL_FROM_NAME`, `APP_URL`). Without them nothing breaks — links are shown on screen as before. Used for: new teammate activation, new organization owner, staff invitations, join requests to Owners.
+
+**Staff via Org ID + Google sign-up (item 5b).**
+- Every organization gets an Org ID (`PN-XXXXXX`), every person a personal ID (`U-XXXXXX`) — no 0/O/1/I/L.
+- Company adds a person by email or personal ID (INVITE) → person accepts on **My account**. Person asks to join with an Org ID (REQUEST) → Owner approves on **Users → Staff**.
+- `/join`: Google + Org ID joins at once **only** if that Google-verified email was already invited; email+password + Org ID is always a request (email not proven). Google without Org ID = free account.
+- Remove from company → the person keeps their login and lands in their own free personal workspace (FREE plan), reused if removed again; a new company can add them later. The only Owner can't leave. Role/workspace changes apply on the next request (JWT re-reads the DB).
+- Google token is verified server-side against `GOOGLE_CLIENT_ID` (audience, issuer, expiry, email_verified). Button hidden until `GOOGLE_CLIENT_ID` is set.
+
+**New database table for tender requirements (item 4).** `TenderRequirement` (tenant-scoped, cascades with the tender): kind (TURNOVER, SIMILAR_CONTRACT, KEY_ACTIVITY, GENERAL_EXPERIENCE, FINANCIAL_RESOURCES, BID_CAPACITY, PERSONNEL, EQUIPMENT, COMPLETION_PERIOD, BID_SECURITY, BID_VALIDITY, PRICE_ADJUSTMENT), label, data JSON, source text, confidence, `needsVerification` (true until a person ticks it), confirmedAt/By. API `GET/PUT /tenders/:id/requirements`, `PATCH/DELETE /tenders/:id/requirements/:rid` (bolpatra module).
+
+**PDF reader on other tenders (item 3) — causes found and fixed:**
+1. "Read from PDF" on the Tenders page read only the **first 30 pages**, the tender page reader 80. In the Pheme Khola document Section III (EQC) is on pages 40–44 and the completion period (SCC) on page 120 of 137. Both now read the whole document (up to 600 pages, with "Reading page X of N" progress). 137 pages read in ~2 s in the browser.
+2. The old field matcher took only the **first** mention of a label; when that was the table of contents or generic ITB text, the value was lost. The new requirements reader (`web/src/app/core/pdf-requirements.ts`) reads every mention in the IFB, BDS, EQC and SCC, cross-checks them (confidence goes up when they agree, down with a warning when they differ), and copes with EQC table text where the unit lands cells away ("NRs. 130.00 … million"). `parseTenderText` falls back to it for turnover, bid capacity, similar contract, bid security, validity, contract period and key activities.
+3. File size limit raised 25 MB → 150 MB. Pages with no text (scanned) are listed by number instead of failing silently.
+- Real document result (all 13 correct): turnover NRs 85.50 million best 3 of 10 yrs; similar contract 1 × 85.50 million in 10 yrs (each JV partner 14.20 million) "Construction of at least One Prestressed RCC Bridge"; Reinforcement 79 MT/yr; M-35 concrete 535.74 m3/yr; general experience 5 yrs; cash flow 23.70 million; bid capacity 130 million; personnel and equipment tables **blank in the document** (reported as such); completion 30 months; bid security 4 million valid 30 days beyond; validity 90 days; price adjustment applies.
+- Tender page: "📋 Requirements found in this document" (save/checked/edit label/confidence/source) → **Save to this tender**; saved rows panel with ✔ confirm and Remove; **Use confirmed values in the requirements above** copies confirmed rows into turnover, bid capacity, similar contract, key activities, contract period, bid security and validity.
+- Still not readable: fully scanned PDFs (need OCR) and documents typed in legacy Preeti font (text comes out as Latin letters). Send such a PDF and it can be checked.
+
+**Verified (actually executed, Linux copy byte-identical to the Mac files):** API unit 22 suites / 86 tests, API e2e 12 suites / 100 tests (new: staff, tender-requirements, plan expiry), web 4 files / 34 tests (new: 19 requirements-reader tests incl. the real document; the old "Hello, web" scaffold test was replaced, so web is now fully green), production build OK, `ngc` and spec `tsc` clean on the Mac. Browser click-through on the production build: /join, /account, upload of the real 137-page PDF → 13 rows → save → confirm → apply → tender requirements box updated (turnover, bid capacity, similar contract, 30 months).
+
+**Database change (additive only — STOPPED before `db push`):** new tables `StaffInvite`, `TenderRequirement` (and `PlatformSetting` from Task 10 if not pushed yet); new optional unique columns `Tenant.orgCode`, `Tenant.personalOwnerId`, `User.googleId`, `User.userCode`; Task 10's `Subscription` columns. No drops. Order: **`db push` first, then `git push`.**
+
 ## Next (in order)
 
-1. **First, on your Mac:** run `npm test`, `npm run test:e2e`, and `ng build` (this session still can't run them — see the verification notes above) before anything is pushed or deployed.
-2. **One-time:** promote `admin@griha.com` to `SUPER_ADMIN` (SQL command given directly) so the Admin Panel is reachable.
-3. Deploy the marketing page to `procurenepal.com` (root domain, separate from `app.procurenepal.com`) — cPanel steps in the reply.
-4. Wire real email sending (needs an SMTP / Brevo / SendGrid account from you) so activation links (new teammates AND, since Task 8, new organizations) and RFQ vendor emails go out automatically; then decide a schedule for External References "Check now".
-5. Feedback from real use of the Task 4 ERP engine pages — cheap to change in `erp.registry.ts`.
-6. Send a bid document that read badly so the PDF extraction fix can be checked against it directly, and extend the Nepali/English toggle once you've reviewed the first-pass wording in `web/src/app/core/i18n.service.ts`.
-7. Storing PDFs and documents online (needs storage credentials from you — e.g. Cloudflare R2).
-8. ~~Decide which modules each plan (FREE/STARTER/PROFESSIONAL/ENTERPRISE) actually unlocks, then wire that into the Admin Panel~~ **Done (2026-11-19, Task 8)** — see above; revisit the actual tier contents, then connect eSewa/Khalti (needs merchant credentials), WhatsApp OTP, WordPress — each still needs its own account/credentials from you.
-9. Write unit tests for `TenantsService.createTenant` and the plan-gating branches in `AccessService` (Task 8), then run a real create-organization + plan-change click-through on the Mac.
-10. After everything is deployed: rotate the admin and Supabase database passwords; consider Render Starter to remove the slow first sign-in.
+1. **On your Mac:** preview SQL → `db push` → `./verify-task11.sh` → commit/push → Render env vars → frontend + marketing upload (exact steps in the reply).
+2. Send 2–3 other tender PDFs that read badly (copy them into `~/ProcureNepal/samples/tenders/`) — especially scanned ones or ones in Preeti font — so the reader can be checked against them.
+3. Create the Brevo account (free tier) and Google OAuth client, then set the env vars.
+4. OCR for scanned PDFs (Tesseract in the browser, Nepali + English) — bigger download, opt-in button.
+5. Self-service checkout with eSewa/Khalti (needs merchant credentials); then promo codes at checkout.
+6. Storing PDFs online (needs storage credentials — e.g. Cloudflare R2).
+7. After everything is deployed: rotate the admin and Supabase database passwords; consider Render Starter to remove the slow first sign-in.

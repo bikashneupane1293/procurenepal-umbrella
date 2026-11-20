@@ -9,6 +9,25 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PricingService } from '../pricing/pricing.service';
+import { MailService } from '../mail/mail.service';
+import { addNptDays, nptDate, nptDaysBetween, nptToday } from '../common/nepal-time';
+
+/** Days after the expiry date during which the plan still applies (with a warning). */
+export const GRACE_DAYS = 7;
+/** Warn this many days before expiry. */
+export const EXPIRING_SOON_DAYS = 14;
+export type PlanStateName = 'NONE' | 'ACTIVE' | 'EXPIRING_SOON' | 'GRACE' | 'EXPIRED';
+export interface PlanState {
+  plan: string | null;
+  /** the plan whose modules actually apply right now (FREE once expired; null = unrestricted) */
+  effectivePlan: string | null;
+  state: PlanStateName;
+  /** Nepal dates, YYYY-MM-DD */
+  expiresOn: string | null;
+  graceEndsOn: string | null;
+  /** days left until expiry (ACTIVE/EXPIRING_SOON) or until grace ends (GRACE) */
+  daysLeft: number | null;
+}
 import {
   ADMIN_ROLES,
   ALL_ACCESS_ROLES,
@@ -34,48 +53,71 @@ const ITEM_KEY = /^[a-z0-9.\-]{1,60}$/i;
 
 @Injectable()
 export class AccessService {
-  constructor(private prisma: PrismaService, private pricing: PricingService) {}
+  constructor(private prisma: PrismaService, private pricing: PricingService, private mail: MailService) {}
 
   // ------------------------------------------------------- workspace modules
 
   /**
-   * The workspace's current plan — the latest Subscription row, or `null` if Super Admin has
-   * never recorded one for this workspace (true for every tenant created before Task 8, and
-   * for every self-registered tenant, since registration doesn't create a Subscription row).
-   * Deliberately NOT defaulted to 'FREE' here: a tenant's module access must not change the
-   * moment this code ships just because nobody has set a plan for them yet.
+   * The workspace's plan and where it stands (Task 11: plan expiry, Nepal Time).
+   *  - NONE: Super Admin never recorded a plan → unrestricted, exactly as before Task 8.
+   *  - ACTIVE / EXPIRING_SOON (≤ 14 days left): the plan applies.
+   *  - GRACE: past the expiry date but within GRACE_DAYS → the plan still applies, with a warning.
+   *  - EXPIRED: grace over, or the plan was marked CANCELED/EXPIRED → the FREE plan's modules apply.
+   * A plan "expiring on 2026-12-31" is valid through 23:59 Nepal Time that day.
    */
+  async planState(tenantId: string, now: Date = new Date()): Promise<PlanState> {
+    // Latest row picked in code (the e2e in-memory DB ignores orderBy); only the columns needed,
+    // so this keeps working even if newer optional columns aren't in the database yet.
+    const subs = await this.prisma.subscription.findMany({
+      where: { tenantId },
+      select: { plan: true, createdAt: true, status: true, expiresAt: true },
+    });
+    if (!subs.length) return { plan: null, effectivePlan: null, state: 'NONE', expiresOn: null, graceEndsOn: null, daysLeft: null };
+    const latest: any = subs.reduce((a: any, b: any) => (new Date(b.createdAt) > new Date(a.createdAt) ? b : a));
+    const plan: string = latest.plan;
+    const today = nptToday(now);
+    const expiresOn = latest.expiresAt ? nptDate(latest.expiresAt) : null;
+    const graceEndsOn = expiresOn ? addNptDays(expiresOn, GRACE_DAYS) : null;
+    if (latest.status === 'CANCELED' || latest.status === 'EXPIRED') {
+      return { plan, effectivePlan: 'FREE', state: 'EXPIRED', expiresOn, graceEndsOn, daysLeft: null };
+    }
+    if (!expiresOn) return { plan, effectivePlan: plan, state: 'ACTIVE', expiresOn: null, graceEndsOn: null, daysLeft: null };
+    if (today <= expiresOn) {
+      const daysLeft = nptDaysBetween(today, expiresOn);
+      return { plan, effectivePlan: plan, state: daysLeft <= EXPIRING_SOON_DAYS ? 'EXPIRING_SOON' : 'ACTIVE', expiresOn, graceEndsOn, daysLeft };
+    }
+    if (today <= graceEndsOn!) {
+      return { plan, effectivePlan: plan, state: 'GRACE', expiresOn, graceEndsOn, daysLeft: nptDaysBetween(today, graceEndsOn!) };
+    }
+    return { plan, effectivePlan: 'FREE', state: 'EXPIRED', expiresOn, graceEndsOn, daysLeft: null };
+  }
+
+  /** The recorded plan (null = never recorded). Kept for callers that only need the name. */
   async currentPlan(tenantId: string): Promise<string | null> {
-    // Latest row by createdAt, picked in code (not via orderBy) so it behaves identically on the
-    // real database and on the e2e tests' in-memory Prisma double, which ignores orderBy.
-    // select only what's needed: keeps this working even if newer optional columns aren't in the DB yet
-    const subs = await this.prisma.subscription.findMany({ where: { tenantId }, select: { plan: true, createdAt: true } });
-    if (!subs.length) return null;
-    const latest = subs.reduce((a: any, b: any) => (new Date(b.createdAt) > new Date(a.createdAt) ? b : a));
-    return latest.plan ?? null;
+    return (await this.planState(tenantId)).plan;
   }
 
   /**
-   * The workspace's plan plus the modules that plan unlocks (Task 8: plan → module mapping).
-   * `unlockedModules: null` means "no plan ever recorded — unrestricted," the same as every
-   * workspace's behavior before Task 8. Gating only starts once Super Admin actually records a
-   * plan for a workspace (Admin Panel "Set plan"), even if that plan is FREE.
+   * The workspace's plan plus the modules it may use. `unlockedModules: null` = no plan ever
+   * recorded → unrestricted (pre-Task-8 behaviour). Order: expired plan → FREE modules;
+   * otherwise Super Admin's per-workspace choice → the plan's defaults (editable catalog).
+   * Super Admin's per-workspace choice is kept while expired, so renewing restores it.
    */
-  async planModulesFor(tenantId: string): Promise<{ plan: string | null; unlockedModules: string[] | null; custom: boolean }> {
-    const plan = await this.currentPlan(tenantId);
-    // Super Admin's explicit per-workspace module choice (entitle:<key> rows) wins over the plan
-    // preset. Only rows for known, non-core modules count.
+  async planModulesFor(tenantId: string): Promise<{ plan: string | null; unlockedModules: string[] | null; custom: boolean; expired: boolean }> {
+    const st = await this.planState(tenantId);
+    const plan = st.plan;
+    if (st.state === 'EXPIRED') {
+      return { plan, unlockedModules: await this.pricing.planModules('FREE'), custom: false, expired: true };
+    }
     const ent = await this.prisma.tenantFeatureFlag.findMany({ where: { tenantId, flagKey: { startsWith: ENTITLE_PREFIX } } });
     if (ent.length) {
       const unlocked = ent
         .filter((f: any) => f.enabled)
         .map((f: any) => String(f.flagKey).slice(ENTITLE_PREFIX.length))
         .filter((k: string) => MODULES.some((m) => m.key === k && !m.core));
-      return { plan, unlockedModules: MODULE_KEYS.filter((k) => unlocked.includes(k)), custom: true };
+      return { plan, unlockedModules: MODULE_KEYS.filter((k) => unlocked.includes(k)), custom: true, expired: false };
     }
-    // Plan defaults come from the editable pricing catalog (Admin Panel → Pricing & promotions),
-    // which falls back to PLAN_MODULES in code until Super Admin saves it.
-    return { plan, unlockedModules: plan ? await this.pricing.planModules(plan) : null, custom: false };
+    return { plan, unlockedModules: plan ? await this.pricing.planModules(plan) : null, custom: false, expired: false };
   }
 
   /**
@@ -103,14 +145,18 @@ export class AccessService {
 
   async setTenantModules(tenantId: string, role: string, changes: Record<string, boolean>) {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenException('Only the workspace Owner can switch modules on or off');
-    const { plan, unlockedModules } = await this.planModulesFor(tenantId);
+    const { plan, unlockedModules, expired } = await this.planModulesFor(tenantId);
     for (const [key, enabled] of Object.entries(changes)) {
       const def = MODULES.find((m) => m.key === key);
       if (!def) throw new BadRequestException(`Unknown module "${key}"`);
       if (def.core && !enabled) throw new BadRequestException(`${def.name} is a core module and cannot be switched off`);
       if (typeof enabled !== 'boolean') throw new BadRequestException(`Value for "${key}" must be true or false`);
       if (enabled && !def.core && unlockedModules !== null && !unlockedModules.includes(key)) {
-        throw new BadRequestException(`${def.name} is not included in your workspace's ${plan ? plan + ' ' : ''}plan. Ask your ProcureNepal platform administrator to add it.`);
+        throw new BadRequestException(
+          expired
+            ? `Your ${plan} plan has expired, so only the FREE plan's modules are available. Ask your ProcureNepal platform administrator to renew it.`
+            : `${def.name} is not included in your workspace's ${plan ? plan + ' ' : ''}plan. Ask your ProcureNepal platform administrator to add it.`,
+        );
       }
     }
     for (const [key, enabled] of Object.entries(changes)) {
@@ -174,6 +220,7 @@ export class AccessService {
 
   async me(tenantId: string, userId: string, role: string) {
     const { plan, unlockedModules, custom } = await this.planModulesFor(tenantId);
+    const planState = await this.planState(tenantId);
     return {
       role,
       canManage: ADMIN_ROLES.includes(role),
@@ -185,6 +232,7 @@ export class AccessService {
       plan,
       planModules: unlockedModules,
       planCustom: custom,
+      planState,
     };
   }
 
@@ -234,7 +282,17 @@ export class AccessService {
       },
       select: { ...PUBLIC_USER, activationToken: true },
     });
-    return { ...user, activationLink: user.activationToken ? `/activate?token=${user.activationToken}` : null };
+    const activationLink = user.activationToken ? `/activate?token=${user.activationToken}` : null;
+    let emailed = false;
+    if (activationLink) {
+      const t: any = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      emailed = await this.mail.send({
+        to: user.email, toName: user.fullName, subject: `You've been added to ${t?.name ?? 'a workspace'} on ProcureNepal`,
+        lines: [`${t?.name ?? 'Your company'} has added you to ProcureNepal. Open this link to choose your password (it works for ${ACTIVATION_DAYS} days):`, this.mail.url(activationLink)],
+      });
+    }
+    const { activationToken: _t, ...rest } = user as any;
+    return { ...rest, activationLink, emailed };
   }
 
   /** Owner lost the first link, or it expired — issue a fresh one. */

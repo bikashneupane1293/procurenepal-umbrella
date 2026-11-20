@@ -9,6 +9,7 @@ import type { ImportRow } from '../../core/excel';
 import { DateField } from '../../shared/date-field';
 import { adToBs } from '../../core/nepali-date';
 import { PdfFill, PdfApply } from '../../shared/pdf-fill';
+import { nptToday } from '../../core/nepal-time';
 
 // The Excel tools are loaded only when needed, so the app stays fast
 const loadExcel = () => import('../../core/excel');
@@ -564,7 +565,7 @@ export class CertificatesPage {
   async exportExcel() {
     const { exportCertificates } = await loadExcel();
     const name = this.companyId() ? this.companyName(this.companyId()).replace(/[^A-Za-z0-9]+/g, '_') : 'All';
-    const date = new Date().toISOString().slice(0, 10);
+    const date = nptToday();
     exportCertificates(this.certificates(), (id) => this.companyName(id), `ProcureNepal_Certificates_${name}_${date}.xlsx`);
   }
 

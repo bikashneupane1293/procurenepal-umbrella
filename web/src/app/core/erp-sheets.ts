@@ -3,12 +3,13 @@
 import * as XLSX from 'xlsx';
 import { autoWidth, dateStr, num, txt, yes } from './excel';
 import type { SheetRow } from './sheets';
+import { nptToday } from './nepal-time';
 
 type Opt = { id: string; label: string; extra?: any };
 /** returns the choices of a linked list (products, vendors, projects, BOQ items of a project …) */
 export type OptFn = (ref: string, projectId?: string) => Promise<Opt[]>;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => nptToday();
 const safe = (s: string) => s.replace(/[^\w.-]+/g, '_').slice(0, 50);
 const sheet = (rows: any[][], cols: string[]) => {
   const ws = XLSX.utils.aoa_to_sheet(rows);

@@ -21,6 +21,8 @@ import { ProjectModule } from './project/project.module';
 import { ErpModule } from './erp/erp.module';
 import { ReferencesModule } from './references/references.module';
 import { PricingModule } from './pricing/pricing.module';
+import { MailModule } from './mail/mail.module';
+import { StaffModule } from './staff/staff.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { PricingModule } from './pricing/pricing.module';
     TenderModule,
     AccessModule,
     PricingModule,
+    MailModule,
+    StaffModule,
     BidModule,
     BankModule,
     ProjectModule,

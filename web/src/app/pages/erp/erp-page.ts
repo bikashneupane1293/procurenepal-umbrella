@@ -9,6 +9,7 @@ import { DateField } from '../../shared/date-field';
 import { ImportPanel } from '../../shared/import-panel';
 import { adToBs } from '../../core/nepali-date';
 import type { SheetRow } from '../../core/sheets';
+import { nptToday } from '../../core/nepal-time';
 
 const loadSheets = () => import('../../core/erp-sheets');
 type Opt = { id: string; label: string; extra?: any };
@@ -428,7 +429,7 @@ export class ErpPage {
   // ---------- form ----------
   openNew() {
     const f: any = { __status: this.def().statuses?.[0] ?? '' };
-    for (const x of this.def().fields) f[x.k] = x.def !== undefined ? x.def : x.type === 'multiref' ? [] : x.type === 'bool' ? false : x.type === 'date' && x.k === 'date' ? new Date().toISOString().slice(0, 10) : '';
+    for (const x of this.def().fields) f[x.k] = x.def !== undefined ? x.def : x.type === 'multiref' ? [] : x.type === 'bool' ? false : x.type === 'date' && x.k === 'date' ? nptToday() : '';
     this.form = f;
     this.lines = [];
     if (this.def().lines) this.addLine();

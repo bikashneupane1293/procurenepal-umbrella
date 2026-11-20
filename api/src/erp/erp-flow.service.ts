@@ -2,11 +2,12 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { daysTo, ErpService, ErpUser, num, r2 } from './erp.service';
 import { ENTITIES, entityDef, MENUS, moduleOf } from './erp.registry';
 import { AccessService } from '../access/access.service';
+import { nptToday } from '../common/nepal-time';
 
 type Row = Record<string, any>;
 export interface Table { title: string; columns: { k: string; label: string; num?: boolean }[]; rows: Row[]; note?: string }
 export interface Report { title: string; cards?: { label: string; value: string | number; hint?: string; tone?: string }[]; tables: Table[]; chart?: any; actions?: { label: string; action: string; body: any }[]; note?: string }
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => nptToday(); // Nepal Time
 const c = (k: string, label: string, isNum = false) => ({ k, label, num: isNum });
 const OPEN_G = ['REQUESTED', 'ACTIVE'];
 const COUNTED = ['SUBMITTED', 'APPROVED'];

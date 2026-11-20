@@ -59,6 +59,8 @@ export const ModelName = {
   Company: 'Company',
   Certificate: 'Certificate',
   Tender: 'Tender',
+  StaffInvite: 'StaffInvite',
+  TenderRequirement: 'TenderRequirement',
   QualificationResult: 'QualificationResult',
   AnnualTurnover: 'AnnualTurnover',
   AuditLog: 'AuditLog',
@@ -98,7 +100,9 @@ export const TenantScalarFieldEnum = {
   contactPhone: 'contactPhone',
   isActive: 'isActive',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  orgCode: 'orgCode',
+  personalOwnerId: 'personalOwnerId'
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
@@ -115,6 +119,7 @@ export const UserScalarFieldEnum = {
   isActive: 'isActive',
   isVerified: 'isVerified',
   googleId: 'googleId',
+  userCode: 'userCode',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
   modules: 'modules',
@@ -251,6 +256,46 @@ export const TenderScalarFieldEnum = {
 } as const
 
 export type TenderScalarFieldEnum = (typeof TenderScalarFieldEnum)[keyof typeof TenderScalarFieldEnum]
+
+
+export const StaffInviteScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  kind: 'kind',
+  email: 'email',
+  userCode: 'userCode',
+  userId: 'userId',
+  fullName: 'fullName',
+  role: 'role',
+  modules: 'modules',
+  customTitle: 'customTitle',
+  status: 'status',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  decidedAt: 'decidedAt'
+} as const
+
+export type StaffInviteScalarFieldEnum = (typeof StaffInviteScalarFieldEnum)[keyof typeof StaffInviteScalarFieldEnum]
+
+
+export const TenderRequirementScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tenderId: 'tenderId',
+  kind: 'kind',
+  label: 'label',
+  data: 'data',
+  sourceText: 'sourceText',
+  confidence: 'confidence',
+  needsVerification: 'needsVerification',
+  confirmedAt: 'confirmedAt',
+  confirmedBy: 'confirmedBy',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenderRequirementScalarFieldEnum = (typeof TenderRequirementScalarFieldEnum)[keyof typeof TenderRequirementScalarFieldEnum]
 
 
 export const QualificationResultScalarFieldEnum = {

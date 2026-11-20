@@ -17,6 +17,8 @@ export interface AccessInfo {
   plan?: string | null;
   planModules?: string[] | null;
   planCustom?: boolean;
+  /** Task 11 — where the plan stands, in Nepal dates */
+  planState?: { plan: string | null; effectivePlan: string | null; state: 'NONE' | 'ACTIVE' | 'EXPIRING_SOON' | 'GRACE' | 'EXPIRED'; expiresOn: string | null; graceEndsOn: string | null; daysLeft: number | null };
 }
 
 /** Which ERP modules the signed-in user may open (loaded once per session). */
