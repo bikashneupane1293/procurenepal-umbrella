@@ -34,6 +34,9 @@ export class LoginPage {
     if (el && this.googleClientId) renderGoogleButton(el.nativeElement, this.googleClientId, (c) => this.withGoogle(c), 'signin_with').catch(() => {});
   }
 
+  /** set when the app signed the person out after 30 idle minutes */
+  idleNote = new URLSearchParams(location.search).get('reason') === 'idle';
+
   constructor() {
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/dashboard']);

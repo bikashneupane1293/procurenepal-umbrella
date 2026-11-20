@@ -11,6 +11,8 @@ export interface MenuItem {
   about?: string;
   /** other items whose data it shares automatically */
   links?: string[];
+  /** same access as another item (a second screen for the same data, e.g. phone fuel entry) */
+  sameAccessAs?: string;
 }
 export interface MenuModule {
   key: string;
@@ -31,6 +33,7 @@ export const MENU: MenuModule[] = [
     items: [
       { id: 'companies.list', label: 'List Companies', route: '/companies', status: 'built' },
       { id: 'companies.users', label: 'User Setup System', route: '/users', status: 'built' },
+      { id: 'companies.activity', label: 'Activity Log', route: '/activity', status: 'built', about: 'Who added, changed or deleted what — for Owners and Directors.' },
     ],
   },
   {
@@ -39,6 +42,7 @@ export const MENU: MenuModule[] = [
       { id: 'bolpatra.bid-info', label: 'Bid Information Management', route: '/bids', status: 'built', links: ['bolpatra.tenders', 'bank.guarantee', 'project.info'] },
       { id: 'bolpatra.certificates', label: 'Certificates', route: '/certificates', status: 'built' },
       { id: 'bolpatra.tenders', label: 'Tenders', route: '/tenders', status: 'built' },
+      { id: 'bolpatra.calendar', label: 'Bid Deadline Calendar', route: '/bid-calendar', status: 'built', sameAccessAs: 'bolpatra.tenders', about: 'Bid deadlines by month in BS and AD, with countdowns.' },
       { id: 'bolpatra.qualification', label: 'Qualification', route: '/qualification', status: 'built' },
       { id: 'bolpatra.reports', label: 'Reports', route: '/reports', status: 'built', links: ['bolpatra.tenders', 'bolpatra.qualification', 'bolpatra.bid-info'] },
       { id: 'bolpatra.references', label: 'External References (PPMO / NRB)', route: '/references', status: 'built' },
@@ -73,6 +77,7 @@ export const MENU: MenuModule[] = [
       erp('fleet.tax', 'Vehicle Tax and Insurance', 'Tax, insurance and blue-book renewals with expiry alerts.', ['fleet.vehicles']),
       erp('fleet.movement', 'Vehicle Movement and Fleet', 'Where each vehicle is and which project uses it.', ['project.info', 'fleet.trips']),
       erp('fleet.fuel', 'Daily Fuel Log', 'Every fill with meter reading and bill — automatic checks for over-tank fills, meter going backwards, repeated fills, rate jumps and fuel use worse than expected.', ['fleet.vehicles', 'fleet.earnings']),
+      { id: 'fleet.fuel-quick', label: 'Quick Fuel Entry (phone)', route: '/fuel-entry', status: 'built', sameAccessAs: 'fleet.fuel', about: 'Big-button fuel entry for drivers on site.' },
       erp('fleet.logs', 'Daily Vehicle Work Log', 'Daily hours / km, fuel and operator.', ['fleet.earnings', 'project.progress']),
       erp('fleet.trips', 'Vehicle Trip Management', 'Trips for material delivery and dispatch.', ['proc.dispatch', 'fleet.logs']),
       erp('fleet.earnings', 'Vehicle-wise Earning and Expense', 'Income and cost per vehicle.', ['fleet.logs', 'bank.finance']),

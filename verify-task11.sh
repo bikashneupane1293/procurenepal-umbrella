@@ -14,7 +14,7 @@ run "API — TypeScript (src + tests)"         npx tsc --noEmit -p tsconfig.json
 run "API — unit tests (incl. Nepal Time)"    npm test
 # (named suites only — never plain `npm run test:e2e`: app.e2e-spec talks to the database in .env)
 run "API — e2e: staff, tender-requirements, access/expiry, pricing, tenants, erp, projects, bank, bids, qualification, verification" \
-  npm run test:e2e -- fuel staff tender-requirements pricing access tenants erp projects bank bids qualification verification
+  npm run test:e2e -- today fuel staff tender-requirements pricing access tenants erp projects bank bids qualification verification
 popd >/dev/null
 
 pushd web >/dev/null
@@ -31,7 +31,7 @@ echo "Summary: $pass passed, $fail failed.   Expected: 8 passed, 0 failed."
 echo "Anything failing: stop and send the output before deploying."
 echo ""
 echo "Results from the cloud session (Linux copy of these exact files):"
-echo "  API unit 23 suites / 92 tests; API e2e 12 named suites (+ app) / 103 tests;"
+echo "  API unit 23 suites / 92 tests; API e2e 13 named suites (+ app) / 109 tests;"
 echo "  Web 4 files / 34 tests (all green); production build OK."
 echo "=================================================================="
 exit 0

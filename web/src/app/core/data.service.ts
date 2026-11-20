@@ -219,6 +219,14 @@ export class DataService {
   }
 
   // ---------- ERP engine (Procurement, Fleet, HR, Project registers, Bank loans / LC / assets) ----------
+  /** Task 15 — Today alerts for the Dashboard */
+  alerts(): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/alerts`)); }
+  myPreferences(): Promise<any> { return firstValueFrom(this.http.get<any>(`${API_URL}/me/preferences`)); }
+  saveMyPreferences(p: any): Promise<any> { return firstValueFrom(this.http.put<any>(`${API_URL}/me/preferences`, p)); }
+  activity(limit = 300): Promise<any[]> { return firstValueFrom(this.http.get<any[]>(`${API_URL}/activity?limit=${limit}`)); }
+  demoSession(): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/demo/session`, {})); }
+  adminRunDigest(): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/digest/run`, {})); }
+  adminResetDemo(): Promise<any> { return firstValueFrom(this.http.post<any>(`${API_URL}/admin/demo/reset`, {})); }
   erpMenu(id: string): Observable<any> { return this.http.get(`${API_URL}/erp/menu/${id}`); }
   erpOptions(ref: string, projectId?: string): Observable<any[]> {
     return this.http.get(`${API_URL}/erp/options/${ref}${projectId ? '?projectId=' + encodeURIComponent(projectId) : ''}`).pipe(map(toList));

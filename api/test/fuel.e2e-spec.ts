@@ -78,6 +78,31 @@ describe('Daily Fuel Log (e2e)', () => {
     await mk('fleet.log', { date: day(0), vehicle: truck, hours: 2 }, 403, 'driver');
     await http().get('/erp/reports/fleet-earnings').set(as('driver')).expect(403);
     await http().get('/tenders').set(as('driver')).expect(403);
+    // limited view (≤ 3 pages, not a Site Engineer, no BOQ): no reports, no rates, no amounts, no analysis
+    expect(me.limitedView).toBe(true);
+    const menu = (await http().get('/erp/menu/fleet.fuel').set(as('driver')).expect(200)).body;
+    expect(menu.tabs.map((t: any) => t.title)).toEqual(['Fuel log']);
+    expect(menu.tabs[0].def.fields.map((f: any) => f.k)).not.toEqual(expect.arrayContaining(['rate']));
+    expect(menu.tabs[0].def.fields.map((f: any) => f.k).filter((k: string) => ['rate', 'amount', 'check', 'consumption'].includes(k))).toEqual([]);
+    await http().get('/erp/reports/fleet-fuel').set(as('driver')).expect(403);
+    const mine = (await http().get('/erp/records/fleet.fuel').set(as('driver')).expect(200)).body;
+    expect(mine.every((r: any) => r.data.rate === undefined && r.data.amount === undefined && r.data.check === undefined)).toBe(true);
+    expect((await http().get('/erp/options/fleet.vehicle').set(as('driver')).expect(200)).body[0].extra.hourlyRate).toBeUndefined();
+    // a fill without rate takes the last known rate; the driver's reply shows no money
+    const saved = (await http().post('/erp/records/fleet.fuel').set(as('driver')).send({ data: { date: day(0), vehicle: truck, meter: 10900, litres: 50 } }).expect(201)).body;
+    expect(saved.data).toEqual(expect.not.objectContaining({ amount: expect.anything() }));
+    const stored = db.db.erpRecord.find((r) => r.id === saved.id)!;
+    expect(stored.data).toMatchObject({ rate: 170, amount: 8500 });
+    expect((await http().get('/alerts').set(as('driver')).expect(200)).body).toEqual([]);
+    expect((await http().get('/erp/csv').set(as('driver')).expect(200)).body).toEqual([]);
+    // a Site Engineer with the same single page keeps rates and reports
+    db.db.user.find((u) => u.id === 'driver')!.role = 'SITE_ENGINEER';
+    expect((await http().get('/access/me').set(as('driver')).expect(200)).body.limitedView).toBe(false);
+    expect((await http().get('/erp/menu/fleet.fuel').set(as('driver')).expect(200)).body.tabs).toHaveLength(2);
+    db.db.user.find((u) => u.id === 'driver')!.role = 'VIEWER';
+    // 4 pages → not limited
+    await http().patch('/users/driver').set(as('ownerA')).send({ modules: ['item:fleet.fuel', 'item:fleet.logs', 'item:fleet.trips', 'item:fleet.vehicles'] }).expect(200);
+    expect((await http().get('/access/me').set(as('driver')).expect(200)).body.limitedView).toBe(false);
     // owner removes the limit → back to every active module
     await http().patch('/users/driver').set(as('ownerA')).send({ modules: [] }).expect(200);
     expect((await http().get('/access/me').set(as('driver')).expect(200)).body.userItems).toBeNull();

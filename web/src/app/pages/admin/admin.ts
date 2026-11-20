@@ -6,7 +6,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-import { DataService } from '../../core/data.service';
+import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { PricingAdmin } from './pricing-admin';
 import { nptToday } from '../../core/nepal-time';
@@ -23,6 +23,16 @@ import { nptToday } from '../../core/nepal-time';
       <div class="msg error">This page is for platform Super Admins only. If you believe you should have access, ask whoever manages the ProcureNepal platform account.</div>
     } @else {
       @if (error()) { <div class="msg error">{{ error() }}</div> }
+
+      <div class="panel">
+        <h2>Daily jobs</h2>
+        <p class="help">Morning alerts go out by themselves at 7:00 AM Nepal Time to each workspace's Owners and Directors (needs Brevo). The public demo rebuilds itself every day at 3:00 AM.</p>
+        <div class="tools">
+          <button class="btn light" (click)="runDigest()" [disabled]="jobBusy()">📧 Send morning alerts now</button>
+          <button class="btn light" (click)="resetDemo()" [disabled]="jobBusy()">🔄 Rebuild the demo workspace</button>
+        </div>
+        @if (jobMsg()) { <div class="msg info" style="margin-top:10px">{{ jobMsg() }}</div> }
+      </div>
 
       <div class="panel">
         <h2>Platform at a glance</h2>
@@ -310,6 +320,21 @@ import { nptToday } from '../../core/nepal-time';
 export class AdminPage {
   private auth = inject(AuthService);
   private data = inject(DataService);
+  jobBusy = signal(false);
+  jobMsg = signal('');
+  async runDigest() {
+    this.jobBusy.set(true); this.jobMsg.set('');
+    try {
+      const r = await this.data.adminRunDigest();
+      this.jobMsg.set(r.emailEnabled ? `✅ Sent ${r.emails} email(s) to ${r.workspaces} workspace(s) (${r.alerts} alert(s)).` : `Email isn't switched on yet (BREVO_API_KEY / domain). ${r.workspaces} workspace(s) have alerts today.`);
+    } catch (e) { this.jobMsg.set(errorText(e)); }
+    this.jobBusy.set(false);
+  }
+  async resetDemo() {
+    this.jobBusy.set(true); this.jobMsg.set('');
+    try { await this.data.adminResetDemo(); this.jobMsg.set('✅ Demo workspace rebuilt with fresh sample data.'); } catch (e) { this.jobMsg.set(errorText(e)); }
+    this.jobBusy.set(false);
+  }
 
   isSuperAdmin = signal(this.auth.getUser()?.role === 'SUPER_ADMIN');
   error = signal('');

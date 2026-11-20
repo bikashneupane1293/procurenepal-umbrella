@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth.service';
 import { DataService, errorText } from '../../core/data.service';
 import { UI_STYLES } from '../../core/ui-styles';
 import { MENU, itemById } from '../../core/modules';
+import { presetFor } from '../../core/role-presets';
 import { showBoth } from '../../core/nepali-date';
 
 const ROLES: { value: string; label: string }[] = [
@@ -126,10 +127,12 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
               <summary>{{ m.icon }} {{ m.label }} <small>({{ m.items.length }} items)</small></summary>
               <div class="mods">
                 @for (i of m.items; track i.id) {
+                  @if (!i.sameAccessAs) {
                   <label class="mod" [class.off]="wsItems[i.id] === false">
                     <input type="checkbox" [checked]="wsItems[i.id] !== false" (change)="wsItems[i.id] = wsItems[i.id] === false ? true : false" />
                     <span>{{ i.label }}</span>
                   </label>
+                  }
                 }
               </div>
             </details>
@@ -151,7 +154,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
           <div><label>Phone</label>
             <input name="phone" [(ngModel)]="f.phone" placeholder="e.g. 98XXXXXXXX" /></div>
           <div><label>Role <span class="req">*</span></label>
-            <select name="role" [(ngModel)]="f.role">@for (r of roles; track r.value) { <option [value]="r.value">{{ r.label }}</option> }</select></div>
+            <select name="role" [(ngModel)]="f.role" (ngModelChange)="roleChanged()">@for (r of roles; track r.value) { <option [value]="r.value">{{ r.label }}</option> }</select></div>
           <div><label>Custom title shown on screen (optional)</label>
             <input name="customTitle" [(ngModel)]="f.customTitle" placeholder="e.g. Site Supervisor – Butwal" />
             <div class="help">Shown instead of the role name in the user list. The role above still controls what they can do.</div></div>
@@ -167,6 +170,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
           }
         </div>
         <h3>Modules this user can open</h3>
+        <p class="help">{{ presetText(f.role) }} <button type="button" class="linkbtn" (click)="applyPreset()">Use the standard for this role</button></p>
         <label class="inline all"><input type="checkbox" name="pagesOnly" [(ngModel)]="f.pagesOnly" /> Only specific pages (for example a driver who may only enter fuel in the Daily Fuel Log)</label>
         @if (f.pagesOnly) {
           <div class="help">This person sees only the pages ticked below — no Dashboard, no other pages. Drop-down lists they need (vehicles, employees, projects) still work.</div>
@@ -258,6 +262,7 @@ const PASSWORD = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
     }
   `,
   styles: [UI_STYLES, `
+    .linkbtn { background: none; border: 0; color: #a16a00; font-weight: 700; cursor: pointer; padding: 0 4px; text-decoration: underline; }
     .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 20px; margin: 8px 0 12px; }
     .pgroup { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
     .pgroup strong { color: #0a1f3d; margin-bottom: 2px; }
@@ -416,7 +421,19 @@ export class UsersPage {
     return ['companies', ...u.modules].map((k: string) => MENU.find((m) => m.key === k)?.label ?? k).join(', ');
   }
   /** pages that can be given on their own (built, outside the Companies module) */
-  pageMenu = MENU.filter((m) => !m.core).map((m) => ({ ...m, items: m.items.filter((i) => i.status === 'built') })).filter((m) => m.items.length);
+  pageMenu = MENU.filter((m) => !m.core).map((m) => ({ ...m, items: m.items.filter((i) => i.status === 'built' && !i.sameAccessAs) })).filter((m) => m.items.length);
+  /** Task 15: standard modules per role — filled in when a role is picked for a new person */
+  roleChanged() { if (!this.editId()) this.applyPreset(); }
+  applyPreset() {
+    const p = presetFor(this.f.role);
+    this.f.pagesOnly = false; this.f.items = [];
+    this.f.allModules = !p.length;
+    this.f.modules = [...p];
+  }
+  presetText(role: string) {
+    const p = presetFor(role);
+    return `Standard for this role: ${p.length ? ['Companies', ...p.map((k) => MENU.find((m) => m.key === k)?.label ?? k)].join(', ') : 'all modules active in the workspace'}.`;
+  }
   toggleItem(id: string) {
     this.f.items = this.f.items.includes(id) ? this.f.items.filter((k) => k !== id) : [...this.f.items, id];
   }

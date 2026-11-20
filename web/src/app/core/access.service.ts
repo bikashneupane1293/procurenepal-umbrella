@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_URL } from './config';
-import { MENU, itemById } from './modules';
+import { ALL_ITEMS, MENU, itemById } from './modules';
 
 export interface AccessInfo {
   role: string;
@@ -13,6 +13,8 @@ export interface AccessInfo {
   itemFlags?: Record<string, boolean>;
   /** Only these pages for this person (e.g. ['fleet.fuel'] = fuel entry only); null = no page limit */
   userItems?: string[] | null;
+  /** Task 16 — few-pages staff: no reports, rates or amounts (Site Engineers and BOQ users excepted) */
+  limitedView?: boolean;
   /** The workspace's plan and the module keys it may use (Task 8/9). Both are null when no plan
    *  has ever been recorded — meaning unrestricted, not "no modules". planCustom = true when
    *  Super Admin chose this workspace's modules explicitly (overriding the plan's defaults). */
@@ -50,16 +52,20 @@ export class AccessService {
 
   /** A single sidebar item switched off for the workspace (default: on). */
   canItem(itemId: string): boolean {
+    const id = itemById(itemId)?.sameAccessAs ?? itemId; // e.g. phone fuel entry = Daily Fuel Log
     const i = this.info();
-    if (i?.userItems && !i.userItems.includes(itemId)) return false;
-    return i?.itemFlags?.[itemId] !== false;
+    if (i?.userItems && !i.userItems.includes(id)) return false;
+    return i?.itemFlags?.[id] !== false;
   }
 
   /** For a person limited to some pages: the routes they may open (else null). */
   limitedRoutes(): string[] | null {
     const u = this.info()?.userItems;
     if (!u) return null;
-    return u.map((id) => itemById(id)?.route).filter((r): r is string => !!r);
+    // the pages themselves first (in the order given), then their second screens (phone fuel entry …)
+    const main = u.map((id) => itemById(id)?.route);
+    const extra = ALL_ITEMS.filter((i) => i.sameAccessAs && u.includes(i.sameAccessAs)).map((i) => i.route);
+    return [...main, ...extra].filter((r): r is string => !!r);
   }
 
   clear() { this.info.set(null); }

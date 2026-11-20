@@ -643,6 +643,7 @@ export class ErpFlowService {
 
   // ================================================================ CSV EXPORT
   async datasets(user: ErpUser) {
+    if (await this.erp.limited(user)) return []; // limited view: no exports (Task 16)
     const mine = await this.access.effectiveModules(user.tenantId, user.userId, user.role);
     const out = [{ key: 'core.banks', title: 'Banks' }, { key: 'core.guarantees', title: 'Bank guarantees' }];
     if (mine.includes('project')) out.push({ key: 'core.projects', title: 'Projects' });

@@ -40,6 +40,7 @@ import {
   itemFlagKeyOf,
   modulesUnlockedByPlan,
   ENTITLE_PREFIX,
+  ROLE_MODULES,
 } from './module-registry';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 
@@ -223,6 +224,17 @@ export class AccessService {
     return active.filter((k) => MODULES.find((m) => m.key === k)?.core || own.has(k));
   }
 
+  /**
+   * Task 16 — "limited view": staff given only a few pages (≤ 3, e.g. a driver with fuel entry) see no
+   * reports/analytics and no rates or amounts. Site Engineers and anyone with the BOQ page keep them.
+   */
+  async limitedView(tenantId: string, userId: string, role: string): Promise<boolean> {
+    if (role === 'SITE_ENGINEER') return false;
+    const items = await this.userItems(tenantId, userId, role);
+    if (!items || items.includes('project.boq')) return false;
+    return items.length <= 3;
+  }
+
   /** The only pages this person may open, or null = no page limit (only module limits apply). */
   async userItems(tenantId: string, userId: string, role: string): Promise<string[] | null> {
     if (ALL_ACCESS_ROLES.includes(role)) return null;
@@ -242,6 +254,7 @@ export class AccessService {
       workspaceModules: await this.tenantModules(tenantId),
       itemFlags: await this.tenantItems(tenantId),
       userItems: await this.userItems(tenantId, userId, role),
+      limitedView: await this.limitedView(tenantId, userId, role),
       registry: MODULES,
       plan,
       planModules: unlockedModules,
@@ -287,7 +300,7 @@ export class AccessService {
         fullName: dto.fullName.trim(),
         phone: dto.phone?.trim() || null,
         role: dto.role as any,
-        modules: dto.modules ?? [],
+        modules: dto.modules ?? ROLE_MODULES[dto.role] ?? [], // no choice made → the role's standard modules
         customTitle: dto.customTitle?.trim() || null,
         passwordHash: placeholder,
         isActive: true,

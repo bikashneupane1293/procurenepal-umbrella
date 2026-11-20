@@ -8,6 +8,7 @@ import { MENU, MenuModule, moduleOfRoute } from '../core/modules';
 import { DataService } from '../core/data.service';
 import { nptToday } from '../core/nepal-time';
 import { HOME_URL } from '../core/config';
+import { IdleService } from '../core/idle.service';
 
 const OPEN_KEY = 'pn.menu.open';
 
@@ -17,8 +18,12 @@ const OPEN_KEY = 'pn.menu.open';
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="shell">
-      <aside class="sidebar">
-        <a class="brand" [href]="home" title="ProcureNepal home page"><span class="gold">Procure</span>Nepal</a>
+      <aside class="sidebar" [class.open]="menuOpen()">
+        <div class="sbtop">
+          <a class="brand" [href]="home" title="ProcureNepal home page"><span class="gold">Procure</span>Nepal</a>
+          <!-- small screens: the menu folds away behind this button -->
+          <button class="burger" type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()" aria-label="Menu">{{ menuOpen() ? '✕ Close' : '☰ Menu' }}</button>
+        </div>
         <nav>
           <a class="item top" [href]="home">🌐 Home page</a>
           @if (!limited()) {
@@ -62,6 +67,9 @@ const OPEN_KEY = 'pn.menu.open';
           <span class="role">{{ user?.role }}</span>
           <button class="logout" (click)="logout()">{{ i18n.t('logout') }}</button>
         </header>
+        @if (isDemo) {
+          <div class="planbar demo">👀 You are looking at the <strong>demo workspace</strong> — sample data, nothing can be changed. <a href="https://app.procurenepal.com/join">Create your free account →</a></div>
+        }
         @if (planBanner(); as b) {
           <div class="planbar" [class.bad]="b.bad">{{ b.text }}</div>
         }
@@ -98,17 +106,25 @@ const OPEN_KEY = 'pn.menu.open';
     .acct.on, .acct:hover { border-color: #d4a017; }
     .badge { background: #dc2626; color: #fff; border-radius: 10px; font-size: 11px; padding: 1px 7px; font-weight: 700; }
     .planbar { background: #fff7e6; border: 1px solid #e6c870; color: #7a5200; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
+    .planbar.demo { background: #eef6ff; border-color: #93c5fd; color: #1e3a8a; }
+    .planbar.demo a { color: #1d4ed8; font-weight: 700; margin-left: 6px; }
     .planbar.bad { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
     .logout { background: #0a1f3d; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .logout:hover { background: #1e3a5f; }
     .lang { background: #fff; color: #0a1f3d; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
     .lang:hover { background: #f3f4f6; }
     .copy { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e1e3e6; font-size: 12px; color: #9ca3af; text-align: center; }
+    .sbtop { display: flex; align-items: center; justify-content: space-between; }
+    .burger { display: none; background: #d4a017; color: #0a1f3d; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 800; font-size: 14px; cursor: pointer; }
     @media (max-width: 768px) {
       .shell { flex-direction: column; }
-      .sidebar { width: auto; padding: 14px; max-height: none; position: static; }
-      .brand { margin-bottom: 10px; }
+      .sidebar { width: auto; padding: 10px 14px; max-height: none; position: sticky; top: 0; z-index: 20; }
+      .sidebar .brand { margin: 0; }
+      .burger { display: inline-block; }
+      .sidebar nav { display: none; padding-top: 10px; max-height: calc(100vh - 60px); overflow-y: auto; }
+      .sidebar.open nav { display: block; }
       .main { padding: 16px; }
+      .topbar { flex-wrap: wrap; }
     }
   `],
 })
@@ -144,18 +160,25 @@ export class ShellLayout {
   visible = computed<MenuModule[]>(() => {
     this.access.info(); // re-run when access info arrives
     const lim = this.access.info()?.userItems;
-    return MENU.filter((m) => this.access.can(m.key) && (!lim || m.items.some((i) => lim.includes(i.id) && this.access.canItem(i.id))));
+    return MENU.filter((m) => this.access.can(m.key) && (!lim || m.items.some((i) => this.access.canItem(i.id))));
   });
   /** limited to some pages (e.g. fuel entry only): no Dashboard / module overviews */
   limited = computed(() => !!this.access.info()?.userItems);
   home = HOME_URL;
 
+  /** the public demo (Task 15) — read-only sample workspace */
+  isDemo = String(this.auth.getUser()?.email ?? '').endsWith('@demo.procurenepal.com');
+
   constructor() {
+    inject(IdleService).start();
     this.access.load(true);
     this.data.staffMe().then((m) => this.inviteCount.set(m.invites?.length ?? 0)).catch(() => { /* older API */ });
     this.openFor(this.router.url);
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e: any) => this.openFor(e.urlAfterRedirects));
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e: any) => { this.openFor(e.urlAfterRedirects); this.menuOpen.set(false); });
   }
+
+  /** small screens: menu folded away until ☰ is pressed; closes again after choosing a page */
+  menuOpen = signal(false);
 
   isOpen(key: string) { return this.open().has(key); }
   toggle(key: string) {

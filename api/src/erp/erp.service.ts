@@ -41,6 +41,26 @@ export class ErpService {
     const items = await this.access.userItems(user.tenantId, user.userId, user.role);
     if (items && !ok(items)) throw new ForbiddenException(`${what} is not one of the pages you are allowed to use. Ask the workspace Owner (Companies → User Setup).`);
   }
+  // ---------------------------------------------------------------- limited view (Task 16)
+  /** page-limited staff (≤ 3 pages): no reports, no money fields, no calculated analysis */
+  limited(user: ErpUser) { return this.access.limitedView(user.tenantId, user.userId, user.role); }
+  static hidden(f: FieldDef) { return f.type === 'money' || !!f.calc; }
+  /** the definition without money / calculated fields */
+  static plainDef(def: EntityDef): EntityDef {
+    return { ...def, fields: def.fields.filter((f) => !ErpService.hidden(f)), lines: def.lines ? { ...def.lines, cols: def.lines.cols.filter((f) => !ErpService.hidden(f)) } : undefined };
+  }
+  /** rows without money / calculated values */
+  static plainRows(def: EntityDef, rows: any[]) {
+    const head = def.fields.filter(ErpService.hidden).map((f) => f.k);
+    const line = (def.lines?.cols ?? []).filter(ErpService.hidden).map((f) => f.k);
+    return rows.map((r) => ({
+      ...r, total: null,
+      data: Object.fromEntries(Object.entries(r.data ?? {}).filter(([k]) => !head.includes(k))),
+      lines: r.lines ? r.lines.map((l: any) => Object.fromEntries(Object.entries(l).filter(([k]) => !line.includes(k)))) : r.lines,
+    }));
+  }
+  private async view(user: ErpUser, def: EntityDef, rows: any[]) { return (await this.limited(user)) ? ErpService.plainRows(def, rows) : rows; }
+
   async def(user: ErpUser, key: string): Promise<EntityDef> {
     const d = entityDef(key);
     if (!d) throw new NotFoundException(`Unknown register "${key}"`);
@@ -51,6 +71,7 @@ export class ErpService {
   async needReport(user: ErpUser, name: string) {
     if (!REPORT_MODULE[name]) throw new NotFoundException(`Unknown report "${name}"`);
     await this.need(user, this.modulesForReport(name), 'This report');
+    if (await this.limited(user)) throw new ForbiddenException('Reports are not part of your pages. Ask the workspace Owner if you need them.');
     await this.needPage(user, (ids) => MENUS.some((m) => ids.includes(m.id) && m.tabs.some((t) => t.report === name)), 'This report');
   }
   async menu(user: ErpUser, id: string) {
@@ -63,7 +84,9 @@ export class ErpService {
     if (!(await this.access.itemEnabled(user.tenantId, id))) {
       throw new ForbiddenException(`${m.title} has been switched off for your workspace. Ask the workspace Owner (Companies → User Setup System).`);
     }
-    return { ...m, tabs: m.tabs.map((t) => (t.entity ? { ...t, def: entityDef(t.entity) } : t)), canDelete: CAN_DELETE_ERP.includes(user.role) };
+    const lim = await this.limited(user);
+    const tabs = m.tabs.filter((t) => !lim || t.kind === 'entity');
+    return { ...m, tabs: tabs.map((t) => (t.entity ? { ...t, def: lim ? ErpService.plainDef(entityDef(t.entity)!) : entityDef(t.entity) } : t)), canDelete: CAN_DELETE_ERP.includes(user.role), limitedView: lim };
   }
 
   // ---------------------------------------------------------------- labels of linked records
@@ -107,9 +130,10 @@ export class ErpService {
     }
     const d = entityDef(ref);
     if (!d) throw new NotFoundException(`Unknown list "${ref}"`);
+    const hide = (await this.limited(user)) ? d.fields.filter(ErpService.hidden).map((f) => f.k) : [];
     return ((await this.prisma.erpRecord.findMany({ where: { tenantId: t, entity: ref } })) as any[])
       .filter((r) => !['LEFT', 'SOLD', 'CANCELLED'].includes(r.status))
-      .map((r) => ({ id: r.id, label: this.label(d, r), extra: { ...r.data, status: r.status } }))
+      .map((r) => ({ id: r.id, label: this.label(d, r), extra: { ...Object.fromEntries(Object.entries(r.data ?? {}).filter(([k]) => !hide.includes(k))), status: r.status } }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -162,7 +186,7 @@ export class ErpService {
     if (f.projectId) where.projectId = f.projectId;
     if (f.companyId) where.companyId = f.companyId;
     const rows = ((await this.prisma.erpRecord.findMany({ where })) as any[]).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-    return this.decorate(user.tenantId, def, rows);
+    return this.view(user, def, await this.decorate(user.tenantId, def, rows));
   }
   async raw(tenantId: string, key: string, where: any = {}): Promise<any[]> {
     return (await this.prisma.erpRecord.findMany({ where: { tenantId, entity: key, ...where } })) as any[];
@@ -171,7 +195,7 @@ export class ErpService {
     const def = await this.def(user, key);
     const r = await this.prisma.erpRecord.findFirst({ where: { id, tenantId: user.tenantId, entity: key } });
     if (!r) throw new NotFoundException(`${def.one} not found or access denied`);
-    return (await this.decorate(user.tenantId, def, [r]))[0];
+    return (await this.view(user, def, await this.decorate(user.tenantId, def, [r])))[0];
   }
 
   // ---------------------------------------------------------------- validate
@@ -341,10 +365,17 @@ export class ErpService {
     if (key === 'fleet.allowance' && d.amount == null) d.amount = r2(num(d.qty) * num(d.rate));
     if (key === 'fleet.fuel') {
       if (!(num(d.litres) > 0)) throw new BadRequestException('Litres must be more than 0');
+      const allFills = (await this.raw(tenantId, 'fleet.fuel')).filter((r) => r.id !== cur?.id);
+      if (d.rate == null) {
+        // blank rate (e.g. a driver who doesn't see rates) = the last known rate, this vehicle first
+        const byDate = (l: any[]) => l.filter((r) => r.data.rate != null && r.data.rate !== '').sort((a, b) => String(b.data.date).localeCompare(String(a.data.date)));
+        const last = byDate(allFills.filter((r) => r.data.vehicle === d.vehicle))[0] ?? byDate(allFills)[0];
+        if (last) d.rate = Number(last.data.rate);
+      }
       if (d.amount == null && d.rate != null) d.amount = r2(num(d.litres) * num(d.rate));
       if (d.fullTank == null) d.fullTank = true;
       const v = ex('fleet.vehicle', d.vehicle) ?? {};
-      const others: FuelFill[] = (await this.raw(tenantId, 'fleet.fuel')).filter((r) => r.data.vehicle === d.vehicle && r.id !== cur?.id).map(fuelFill);
+      const others: FuelFill[] = allFills.filter((r) => r.data.vehicle === d.vehicle).map(fuelFill);
       const me = '__this__';
       const res = checkFills(fuelVehicle(v), [...others, fuelFill({ id: me, data: d })]).get(me)!;
       d.check = res.flags.length ? res.flags.join(' · ') : 'OK';
@@ -431,7 +462,7 @@ export class ErpService {
 
   async create(user: ErpUser, key: string, body: any) {
     const def = await this.def(user, key);
-    return this.createRaw(user, def, body);
+    return (await this.view(user, def, [await this.createRaw(user, def, body)]))[0];
   }
   /** used by create() and by the automatic steps (RFQ from requisition, PO from quotation …) */
   async createRaw(user: ErpUser, def: EntityDef, body: any) {
@@ -453,12 +484,17 @@ export class ErpService {
       const changed = JSON.stringify(body.lines ?? cur.lines) !== JSON.stringify(cur.lines) || this.moves(key, { ...cur.data, ...(body.data ?? {}) }).join() !== this.moves(key, cur.data).join();
       if (changed) throw new BadRequestException('This document is POSTED. Set the status back to DRAFT to change items or warehouses.');
     }
+    if (Array.isArray(body?.lines) && Array.isArray(cur.lines) && def.lines && (await this.limited(user))) {
+      // limited view never saw the rates — keep the ones already on each line
+      const keep = def.lines.cols.filter(ErpService.hidden).map((f) => f.k);
+      body = { ...body, lines: body.lines.map((l: any, i: number) => ({ ...Object.fromEntries(keep.map((k) => [k, cur.lines[i]?.[k]])), ...l })) };
+    }
     const m = await this.validate(user.tenantId, def, body, cur);
     await this.before(user.tenantId, def, m, cur);
     const total = this.totals(def, m.data, m.lines);
     const r = await this.prisma.erpRecord.update({ where: { id }, data: { status: m.status, data: m.data, lines: m.lines ?? undefined, ...this.columns(m.data, total) } });
     await this.after(user.tenantId, key, r);
-    return (await this.decorate(user.tenantId, def, [r]))[0];
+    return (await this.view(user, def, await this.decorate(user.tenantId, def, [r])))[0];
   }
 
   async remove(user: ErpUser, key: string, id: string) {

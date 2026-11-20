@@ -160,6 +160,7 @@
     <p class="lead">ProcureNepal is a construction ERP built specifically for Nepal's contractors and PPMO e-GP (Bolpatra) bidders — bid tracking, bank guarantees, procurement, fleet, HR and project management, all in one workspace.</p>
     <div class="hero-ctas">
       <a href="https://app.procurenepal.com" class="btn gold">Open the app →</a>
+      <button type="button" class="btn outline demo-btn" style="margin-left:10px">👀 Try the demo</button>
       <a href="#features" class="btn outline">See what's inside</a>
     </div>
     <p class="hero-note">Built in Nepal, for Nepal's procurement rules — by Cuidado Technology Pvt. Ltd.</p>
@@ -251,6 +252,7 @@
     <h2>Ready to run your next bid properly?</h2>
     <p>Sign in to your workspace, or get in touch to set one up for your company.</p>
     <a href="https://app.procurenepal.com" class="btn gold">Open the app →</a>
+      <button type="button" class="btn outline demo-btn" style="margin-left:10px">👀 Try the demo</button>
   </div>
 </section>
 
@@ -292,6 +294,23 @@
       var msg = r.body && r.body.message; if (Array.isArray(msg)) msg = msg.join(' ');
       say(msg || 'Sign-in failed.', true);
       b.disabled = false; b.textContent = 'Open the app';
+    });
+  });
+})();
+
+// "Try the demo": a read-only session in the sample workspace (rebuilt every day).
+(function () {
+  var API = 'https://procurenepal-api.onrender.com', APP = 'https://app.procurenepal.com';
+  function go(btn, left) {
+    return fetch(API + '/demo/session', { method: 'POST' }).then(function (r) {
+      if (!r.ok) { if (left > 0 && r.status >= 500) return new Promise(function (res) { setTimeout(res, 3000); }).then(function () { return go(btn, left - 1); }); throw new Error(); }
+      return r.json().then(function (j) { location.href = APP + '/handoff#t=' + encodeURIComponent(j.access_token) + '&u=' + encodeURIComponent(JSON.stringify(j.user)); });
+    }, function () { if (left > 0) return new Promise(function (res) { setTimeout(res, 3000); }).then(function () { return go(btn, left - 1); }); throw new Error(); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.demo-btn'), function (btn) {
+    btn.addEventListener('click', function () {
+      var label = btn.textContent; btn.disabled = true; btn.textContent = 'Opening the demo…';
+      go(btn, 30).catch(function () { btn.disabled = false; btn.textContent = label; alert('The demo could not open right now — please try again in a minute.'); });
     });
   });
 })();

@@ -68,6 +68,24 @@ export const ASSIGNABLE_ROLES = [
   'OWNER', 'DIRECTOR', 'PROJECT_DIRECTOR', 'PROCUREMENT_OFFICER', 'ACCOUNTANT',
   'STORE_MANAGER', 'SITE_ENGINEER', 'SUPERVISOR', 'HR_MANAGER', 'VIEWER',
 ];
+/**
+ * Standard modules per role (Task 15) — used when an Owner adds a person without choosing modules,
+ * and offered as the starting point in Users. [] = every module active in the workspace.
+ * Keep in step with web/src/app/core/role-presets.ts.
+ */
+export const ROLE_MODULES: Record<string, string[]> = {
+  OWNER: [], DIRECTOR: [],
+  PROJECT_DIRECTOR: ['bolpatra', 'project', 'procurement', 'fleet'],
+  PROCUREMENT_OFFICER: ['procurement', 'bolpatra'],
+  ACCOUNTANT: ['bank', 'procurement', 'hr', 'project'],
+  STORE_MANAGER: ['procurement'],
+  SITE_ENGINEER: ['project', 'procurement', 'fleet'],
+  SUPERVISOR: ['project', 'fleet'],
+  HR_MANAGER: ['hr', 'fleet'],
+  VIEWER: [],
+};
+/** Roles that may see the workspace's activity log (Task 15) */
+export const ACTIVITY_VIEW_ROLES = ['OWNER', 'SUPER_ADMIN', 'DIRECTOR'];
 /** Roles that may view sign-in / sign-out history (Task 5) */
 export const LOGIN_VIEW_ROLES = ['OWNER', 'SUPER_ADMIN', 'HR_MANAGER'];
 /** flagKey for a single sidebar item switched off within an active module */

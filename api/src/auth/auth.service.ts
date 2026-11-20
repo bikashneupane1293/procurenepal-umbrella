@@ -197,6 +197,12 @@ export class AuthService {
     return { ...(await this.generateTokens(user.id, user.email, user.role, user.tenantId)), created: true, join };
   }
 
+  /** Session for a user created by the platform itself (the public demo, Task 15). */
+  async issueFor(userId: string) {
+    const u: any = await this.prisma.user.findUnique({ where: { id: userId } });
+    return this.generateTokens(u.id, u.email, u.role, u.tenantId);
+  }
+
   private async generateTokens(userId: string, email: string, role: string, tenantId: string) {
     const payload = { sub: userId, email, role, tenantId };
 

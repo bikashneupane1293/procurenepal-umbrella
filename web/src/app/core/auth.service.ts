@@ -39,12 +39,12 @@ export class AuthService {
 
   /** toHome = the person pressed Logout: go back to the ProcureNepal home page (procurenepal.com).
    *  An expired session (401) still goes to the sign-in page. */
-  logout(toHome = false): void {
+  logout(toHome = false, reason?: 'idle'): void {
     // best-effort: close the sign-in session on the server (Task 5 login history)
     this.http.post(`${API_URL}/auth/logout`, {}).subscribe({ next: () => {}, error: () => {} });
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     if (toHome && location.hostname.endsWith('procurenepal.com')) { location.href = HOME_URL; return; }
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], reason ? { queryParams: { reason } } : {});
   }
 }

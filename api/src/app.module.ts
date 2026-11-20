@@ -1,3 +1,4 @@
+import { AlertsModule } from './alerts/alerts.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClsModule } from 'nestjs-cls';
@@ -30,6 +31,7 @@ import { StaffModule } from './staff/staff.module';
     ClsModule.forRoot({ global: true, middleware: { mount: true } }),
     PrismaModule,
     AuthModule,
+    AlertsModule,
     UsersModule,
     TenantsModule,
     FeatureFlagModule,

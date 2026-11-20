@@ -30,6 +30,25 @@ import { UI_STYLES } from '../../core/ui-styles';
         </div>
       </div>
 
+      @if (prefs(); as p) {
+        <div class="panel">
+          <h2>⏰ Morning alerts (7:00 AM, Nepal Time)</h2>
+          <p class="help">Bid deadlines, expiring guarantees and renewals, services due and fuel entries to check — only for the modules you use. Nothing is sent on days with nothing due.</p>
+          <label class="inline"><input type="checkbox" [(ngModel)]="p.morningEmail" /> Email them to me ({{ m.email }})</label>
+          @if (!p.emailAvailable) { <div class="muted">Email sending is being set up by ProcureNepal — your choice is saved.</div> }
+          <div class="row wa">
+            <div>
+              <label class="lbl">WhatsApp number</label>
+              <input [(ngModel)]="p.whatsapp" placeholder="98XXXXXXXX" inputmode="tel" class="phone" />
+            </div>
+            <label class="inline"><input type="checkbox" [(ngModel)]="p.morningWhatsapp" /> Also send them on WhatsApp</label>
+          </div>
+          @if (!p.whatsappAvailable) { <div class="muted">WhatsApp sending is being set up by ProcureNepal — your choice is saved and starts as soon as it is ready. Meanwhile the Dashboard has a "Share on WhatsApp" button.</div> }
+          <button class="btn gold" (click)="savePrefs(p)" [disabled]="busy()">Save</button>
+          @if (prefsMsg()) { <span class="saved">{{ prefsMsg() }}</span> }
+        </div>
+      }
+
       @if (m.invites.length) {
         <div class="panel invite">
           <h2>📨 Invitations</h2>
@@ -81,6 +100,11 @@ import { UI_STYLES } from '../../core/ui-styles';
     .muted { color: #9ca3af; font-size: 13px; }
     input.code { max-width: 220px; text-transform: uppercase; font-weight: 700; letter-spacing: .05em; }
     .btn.small { padding: 6px 12px; font-size: 13px; }
+    .inline { display: flex; gap: 8px; align-items: center; font-size: 14px; text-transform: none; letter-spacing: 0; color: #1f2937; font-weight: 600; margin: 8px 0; }
+    .wa { justify-content: flex-start; gap: 20px; align-items: flex-end; }
+    .lbl { display: block; margin-bottom: 4px; }
+    input.phone { max-width: 220px; }
+    .saved { margin-left: 12px; color: #15803d; font-weight: 700; font-size: 14px; }
   `],
 })
 export class AccountPage {
@@ -93,7 +117,19 @@ export class AccountPage {
   copied = signal(false);
   orgCode = '';
 
-  constructor() { this.load(); }
+  prefs = signal<any | null>(null);
+  prefsMsg = signal('');
+
+  constructor() { this.load(); this.data.myPreferences().then((p) => this.prefs.set(p)).catch(() => { /* older API */ }); }
+
+  async savePrefs(p: any) {
+    this.busy.set(true); this.error.set(''); this.prefsMsg.set('');
+    try {
+      this.prefs.set(await this.data.saveMyPreferences({ morningEmail: !!p.morningEmail, whatsapp: String(p.whatsapp ?? '').trim(), morningWhatsapp: !!p.morningWhatsapp }));
+      this.prefsMsg.set('✅ Saved');
+    } catch (e) { this.error.set(errorText(e)); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    this.busy.set(false);
+  }
 
   async load() {
     try { this.me.set(await this.data.staffMe()); } catch (e) { this.error.set(errorText(e)); }

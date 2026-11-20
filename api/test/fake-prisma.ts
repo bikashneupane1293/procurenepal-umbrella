@@ -68,6 +68,7 @@ const DEFAULTS: Record<string, () => Row> = {
   project: () => ({ status: 'ONGOING', source: 'MANUAL', bidderType: 'SINGLE', tenderId: null, bidId: null, createdAt: new Date(), updatedAt: new Date() }),
   boqItem: () => ({ isHeading: false, createdAt: new Date() }),
   erpRecord: () => ({ createdAt: new Date(), updatedAt: new Date() }),
+  auditLog: () => ({ createdAt: new Date(), isAiAction: false }),
   bankGuarantee: () => ({ status: 'ACTIVE', source: 'MANUAL', bankId: null, bidId: null, tenderId: null, projectId: null, createdAt: new Date(), updatedAt: new Date() }),
 };
 
@@ -76,7 +77,7 @@ export class FakePrisma {
     company: [], certificate: [], tender: [], qualificationResult: [],
     annualTurnover: [], user: [], tenant: [], tenantFeatureFlag: [], bid: [],
     bank: [], bankGuarantee: [], project: [], boqItem: [], erpRecord: [],
-    loginSession: [], externalRef: [], subscription: [], platformSetting: [], staffInvite: [], tenderRequirement: [],
+    loginSession: [], externalRef: [], subscription: [], platformSetting: [], staffInvite: [], tenderRequirement: [], auditLog: [],
   };
 
   private include(model: string, row: Row, include?: Row): Row {
@@ -214,6 +215,7 @@ export class FakePrisma {
   platformSetting = this.model('platformSetting');
   staffInvite = this.model('staffInvite');
   tenderRequirement = this.model('tenderRequirement');
+  auditLog = this.model('auditLog');
 
   /**
    * Supports both forms real Prisma does: the batch form (an array of pending ops, run
